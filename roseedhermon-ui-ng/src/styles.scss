@@ -1,0 +1,137 @@
+/* You can add global styles to this file, and also import other style files */
+@use './tailwind.css';
+@use './assets/layout/layout.scss';
+@use 'primeicons/primeicons.css';
+@use './assets/demo/demo.scss';
+
+
+
+html, body, app-root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+body {
+  overflow-y: scroll !important;
+}
+
+/* Force scroll pour la page des événements */
+app-layout {
+  height: 100%;
+  overflow-y: auto !important;
+}
+
+.layout-main-container {
+  overflow-y: auto !important;
+  height: calc(100vh - 70px) !important;
+}
+
+.layout-main {
+  overflow-y: visible !important;
+}
+
+.p-menubar {
+    display: flex;
+    align-items: center;
+    background: #2e31a4 !important;
+    border: 1px solid var(--p-menubar-border-color);
+    border-radius: 0px !important;
+    height: 70px;
+   }
+   .p-menubar-item-link {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    overflow: hidden;
+    position: relative;
+    color: inherit;
+    padding: var(--p-menubar-item-padding);
+    gap: var(--p-menubar-item-gap);
+    user-select: none;
+    outline: 0 none;
+    color: #FFF !important;
+}
+.p-menubar-submenu {
+    display: none;
+    position: absolute;
+    min-width: 12.5rem;
+    z-index: 1;
+    background: var(--p-menubar-submenu-background);
+    border: 1px solid var(--p-menubar-submenu-border-color);
+    border-radius: var(--p-menubar-border-radius);
+    box-shadow: var(--p-menubar-submenu-shadow);
+    color: var(--p-menubar-submenu-color);
+    flex-direction: column;
+    padding: var(--p-menubar-submenu-padding);
+    gap: var(--p-menubar-submenu-gap);
+    color:#2e31a4;
+}
+.p-menubar-item-active > .p-menubar-item-content {
+    color: var(--p-menubar-item-active-color);
+    background: var(--p-menubar-item-active-background);
+    background: green !important;
+}
+.p-menubar-root-list > .p-menuitem > .p-menuitem-link:hover {
+    background-color: rgb(46, 49, 164) !important; /* 💡 ta couleur de hover */
+    color: #ffffff;
+  }
+
+  .p-menubar-root-list > .p-menuitem:hover {
+    background-color: rgb(46, 49, 164) !important; /* 💡 ta couleur de hover */
+    color: #ffffff;
+  }
+
+  .p-menubar-root-list > .p-menubar-item > .p-menubar-item-content > .p-menubar-item-link:hover {
+    padding: var(--p-menubar-base-item-padding);
+    background-color: rgb(46, 49, 164) !important; /* 💡 ta couleur de hover */
+    border-radius: 5px;
+}
+.p-menubar-root-list > .p-menubar-item > .p-menubar-item-content > .p-menubar-item-link {
+    padding: var(--p-menubar-base-item-padding);
+    font-weight: 800;
+}
+
+.pi-user{
+    font-weight: 800 !important;
+}
+.pi-user:before {
+    content: "\e939";
+    font-weight: 800 !important;
+    color: #FFF !important;
+}
+
+.pi-calendar:before {
+    content: "\e927";
+    font-weight: 800 !important;
+    color: #FFF !important;
+}
+
+
+.p-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    padding: var(--p-dialog-header-padding);
+    background:rgb(46, 49, 164) !important;
+    border-radius: 10px 10px 0px 0px;
+    border:2px solid rgb(46, 49, 164) !important;
+    color: #FFF !important;
+}
+
+.p-button-text.p-button-secondary {
+    background: #FFF !important;
+    border-color: transparent;
+    color: var(--p-button-text-secondary-color);
+}
+.p-dialog-footer {
+    padding-right: 0px !important;
+}
+
+.p-dialog {
+    border: none !important;
+}

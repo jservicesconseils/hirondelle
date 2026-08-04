@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/layout/component/app.layout.ts"],
+  "sourcesContent": ["\n \n    .menubar-logo .app-name {\n      color: white;\n      font-size: 1.25rem;\n      font-weight: bold;\n      font-weight: 800;\n    }\n\n    .menubar-actions {\n      display: flex;\n      align-items: center;\n      gap: 0.75rem;\n    }\n\n    .user-name {\n      color: white;\n      font-weight: 800;\n      margin-right: 0.75rem;\n    }\n\n    .search-container {\n  position: relative;\n  width: 300px;\n}\n\n.search-icon {\n  position: absolute;\n  top: 50%;\n  left: 10px;\n  transform: translateY(-50%);\n  color: #999;\n  font-size: 1rem;\n  font-weight: 800;\n}\n\n.search-input {\n  width: 100%;\n  padding-left: 2.2rem;\n  height: 2.5rem;\n  font-size: 1rem;\n  font-weight: 800;\n}\n\n\n    .lang-btn, .help-btn {\n      background-color: #0059b3;\n      border: none;\n      color: white;\n      font-weight: 800;\n    }\n   \n  \n    .lang-btn:hover,\n    .help-btn:hover {\n      background-color: #0066cc;\n      font-weight: 800;\n    }\n  "],
+  "mappings": ";AAEI,CAAA,aAAA,CAAA;AACE,SAAA;AACA,aAAA;AACA,eAAA;AACA,eAAA;;AAGF,CAAA;AACE,WAAA;AACA,eAAA;AACA,OAAA;;AAGF,CAAA;AACE,SAAA;AACA,eAAA;AACA,gBAAA;;AAGF,CAAA;AACF,YAAA;AACA,SAAA;;AAGF,CAAA;AACE,YAAA;AACA,OAAA;AACA,QAAA;AACA,aAAA,WAAA;AACA,SAAA;AACA,aAAA;AACA,eAAA;;AAGF,CAAA;AACE,SAAA;AACA,gBAAA;AACA,UAAA;AACA,aAAA;AACA,eAAA;;AAIE,CAAA;AAAA,CAAA;AACE,oBAAA;AACA,UAAA;AACA,SAAA;AACA,eAAA;;AAIF,CARA,QAQA;AAAA,CARA,QAQA;AAEE,oBAAA;AACA,eAAA;;",
+  "names": []
+}

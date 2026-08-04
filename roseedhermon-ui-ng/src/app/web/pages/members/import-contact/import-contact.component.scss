@@ -1,0 +1,119 @@
+.import-panel {
+  margin: 1rem;
+  text-align: right;
+  padding: 1rem 1rem 1rem 0px;
+}
+  
+  .upload-btn {
+  background-color: #dc3545 !important; /* rouge */
+    color: white;
+  padding: 1.25rem 2rem; /* +10px hauteur et largeur */
+  border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  min-height: 50px;
+  font-size: 1.1rem;
+  transition: background-color 0.3s ease;
+  position: relative;
+  text-align: center;
+  &:hover {
+    background-color: #c82333 !important;
+  }
+}
+
+.upload-btn i {
+  margin-right: 8px;
+  display: inline-block;
+  vertical-align: middle;
+  }
+
+/* L'input recouvre tout le bouton : le clic atteint directement le champ de
+   fichier, sans dépendre de la propagation depuis le <label> (qui ne fonctionne
+   pas partout quand l'input est en display:none). */
+.upload-btn .file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0;
+}
+
+  .errors {
+    margin-top: 1rem;
+    color: #b00020;
+    font-weight: 600;
+    text-align: right;
+  }
+
+  .loading-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #eef4ff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #c4dcff;
+    color: #294fa3;
+  
+    .loading-message {
+      font-weight: 500;
+    }
+  }
+  
+  .custom-spinner {
+    width: 25px;
+    height: 25px;
+  }
+  
+  .import-panel {
+    margin-top: 10px;
+  }
+  
+  .spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  
+  .spinner {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #007bff;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+  
+  .loading-message {
+    font-size: 1.2rem;
+    color: #333;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .import-panel {
+    padding: 1rem 0px 1rem 1rem;
+    border-radius: 12px;
+    color: white;
+    text-align: right;
+  }

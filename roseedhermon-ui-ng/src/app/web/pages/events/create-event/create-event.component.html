@@ -1,0 +1,588 @@
+<p>create-event works!</p>
+
+<p-toast></p-toast>
+
+<p-dialog 
+    [(visible)]="visible" 
+    [style]="{width: 'calc(75vw - 200px)', height: '90vh'}" 
+    [draggable]="false" 
+    [resizable]="false"
+    (onHide)="hideDialog()"
+    modal="true"
+    styleClass="update-applicant-dialog">
+    <ng-template pTemplate="header">
+        <div class="modal-header-custom">
+            <i class="pi pi-calendar-plus modal-header-icon"></i>
+            <span class="modal-header-title">{{ eventToEdit ? 'Modifier l\'événement' : 'Créer un nouvel événement' }}</span>
+        </div>
+    </ng-template>
+
+    <form [formGroup]="eventForm" (ngSubmit)="onSubmit()" class="p-fluid">
+        <p-tabView>
+            <p-tabPanel header="Informations sur l'événement" leftIcon="pi pi-info-circle">
+                <div style="margin-top: 20px;"></div>
+                <div class="p-fluid p-formgrid p-grid">
+                    <div class="p-field p-col-12 p-md-6">
+                        <span class="p-input-icon-right">
+                            <input pInputText formControlName="name" placeholder="Nom de l'événement" />
+                            <i class="pi pi-tag"></i>
+                        </span>
+                    </div>
+                    <div class="p-field p-col-12 p-md-6">
+                        <p-dropdown 
+                            [options]="eventCategories" 
+                            formControlName="category" 
+                            optionLabel="label" 
+                            optionValue="key"
+                            placeholder="Catégorie"
+                            [showClear]="true"
+                            appendTo="body"
+                            styleClass="w-full">
+                        </p-dropdown>
+                    </div>
+                    <div class="p-field p-col-12 p-md-6">
+                        <label class="label-inline" style="margin-bottom: 0.5rem;">Type d'événement</label>
+                        <div class="flex" style="gap: 2rem; align-items: center;">
+                            <div *ngFor="let type of eventTypes">
+                                <p-radioButton 
+                                    name="eventType"
+                                    [value]="type.key"
+                                    formControlName="eventType"
+                                    [inputId]="'eventType_' + type.key"
+                                ></p-radioButton>
+                                <label [for]="'eventType_' + type.key" style="margin-left: 0.5rem;">{{ type.label }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-field p-col-12 p-md-6">
+                        <span>
+                                    <input type="checkbox" formControlName="free" id="free" style="margin-right:8px;vertical-align:middle;" />
+        <label for="free" style="vertical-align:middle;">Événement gratuit ?</label>
+                        </span>
+                    </div>
+                    <div class="p-col-12 p-md-6" style="display: flex; gap: 1rem; align-items: flex-end;">
+                        <div class="p-field" *ngIf="!eventForm.get('free')?.value" style="flex:1;">
+                            <span class="p-input-icon-right">
+                                <input pInputText type="number" formControlName="amount" placeholder="Montant (€)" min="0" step="0.01" />
+                                <i class="pi pi-euro"></i>
+                            </span>
+                        </div>
+                        <div class="p-field" style="flex:1;">
+                            <label class="label-inline" for="numberOfDays">Nombre de jours</label>
+                            <span class="p-input-icon-right">
+                                <input pInputText type="number" id="numberOfDays" formControlName="numberOfDays" placeholder="Nombre de jours" min="1" />
+                                <i class="pi pi-calendar"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-col-12 p-md-6" style="display: flex; gap: 1rem; align-items: flex-end;">
+                        <div class="p-field" style="flex:1;">
+                            <label class="label-inline" for="availableSeats">Places disponibles</label>
+                            <span class="p-input-icon-right">
+                                <input pInputText type="number" id="availableSeats" formControlName="availableSeats" placeholder="Nombre de places" min="1" />
+                                <i class="pi pi-users"></i>
+                            </span>
+                        </div>
+                        <div class="p-field" style="flex:1;">
+                            <label class="label-inline" for="lastRegistrationDate">Date limite réservation</label>
+                            <span class="p-input-icon-right">
+                                <input pInputText id="lastRegistrationDate" formControlName="lastRegistrationDate" placeholder="Date limite (JJ/MM/AAAA)" />
+                                <i class="pi pi-calendar-times"></i>
+                            </span>
+                            <div *ngIf="eventForm.get('lastRegistrationDate')?.invalid && (eventForm.get('lastRegistrationDate')?.dirty || eventForm.get('lastRegistrationDate')?.touched)" class="error-message">
+                                <span *ngIf="eventForm.get('lastRegistrationDate')?.errors?.['required']">Date limite requise</span>
+                                <span *ngIf="eventForm.get('lastRegistrationDate')?.errors?.['dateFormat']">Le format doit être JJ/MM/AAAA</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-field p-col-12">
+                        <span class="p-input-icon-right" style="width:100%;">
+                            <textarea pInputTextarea formControlName="description" rows="3" placeholder="Description" style="width:100%;"></textarea>
+                            <i class="pi pi-pencil"></i>
+                        </span>
+                    </div>
+                </div>
+            </p-tabPanel>
+            <p-tabPanel header="Lieu et heure" leftIcon="pi pi-map-marker">
+                <div class="p-fluid p-formgrid p-grid">
+                    <div class="p-field p-col-12 p-md-6">
+                        <span class="p-input-icon-right">
+                            <input pInputText formControlName="date" placeholder="Date de l'événement (JJ/MM/AAAA)" />
+                            <i class="pi pi-calendar"></i>
+                        </span>
+                        <div *ngIf="eventForm.get('date')?.invalid && (eventForm.get('date')?.dirty || eventForm.get('date')?.touched)" class="error-message">
+                            <span *ngIf="eventForm.get('date')?.errors?.['required']">Date requise</span>
+                            <span *ngIf="eventForm.get('date')?.errors?.['dateFormat']">Le format doit être JJ/MM/AAAA</span>
+                        </div>
+                    </div>
+                </div>
+                <div [formGroupName]="'location'" class="p-fluid p-formgrid p-grid">
+                    <div class="p-field p-col-12 p-md-6">
+                        <span class="p-input-icon-right">
+                            <input pInputText formControlName="placeName" placeholder="Nom du lieu" />
+                            <i class="pi pi-map-marker"></i>
+                        </span>
+                    </div>
+                    <div class="p-field p-col-12 p-md-6">
+                        <span class="p-input-icon-right">
+                            <input pInputText formControlName="address" placeholder="Adresse" />
+                            <i class="pi pi-home"></i>
+                        </span>
+                    </div>
+                    <div class="p-field p-col-12 p-md-6">
+                        <span class="p-input-icon-right">
+                            <input pInputText formControlName="city" placeholder="Ville" />
+                            <i class="pi pi-building"></i>
+                        </span>
+                    </div>
+                    <div class="p-field p-col-12 p-md-6">
+                        <span class="p-input-icon-right">
+                            <input pInputText formControlName="postalCode" placeholder="Code postal" />
+                            <i class="pi pi-hashtag"></i>
+                        </span>
+                    </div>
+                    <div class="p-field p-col-12 p-md-6">
+                        <span class="p-input-icon-right">
+                            <input pInputText formControlName="country" placeholder="Pays" />
+                            <i class="pi pi-globe"></i>
+                        </span>
+                    </div>
+                </div>
+            </p-tabPanel>
+            <p-tabPanel header="Présentateurs" leftIcon="pi pi-users">
+                <div class="p-fluid p-formgrid p-grid">
+                    <div class="p-col-12">
+                        <div *ngIf="isFormReady">
+                            <table class="event-table" style="width:100%;">
+                                <tr><th>Nom</th><th>Prénom</th><th>Titre</th><th>Résumé</th><th>Action</th></tr>
+                                <tr *ngFor="let presenter of presenters.controls; let i = index; trackBy: trackByIndex">
+                                    <td>
+                                        <span class="p-input-icon-right">
+                                            <input pInputText [formControl]="getPresenterControl(presenter, 'lastName')" placeholder="Nom" />
+                                            <i class="pi pi-id-card"></i>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="p-input-icon-right">
+                                            <input pInputText [formControl]="getPresenterControl(presenter, 'firstName')" placeholder="Prénom" />
+                                            <i class="pi pi-user"></i>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="p-input-icon-right">
+                                            <input pInputText [formControl]="getPresenterControl(presenter, 'title')" placeholder="Titre" />
+                                            <i class="pi pi-briefcase"></i>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="p-input-icon-right">
+                                            <input pInputText [formControl]="getPresenterControl(presenter, 'resume')" placeholder="Résumé" />
+                                            <i class="pi pi-comment"></i>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button type="button" pButton icon="pi pi-trash" class="p-button-danger" (click)="removePresenter(i)"></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5">
+                                        <button type="button" pButton icon="pi pi-plus" label="Ajouter un présentateur" (click)="addPresenter()"></button>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div *ngIf="!isFormReady">
+                            <p>Chargement...</p>
+                            <button type="button" pButton icon="pi pi-plus" label="Ajouter un présentateur" (click)="addPresenter()"></button>
+                        </div>
+                    </div>
+                </div>
+            </p-tabPanel>
+            <p-tabPanel header="Photo de présentation" leftIcon="pi pi-image">
+                <div class="p-fluid p-formgrid p-grid">
+                    <div class="p-col-12">
+                        <div class="presentation-photo-section">
+                            <h4>Photos de présentation</h4>
+                            <p class="section-description">
+                                Uploadez plusieurs photos de présentation, puis sélectionnez celle qui sera affichée en premier 
+                                lors de la présentation de l'événement. Cliquez sur une photo pour la sélectionner.
+                            </p>
+                            
+                            <div class="main-photo-upload">
+                                <p-fileUpload 
+                                    #mainPhotoUpload
+                                    [multiple]="true"
+                                    [customUpload]="true"
+                                    (onSelect)="onMainPhotoSelect($event)"
+                                    (onUpload)="onMainPhotoUpload($event)"
+                                    accept="image/*"
+                                    [maxFileSize]="10000000"
+                                    [showCancelButton]="false"
+                                    [showUploadButton]="true"
+                                    [auto]="false"
+                                    chooseLabel="Sélectionner des photos de présentation"
+                                    uploadLabel="Uploader"
+                                    [disabled]="false">
+                                    <ng-template pTemplate="content">
+                                        <div *ngIf="presentationPhotos.length > 0" class="photos-table-section">
+                                            <h5>Photos de présentation uploadées ({{ presentationPhotos.length }})</h5>
+                                            
+                                            <!-- Informations de débogage -->
+                                            <div class="debug-info" style="margin-bottom: 1rem; padding: 0.5rem; background: #f8f9fa; border-radius: 4px; font-size: 0.9rem;">
+                                                <strong>Debug:</strong> 
+                                                Photos: {{ presentationPhotos.length }} | 
+                                                Fichiers: {{ uploadedFiles.length }} | 
+                                                En attente: {{ pendingPresentationPhotos.length }} |
+                                                Upload en cours: {{ isUploading ? 'Oui' : 'Non' }}
+                                            </div>
+                                            
+                                            <!-- Bouton de débogage -->
+                                            <div class="debug-section" style="margin-bottom: 1rem;">
+                                                <button pButton 
+                                                        type="button" 
+                                                        class="p-button-secondary p-button-sm" 
+                                                        icon="pi pi-bug" 
+                                                        label="Déboguer photos" 
+                                                        (click)="debugPhotoDisplay()"
+                                                        style="margin-right: 0.5rem;">
+                                                </button>
+                                                <button pButton 
+                                                        type="button" 
+                                                        class="p-button-info p-button-sm" 
+                                                        icon="pi pi-refresh" 
+                                                        label="Recharger photos" 
+                                                        (click)="loadEventFiles()"
+                                                        style="margin-right: 0.5rem;">
+                                                </button>
+                                                <button pButton 
+                                                        type="button" 
+                                                        class="p-button-warning p-button-sm" 
+                                                        icon="pi pi-info-circle" 
+                                                        label="Test EventToEdit" 
+                                                        (click)="testEventToEdit()"
+                                                        style="margin-right: 0.5rem;">
+                                                </button>
+                                                <button pButton 
+                                                        type="button" 
+                                                        class="p-button-success p-button-sm" 
+                                                        icon="pi pi-image" 
+                                                        label="Test Images" 
+                                                        (click)="testImageAccessibility()">
+                                                </button>
+                                            </div>
+                                            
+                                            <div class="table-container">
+                                                <table class="photos-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Photo</th>
+                                                            <th>Nom du fichier</th>
+                                                            <th>Commentaire</th>
+                                                            <th>Taille</th>
+                                                            <th>Date d'upload</th>
+                                                            <th>Photo principale</th>
+                                                            <th>Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr *ngFor="let photo of presentationPhotos; trackBy: trackByPhotoId" 
+                                                            [class.main-photo-row]="photo.id === mainPresentationPhoto?.id">
+                                                            <td class="photo-cell">
+                                                                <div class="photo-thumbnail-small clickable" 
+                                                                     (click)="openImageModal(photo)"
+                                                                     pTooltip="Cliquez pour agrandir l'image"
+                                                                     tooltipPosition="top">
+                                                                    <img [src]="getThumbnailUrl(photo) || getFilePreviewUrl(photo)" 
+                                                                         [alt]="photo.fileName" 
+                                                                         class="photo-image-small"
+                                                                         (error)="onImageError($event, photo)"
+                                                                         (load)="onImageLoad($event, photo)" />
+                                                                    <div class="photo-overlay-hint">
+                                                                        <i class="pi pi-search-plus"></i>
+                                                                    </div>
+                                                                    <div class="photo-placeholder" style="display: none;">
+                                                                        <i class="pi pi-image"></i>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td class="filename-cell">
+                                                                <span class="filename">{{ photo.fileName }}</span>
+                                                            </td>
+                                                            <td class="comment-cell">
+                                                                <input pInputText 
+                                                                       type="text" 
+                                                                       [value]="photo.description || ''" 
+                                                                       placeholder="Ajouter un commentaire..."
+                                                                       #commentInput
+                                                                       (input)="photo.description = commentInput.value"
+                                                                       (blur)="updatePhotoComment(photo, commentInput.value || '')"
+                                                                       class="comment-input" />
+                                                            </td>
+                                                            <td class="size-cell">
+                                                                <span class="file-size">{{ getFileSizeDisplay(photo.fileSize || 0) }}</span>
+                                                            </td>
+                                                            <td class="date-cell">
+                                                                <span class="upload-date">{{ photo.uploadDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                                                            </td>
+                                                            <td class="main-photo-cell">
+                                                                <div class="checkbox-container">
+                                                                    <input type="radio" 
+                                                                           [name]="'mainPhoto'" 
+                                                                           [id]="'mainPhoto_' + photo.id"
+                                                                           [checked]="photo.id === mainPresentationPhoto?.id"
+                                                                           (change)="selectMainPhoto(photo)"
+                                                                           class="main-photo-radio" />
+                                                                    <label [for]="'mainPhoto_' + photo.id" class="radio-label">
+                                                                        <i class="pi pi-star"></i>
+                                                                    </label>
+                                                                </div>
+                                                            </td>
+                                                            <td class="actions-cell">
+                                                                <button type="button" 
+                                                                        pButton 
+                                                                        icon="pi pi-trash" 
+                                                                        class="p-button-danger p-button-sm" 
+                                                                        (click)="removeFile(photo)"
+                                                                        pTooltip="Supprimer la photo">
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        
+                                        <div *ngIf="pendingPresentationPhotos.length > 0" class="pending-photos">
+                                            <h5>Photos en attente d'upload ({{ pendingPresentationPhotos.length }})</h5>
+                                            <div class="photo-list">
+                                                <div *ngFor="let file of pendingPresentationPhotos" class="photo-item pending">
+                                                    <div class="photo-info">
+                                                        <i class="pi pi-clock"></i>
+                                                        <span class="photo-name">{{ file.name }}</span>
+                                                        <span class="photo-size">{{ getFileSizeDisplay(file.size) }}</span>
+                                                        <span class="photo-status">En attente</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p class="text-info">
+                                                <i class="pi pi-info-circle"></i>
+                                                Ces photos seront uploadées automatiquement.
+                                            </p>
+                                        </div>
+                                        
+                                        <div *ngIf="isUploading" class="upload-progress">
+                                            <p-progressBar [value]="uploadProgress" [showValue]="true"></p-progressBar>
+                                            <p>Upload en cours... {{ uploadProgress.toFixed(0) }}%</p>
+                                        </div>
+                                        
+                                        <div *ngIf="presentationPhotos.length === 0 && pendingPresentationPhotos.length === 0 && !isUploading" class="no-photo">
+                                            <div class="upload-placeholder">
+                                                <i class="pi pi-image" style="font-size: 3rem; color: rgba(255,255,255,0.6);"></i>
+                                                <p>Aucune photo de présentation uploadée</p>
+                                                <p class="upload-hint">Sélectionnez des images pour définir les photos de présentation</p>
+                                            </div>
+                                        </div>
+                                        
+
+                                    </ng-template>
+                                </p-fileUpload>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </p-tabPanel>
+            <p-tabPanel header="Documents" leftIcon="pi pi-file">
+                <div class="p-fluid p-formgrid p-grid">
+                    <div class="p-col-12">
+                        <div class="file-upload-section">
+                            <h4>Upload de documents</h4>
+                            <p class="section-description">
+                                Ajoutez des documents, vidéos, audio et autres fichiers pour enrichir votre événement.
+                            </p>
+                            <p class="click-hint">
+                                <i class="pi pi-info-circle"></i>
+                                <strong>Astuce :</strong> Cliquez sur une photo pour la définir comme photo principale de présentation
+                            </p>
+                            <p-fileUpload 
+                                #fileUpload
+                                [multiple]="true"
+                                [customUpload]="true"
+                                (onSelect)="onFileSelect($event)"
+                                (onUpload)="onFileUpload($event)"
+                                accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+                                [maxFileSize]="10000000"
+                                [showCancelButton]="false"
+                                [showUploadButton]="true"
+                                [auto]="false"
+                                chooseLabel="Sélectionner des fichiers"
+                                uploadLabel="Uploader"
+                                [disabled]="false">
+                                <ng-template pTemplate="content">
+                                                                            <div *ngIf="uploadedFiles.length > 0" class="files-table-section">
+                                            <h5>Fichiers uploadés</h5>
+                                            <div class="table-container">
+                                                <table class="files-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Photo</th>
+                                                            <th>Nom du fichier</th>
+                                                            <th>Type</th>
+                                                            <th>Taille</th>
+                                                            <th>Date d'upload</th>
+                                                            <th>Principal</th>
+                                                            <th>Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr *ngFor="let file of uploadedFiles" 
+                                                            [class.main-photo-row]="file.id === mainPresentationPhoto?.id">
+                                                            <td class="photo-cell">
+                                                                <div class="file-thumbnail-small" *ngIf="file.mimeType?.startsWith('image/')">
+                                                                    <img [src]="file.accessUrl || getFilePreviewUrl(file)" 
+                                                                         [alt]="file.fileName" 
+                                                                         class="file-image-small" />
+                                                                </div>
+                                                                <div class="file-icon-placeholder" *ngIf="!file.mimeType?.startsWith('image/')">
+                                                                    <i [class]="getFileTypeIcon(file.fileType || 'OTHER')" class="file-type-icon"></i>
+                                                                </div>
+                                                            </td>
+                                                            <td class="filename-cell">
+                                                                <span class="filename">{{ file.fileName }}</span>
+                                                            </td>
+                                                            <td class="type-cell">
+                                                                <span class="file-type-badge">{{ file.fileType || 'OTHER' }}</span>
+                                                            </td>
+                                                            <td class="size-cell">
+                                                                <span class="file-size">{{ getFileSizeDisplay(file.fileSize || 0) }}</span>
+                                                            </td>
+                                                            <td class="date-cell">
+                                                                <span class="upload-date">{{ file.uploadDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                                                            </td>
+                                                            <td class="main-photo-cell">
+                                                                <div class="checkbox-container" *ngIf="file.mimeType?.startsWith('image/')">
+                                                                    <input type="radio" 
+                                                                           [name]="'mainPhoto'" 
+                                                                           [id]="'mainPhoto_' + file.id"
+                                                                           [checked]="file.id === mainPresentationPhoto?.id"
+                                                                           (change)="selectMainPhoto(file)"
+                                                                           class="main-photo-radio" />
+                                                                    <label [for]="'mainPhoto_' + file.id" class="radio-label">
+                                                                        <i class="pi pi-star"></i>
+                                                                    </label>
+                                                                </div>
+                                                                <span class="not-applicable" *ngIf="!file.mimeType?.startsWith('image/')">
+                                                                    N/A
+                                                                </span>
+                                                            </td>
+                                                            <td class="actions-cell">
+                                                                <button type="button" 
+                                                                        pButton 
+                                                                        icon="pi pi-trash" 
+                                                                        class="p-button-danger p-button-sm" 
+                                                                        (click)="removeFile(file)"
+                                                                        pTooltip="Supprimer le fichier">
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    
+                                    <div *ngIf="isUploading" class="upload-progress">
+                                        <p-progressBar [value]="uploadProgress" [showValue]="true"></p-progressBar>
+                                        <p>Upload en cours...</p>
+                                    </div>
+                                    
+                                                                            <div *ngIf="pendingFiles.length > 0" class="pending-files">
+                                            <h5>Fichiers en attente</h5>
+                                            <div class="file-list">
+                                                <div *ngFor="let file of pendingFiles" class="file-item pending">
+                                                    <div class="file-info">
+                                                        <i class="pi pi-clock"></i>
+                                                        <span class="file-name">{{ file.name }}</span>
+                                                        <span class="file-size">{{ getFileSizeDisplay(file.size) }}</span>
+                                                        <span class="file-status">En attente</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p class="text-info">
+                                                <i class="pi pi-info-circle"></i>
+                                                Ces fichiers seront uploadés automatiquement lors de la création de l'événement.
+                                            </p>
+                                        </div>
+                                    
+                                    <div *ngIf="!eventToEdit?.id && pendingFiles.length === 0" class="upload-notice">
+                                        <p class="text-info">
+                                            <i class="pi pi-info-circle"></i>
+                                            Sélectionnez des fichiers. Ils seront uploadés automatiquement lors de la création de l'événement.
+                                        </p>
+                                    </div>
+                                </ng-template>
+                            </p-fileUpload>
+                        </div>
+                    </div>
+                </div>
+            </p-tabPanel>
+        </p-tabView>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <div class="modal-footer-custom">
+            <button pButton type="button" class="p-button-danger wide-btn" icon="pi pi-ban" label="Annuler" (click)="hideDialog()"></button>
+                            <button pButton type="submit" class="p-button-success wide-btn" icon="pi pi-save" [label]="eventToEdit ? 'Modifier' : 'Créer'" (click)="onSubmit()" [disabled]="submitted && eventForm.invalid"></button>
+            <button *ngIf="eventToEdit?.id" pButton type="button" class="p-button-info wide-btn" icon="pi pi-check" label="Terminer" (click)="hideDialog()"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Modal pour afficher l'image agrandie -->
+<p-dialog 
+    [(visible)]="imageModalVisible" 
+    [style]="{width: '60vw', height: '70vh', maxWidth: '800px', maxHeight: '600px'}" 
+    [draggable]="false" 
+    [resizable]="false"
+    (onHide)="closeImageModal()"
+    modal="true"
+    styleClass="image-modal-dialog">
+    <ng-template pTemplate="header">
+        <div class="image-modal-header">
+            <i class="pi pi-image modal-header-icon"></i>
+            <span class="modal-header-title">{{ selectedImage?.fileName || 'Image' }}</span>
+        </div>
+    </ng-template>
+    
+    <ng-template pTemplate="content">
+        <div class="image-modal-content" *ngIf="selectedImage">
+            <div class="image-container">
+                <img [src]="getSelectedImageUrl()" 
+                     [alt]="selectedImage.fileName" 
+                     class="modal-image" />
+            </div>
+            <div class="image-details" *ngIf="selectedImage.description">
+                <h4>Description</h4>
+                <p>{{ selectedImage.description }}</p>
+            </div>
+            <div class="image-metadata">
+                <div class="metadata-item">
+                    <strong>Nom :</strong> {{ selectedImage.fileName }}
+                </div>
+                <div class="metadata-item">
+                    <strong>Taille :</strong> {{ getFileSizeDisplay(selectedImage.fileSize || 0) }}
+                </div>
+                <div class="metadata-item">
+                    <strong>Type :</strong> {{ selectedImage.mimeType }}
+                </div>
+                <div class="metadata-item">
+                    <strong>Date d'upload :</strong> {{ selectedImage.uploadDate | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+            </div>
+        </div>
+    </ng-template>
+    
+    <ng-template pTemplate="footer">
+        <div class="image-modal-footer">
+            <button pButton type="button" class="p-button-secondary" icon="pi pi-times" label="Fermer" (click)="closeImageModal()"></button>
+        </div>
+    </ng-template>
+</p-dialog>

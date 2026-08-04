@@ -1,0 +1,12 @@
+
+  <div class="import-panel">
+    <label class="upload-btn">
+      <i class="pi pi-upload" style="margin-right: 8px;"></i>Importation
+      <input type="file" (change)="onFileChange($event)" accept=".xlsx, .xls" hidden />
+    </label>
+  </div>
+
+  <div class="spinner-overlay" *ngIf="loading">
+    <div class="spinner"></div>
+    <div class="loading-message">{{ loadingMessage }}</div>
+  </div>

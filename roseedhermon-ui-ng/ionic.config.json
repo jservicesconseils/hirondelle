@@ -1,0 +1,8 @@
+{
+  "name": "roseed-hermon",
+  "app_id": "com.roseedhermon.app",
+  "type": "angular-standalone",
+  "integrations": {
+    "capacitor": {}
+  }
+}

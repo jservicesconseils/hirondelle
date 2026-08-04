@@ -1,0 +1,80 @@
+<div class="detail-container">
+  <div class="close-handle" (click)="onClose()">
+    <div class="close-icon"></div>
+  </div>
+  <div class="edit-handle" (click)="onEdit()">
+    <i class="pi pi-user-edit edit-icon"></i>
+  </div>
+
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="card-header">
+        Informations sur l'événement
+        <i class="pi pi-info-circle icon-right"></i>
+      </div>
+    </ng-template>
+    <p><strong>Nom :</strong> {{ event.name }}</p>
+    <p><strong>Catégorie :</strong> {{ event.category }}</p>
+    <p><strong>Type :</strong> {{ event.eventType === 'PUBLIC' ? 'Public' : 'Privé' }}</p>
+    <p><strong>Date :</strong> {{ event.date | date:'dd/MM/yyyy' }}</p>
+    <p><strong>Nombre de jours :</strong> {{ event.numberOfDays }}</p>
+    <p><strong>Places disponibles :</strong> {{ event.availableSeats }}</p>
+    <p><strong>Montant :</strong> {{ event.amount ? (event.amount + ' €') : (event.free ? 'Gratuit' : '-') }}</p>
+    <p><strong>Date limite réservation :</strong> {{ event.lastRegistrationDate | date:'dd/MM/yyyy' }}</p>
+    <p><strong>Description :</strong> {{ event.description }}</p>
+  </p-card>
+
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="card-header">
+        Lieu et heure
+        <i class="pi pi-map-marker icon-right"></i>
+      </div>
+    </ng-template>
+    <p><strong>Lieu :</strong> {{ event.location?.placeName }}</p>
+    <p><strong>Adresse :</strong> {{ event.location?.address }}</p>
+    <p><strong>Ville :</strong> {{ event.location?.city }}</p>
+    <p><strong>Code postal :</strong> {{ event.location?.postalCode }}</p>
+    <p><strong>Pays :</strong> {{ event.location?.country }}</p>
+  </p-card>
+
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="card-header">
+        Présentateurs
+        <i class="pi pi-users icon-right"></i>
+      </div>
+    </ng-template>
+    <div class="presenters-list-simple">
+      <div class="presenter-row" *ngFor="let presenter of event.presenters">
+        <div class="avatar-small">
+          <span>{{ presenter.firstName?.charAt(0) }}{{ presenter.lastName?.charAt(0) }}</span>
+        </div>
+        <div class="presenter-info-simple">
+          <span class="presenter-name-simple">{{ presenter.firstName }} {{ presenter.lastName }}</span>
+          <span class="presenter-title-simple">{{ presenter.title }}</span>
+        </div>
+        <button pButton class="profile-btn-simple" (click)="selectedPresenter = presenter; profilePanel.toggle($event); $event.stopPropagation();">
+          <i class="pi pi-info-circle"></i>
+        </button>
+      </div>
+      <p-overlayPanel #profilePanel [dismissable]="true" [showCloseIcon]="true">
+        <div *ngIf="selectedPresenter">
+          <h4>Profil présentateur</h4>
+          <div>{{ selectedPresenter.resume }}</div>
+        </div>
+      </p-overlayPanel>
+    </div>
+  </p-card>
+
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="card-header">
+        Participation
+        <i class="pi pi-users icon-right"></i>
+      </div>
+    </ng-template>
+    <p><strong>Statut :</strong> À venir</p>
+    <p><strong>Nombre de participants :</strong> 0</p>
+  </p-card>
+</div> 

@@ -1,0 +1,20 @@
+
+  <div class="import-panel">
+    <label class="upload-btn">
+      <i class="pi pi-upload" style="margin-right: 8px;"></i>Importation
+      <!-- L'input reste dans le flux (opacité 0, superposé au bouton) : masqué avec
+           `hidden` / `display:none`, il n'ouvre pas le sélecteur de fichiers sur
+           Safari ni dans les WebViews iOS/Android. -->
+      <input
+        type="file"
+        class="file-input"
+        (change)="onFileChange($event)"
+        accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain" />
+    </label>
+    <div class="errors" *ngIf="errorMessage">{{ errorMessage }}</div>
+  </div>
+
+  <div class="spinner-overlay" *ngIf="loading">
+    <div class="spinner"></div>
+    <div class="loading-message">{{ loadingMessage }}</div>
+  </div>

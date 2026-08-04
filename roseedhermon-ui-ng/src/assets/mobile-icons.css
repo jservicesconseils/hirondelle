@@ -1,0 +1,63 @@
+/* Icônes CSS pour les composants mobiles */
+
+.icon-calendar::before {
+  content: "📅";
+}
+
+.icon-location::before {
+  content: "📍";
+}
+
+.icon-cash::before {
+  content: "💰";
+}
+
+.icon-search::before {
+  content: "🔍";
+}
+
+.icon-user::before {
+  content: "👤";
+}
+
+.icon-people::before {
+  content: "👥";
+}
+
+.icon-star::before {
+  content: "⭐";
+}
+
+.icon-heart::before {
+  content: "❤️";
+}
+
+.icon-checkmark::before {
+  content: "✅";
+}
+
+.icon-back::before {
+  content: "←";
+}
+
+.icon-ticket::before {
+  content: "🎫";
+}
+
+.icon-share::before {
+  content: "📤";
+}
+
+.icon-home::before {
+  content: "🏠";
+}
+
+.icon-qr::before {
+  content: "📱";
+}
+
+.icon-download::before {
+  content: "⬇️";
+}
+
+ 

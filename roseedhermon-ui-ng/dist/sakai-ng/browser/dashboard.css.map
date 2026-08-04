@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/app/pages/dashboard/dashboard.ts"],
+  "sourcesContent": ["\n        .dashboard-container {\n            position: relative;\n            width: 100%;\n            height: 100%;\n            padding: 20px;\n            margin: 0;\n            background-color: #f5f5f5;\n        }\n\n        .dashboard-content {\n            background-color: white;\n            border-radius: 8px;\n            padding: 30px;\n            box-shadow: 0 2px 10px rgba(0,0,0,0.1);\n            text-align: center;\n        }\n\n        .dashboard-content h1 {\n            color: #2e31a4;\n            font-size: 2.5rem;\n            font-weight: bold;\n            margin-bottom: 20px;\n        }\n\n        .dashboard-content p {\n            color: #666;\n            font-size: 1.1rem;\n            margin: 0;\n        }\n    "],
+  "mappings": ";AACQ,CAAA;AACI,YAAA;AACA,SAAA;AACA,UAAA;AACA,WAAA;AACA,UAAA;AACA,oBAAA;;AAGJ,CAAA;AACI,oBAAA;AACA,iBAAA;AACA,WAAA;AACA,cAAA,EAAA,IAAA,KAAA,KAAA,CAAA,EAAA,CAAA,EAAA,CAAA,EAAA;AACA,cAAA;;AAGJ,CARA,kBAQA;AACI,SAAA;AACA,aAAA;AACA,eAAA;AACA,iBAAA;;AAGJ,CAfA,kBAeA;AACI,SAAA;AACA,aAAA;AACA,UAAA;;",
+  "names": []
+}
