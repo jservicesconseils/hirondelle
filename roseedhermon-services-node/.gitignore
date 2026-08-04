@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+*.log
+
+# Fichiers déposés par les uploads (le contenu est reconstruit à l'usage)
+uploads/

@@ -1,0 +1,3 @@
+firstName,lastName,gender,birthDate,profession,phoneNumber,email,city
+Jean,Dupont,Male,1990-05-15,Developpeur,0612345678,jean.dupont@example.com,Paris
+Marie,Durand,Female,1985-11-20,Graphic Designer,0678901234,marie.durand@example.com,Lyon

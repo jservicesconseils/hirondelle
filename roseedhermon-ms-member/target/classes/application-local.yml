@@ -1,0 +1,18 @@
+# Configuration locale pour MongoDB local
+# Utiliser avec: SPRING_PROFILES_ACTIVE=local mvn spring-boot:run
+
+server:
+  port: 8082
+  ssl:
+    enabled: false
+
+spring:
+  application:
+    name: ms-member
+  data:
+    mongodb:
+      # MongoDB local (sans authentification)
+      uri: mongodb://localhost:27017/db_rdh
+      database: db_rdh
+
+

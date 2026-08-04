@@ -1,0 +1,11 @@
+/Users/jservicesconseilsinc/Documents/PROJETS/hirondelle/roseedhermon-ms-member/src/main/java/com/roseedhermon/msmember/model/GroupEntity.java
+/Users/jservicesconseilsinc/Documents/PROJETS/hirondelle/roseedhermon-ms-member/src/main/java/com/roseedhermon/msmember/service/GroupService.java
+/Users/jservicesconseilsinc/Documents/PROJETS/hirondelle/roseedhermon-ms-member/src/main/java/com/roseedhermon/msmember/MsMemberApplication.java
+/Users/jservicesconseilsinc/Documents/PROJETS/hirondelle/roseedhermon-ms-member/src/main/java/com/roseedhermon/msmember/config/CorsConfig.java
+/Users/jservicesconseilsinc/Documents/PROJETS/hirondelle/roseedhermon-ms-member/src/main/java/com/roseedhermon/msmember/dto/CreateGroupRequest.java
+/Users/jservicesconseilsinc/Documents/PROJETS/hirondelle/roseedhermon-ms-member/src/main/java/com/roseedhermon/msmember/repository/GroupRepository.java
+/Users/jservicesconseilsinc/Documents/PROJETS/hirondelle/roseedhermon-ms-member/src/main/java/com/roseedhermon/msmember/controller/GroupController.java
+/Users/jservicesconseilsinc/Documents/PROJETS/hirondelle/roseedhermon-ms-member/src/main/java/com/roseedhermon/msmember/model/MemberEntity.java
+/Users/jservicesconseilsinc/Documents/PROJETS/hirondelle/roseedhermon-ms-member/src/main/java/com/roseedhermon/msmember/service/MemberService.java
+/Users/jservicesconseilsinc/Documents/PROJETS/hirondelle/roseedhermon-ms-member/src/main/java/com/roseedhermon/msmember/repository/MemberRepository.java
+/Users/jservicesconseilsinc/Documents/PROJETS/hirondelle/roseedhermon-ms-member/src/main/java/com/roseedhermon/msmember/controller/MemberController.java

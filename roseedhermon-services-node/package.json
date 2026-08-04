@@ -1,0 +1,40 @@
+{
+  "name": "roseedhermon-services-node",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Microservices Node.js (event, member) + gateway pour Hirondelle — Rose d'Hermon",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "concurrently -n event,member,gateway -c cyan,magenta,yellow \"npm:dev:event\" \"npm:dev:member\" \"npm:dev:gateway\"",
+    "dev:event": "tsx watch src/ms-event/main.ts",
+    "dev:member": "tsx watch src/ms-member/main.ts",
+    "dev:gateway": "tsx watch src/gateway/main.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "concurrently -n event,member,gateway -c cyan,magenta,yellow \"npm:start:event\" \"npm:start:member\" \"npm:start:gateway\"",
+    "start:event": "node dist/ms-event/main.js",
+    "start:member": "node dist/ms-member/main.js",
+    "start:gateway": "node dist/gateway/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "http-proxy-middleware": "^3.0.3",
+    "mongoose": "^8.9.5",
+    "multer": "^2.2.0",
+    "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^20.17.12",
+    "concurrently": "^9.1.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
