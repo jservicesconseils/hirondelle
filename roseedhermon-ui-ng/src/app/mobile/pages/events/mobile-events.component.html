@@ -1,0 +1,120 @@
+<div class="events-screen">
+
+  <!-- Bandeau, même dégradé et même surtitre à barre orange que le site public -->
+  <header class="head">
+    <span class="eyebrow">
+      <span class="eyebrow-bar"></span>
+      Agenda
+    </span>
+
+    <h1>Événements</h1>
+
+    <p class="lead">
+      Ce qui se prépare près de chez vous, et tout ce que votre communauté organise.
+    </p>
+
+    <!-- La recherche chevauche le bas du bandeau : elle appartient aux deux -->
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z" />
+      </svg>
+      <input type="search"
+             placeholder="Rechercher un événement, une ville…"
+             [(ngModel)]="query"
+             name="query"
+             autocomplete="off" />
+      <button type="button" class="clear" *ngIf="query" (click)="query = ''" aria-label="Effacer">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="body">
+
+    <!-- Onglets : les compteurs viennent des événements réellement chargés -->
+    <nav class="tabs" *ngIf="!loading && !failed">
+      <button type="button" [class.is-active]="scope === 'upcoming'" (click)="show('upcoming')">
+        À venir <em>{{ upcoming.length }}</em>
+      </button>
+      <button type="button" [class.is-active]="scope === 'past'" (click)="show('past')">
+        Passés <em>{{ past.length }}</em>
+      </button>
+    </nav>
+
+    <!-- Catégories présentes dans la liste, chacune dans sa couleur -->
+    <div class="filters" *ngIf="!loading && !failed && categories.length > 1">
+      <button type="button"
+              class="filter"
+              *ngFor="let name of categories"
+              [class.is-active]="category === name"
+              (click)="pickCategory(name)">
+        {{ name }}
+      </button>
+    </div>
+
+    <p class="state" *ngIf="loading">Chargement de l'agenda…</p>
+    <p class="state is-error" *ngIf="failed">
+      Impossible de joindre le serveur. Réessayez dans un instant.
+    </p>
+
+    <ng-container *ngIf="!loading && !failed">
+      <p class="state" *ngIf="!shown.length">{{ emptyMessage }}</p>
+
+      <!-- Une carte par événement : visuel, puis corps -->
+      <article class="event-card"
+               *ngFor="let card of shown; trackBy: trackByCard"
+               (click)="open(card)">
+
+        <div class="event-visual" [style.background]="card.style.gradient">
+          <img *ngIf="card.visual" [src]="card.visual" [alt]="card.name" (error)="onVisualError(card)" />
+
+          <span class="date-chip" *ngIf="card.date">
+            <strong>{{ card.day }}</strong>
+            <small>{{ card.month }}</small>
+          </span>
+
+          <span class="past-chip" *ngIf="!card.upcoming && card.date">Passé</span>
+        </div>
+
+        <div class="event-body">
+          <span class="tag"
+                *ngIf="card.category"
+                [style.background]="card.style.tint"
+                [style.color]="card.style.color">
+            {{ card.category }}
+          </span>
+
+          <h2>{{ card.name }}</h2>
+
+          <p class="meta" *ngIf="card.longDate">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V8h14v11z" />
+            </svg>
+            {{ card.longDate }}<span *ngIf="card.time"> · {{ card.time }}</span>
+          </p>
+
+          <p class="meta" *ngIf="card.place">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
+            </svg>
+            {{ card.place }}
+          </p>
+
+          <div class="event-foot">
+            <span class="price" *ngIf="card.price" [class.is-free]="card.free">{{ card.price }}</span>
+            <span class="price muted" *ngIf="!card.price">Tarif à venir</span>
+
+            <span class="go">
+              Voir
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+              </svg>
+            </span>
+          </div>
+        </div>
+      </article>
+    </ng-container>
+  </main>
+</div>

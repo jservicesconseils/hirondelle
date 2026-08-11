@@ -1,0 +1,156 @@
+<div class="wizard-mask" *ngIf="visible" (click)="close()">
+  <div class="wizard" (click)="$event.stopPropagation()">
+
+    <header class="wizard-header">
+      <div class="wizard-title">
+        <span class="header-icon"><i class="pi pi-users"></i></span>
+        <div>
+          <h2>Importer des membres</h2>
+          <p>Ajoutez plusieurs membres à Rosée d'Hermon à partir d'un fichier CSV.</p>
+        </div>
+      </div>
+      <button type="button" class="close-btn" (click)="close()" aria-label="Fermer">
+        <i class="pi pi-times"></i>
+      </button>
+    </header>
+
+    <!-- Fil des étapes -->
+    <ol class="stepper">
+      <li [class.current]="step === 1" [class.done]="step > 1">
+        <span class="bullet">1</span>
+        <span class="labels"><strong>Fichier CSV</strong><small>Déposez votre fichier</small></span>
+      </li>
+      <li [class.current]="step === 2" [class.done]="step > 2">
+        <span class="bullet">2</span>
+        <span class="labels"><strong>Colonnes</strong><small>Vérifiez la correspondance</small></span>
+      </li>
+      <li [class.current]="step === 3">
+        <span class="bullet">3</span>
+        <span class="labels"><strong>Terminé</strong><small>Import et résultat</small></span>
+      </li>
+    </ol>
+
+    <div class="wizard-body">
+
+      <!-- Étape 1 : dépôt du fichier -->
+      <section *ngIf="step === 1" class="step-panel">
+        <h3 class="step-title">Étape 1 : Déposer le fichier <i class="pi pi-cloud-upload"></i></h3>
+
+        <label class="dropzone"
+               [class.dragging]="dragging"
+               (dragover)="onDragOver($event)"
+               (dragleave)="onDragLeave($event)"
+               (drop)="onDrop($event)">
+          <i class="pi pi-cloud-upload dropzone-icon"></i>
+          <strong>Glissez-déposez votre fichier ici</strong>
+          <span class="dropzone-hint">ou cliquez pour le choisir sur votre ordinateur</span>
+          <span class="select-btn">Choisir un fichier <i class="pi pi-paperclip"></i></span>
+          <input type="file"
+                 class="file-input"
+                 (change)="onFileChange($event)"
+                 accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain" />
+        </label>
+
+        <p class="support-note">
+          <i class="pi pi-info-circle"></i> Formats acceptés : .csv, .xlsx, .xls • encodage UTF-8
+        </p>
+        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+      </section>
+
+      <!-- Étape 2 : correspondance des colonnes -->
+      <section *ngIf="step === 2" class="step-panel">
+        <h3 class="step-title">Étape 2 : Associer les colonnes</h3>
+        <p class="step-sub">Aperçu des premières lignes de <strong>{{ fileName }}</strong> — vérifiez la correspondance.</p>
+
+        <div class="mapping-card">
+          <div class="mapping-head">
+            <span>Colonne du fichier</span>
+            <span>Champ du membre</span>
+          </div>
+          <div class="mapping-row" *ngFor="let header of headers; let i = index">
+            <div class="source">
+              <span class="index">{{ i + 1 }}.</span>
+              <div class="source-text">
+                <strong>{{ header }}</strong>
+                <small *ngIf="previewRows.length">{{ cellValue(previewRows[0], header) || '—' }}</small>
+              </div>
+              <i class="pi pi-arrow-right"></i>
+            </div>
+            <select [(ngModel)]="mapping[header]" [class.ignored]="!mapping[header]">
+              <option *ngFor="let field of memberFields" [value]="field.value">{{ field.label }}</option>
+            </select>
+          </div>
+        </div>
+
+        <p class="mapping-summary">
+          <i class="pi pi-check-circle"></i>
+          {{ mappedColumns }} colonne(s) associée(s) • {{ rows.length }} ligne(s) détectée(s)
+        </p>
+
+        <div class="step-actions">
+          <button type="button" class="btn-outline" (click)="backToUpload()">Retour</button>
+          <button type="button" class="btn-gradient" (click)="confirmMapping()" [disabled]="!mappedColumns">
+            Lancer l'import <i class="pi pi-arrow-right"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- Étape 3 : résultat -->
+      <section *ngIf="step === 3" class="step-panel result">
+        <ng-container *ngIf="importing; else done">
+          <div class="progress-block">
+            <span class="spinner"></span>
+            <strong>Import en cours…</strong>
+            <div class="progress-track"><div class="progress-value" [style.width.%]="progress"></div></div>
+            <span class="progress-label">{{ progress }} %</span>
+          </div>
+        </ng-container>
+
+        <ng-template #done>
+          <span class="result-icon" [class.warn]="!createdCount"><i class="pi pi-check"></i></span>
+          <h3 class="result-title">{{ createdCount ? 'Import réussi !' : 'Aucun membre importé' }}</h3>
+          <p class="result-sub">
+            {{ createdCount }} membre(s) ajouté(s) à Rosée d'Hermon sur {{ rows.length }} ligne(s) lue(s).
+          </p>
+
+          <div class="result-stats">
+            <div class="result-stat">
+              <span class="label">Nouveaux membres</span>
+              <span class="value">{{ createdCount }}</span>
+            </div>
+            <div class="result-stat">
+              <span class="label">Doublons ignorés</span>
+              <span class="value">{{ duplicateCount }}</span>
+            </div>
+            <div class="result-stat">
+              <span class="label">Erreurs</span>
+              <span class="value" [class.error-value]="errorCount">{{ errorCount }}</span>
+            </div>
+          </div>
+
+          <div class="result-note" *ngIf="!errorCount">
+            <i class="pi pi-check-circle"></i> Tous les membres retenus ont été ajoutés à votre liste.
+          </div>
+
+          <div class="rejected" *ngIf="errorCount">
+            <strong>Lignes non importées</strong>
+            <ul>
+              <li *ngFor="let rejected of rejectedRows">
+                Ligne {{ rejected.rowNumber }} <span *ngIf="rejected.label">— {{ rejected.label }}</span> : {{ rejected.reason }}
+              </li>
+            </ul>
+          </div>
+
+          <div class="step-actions">
+            <button type="button" class="btn-outline" (click)="backToUpload()">Importer un autre fichier</button>
+            <button type="button" class="btn-gradient" (click)="close()">Terminé</button>
+          </div>
+        </ng-template>
+      </section>
+    </div>
+
+    <footer class="wizard-footer">
+      Besoin d'aide ? Le fichier doit contenir les colonnes Prénom, Nom, Genre, Date de naissance, Profession, Téléphone, Email et Ville.
+    </footer>
+  </div>
+</div>

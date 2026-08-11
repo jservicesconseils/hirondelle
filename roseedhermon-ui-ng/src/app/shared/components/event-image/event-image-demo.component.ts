@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EventImageComponent } from './event-image.component';
-import { EventDTO } from '../../../api/model/eventDTO';
+import { EventDTO } from '../../services/api/model/eventDTO';
 
 @Component({
   selector: 'app-event-image-demo',

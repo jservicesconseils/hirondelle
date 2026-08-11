@@ -1,0 +1,18 @@
+{
+    "name": "hirondelle",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Racine du projet : les scripts délèguent au module concerné.",
+    "scripts": {
+        "install:ui": "cd roseedhermon-ui-ng && npm install",
+        "start": "cd roseedhermon-ui-ng && npm start",
+        "build": "cd roseedhermon-ui-ng && npm run build:web",
+        "build:web": "cd roseedhermon-ui-ng && npm run build:web",
+        "build:android": "cd roseedhermon-ui-ng && npm run build:android",
+        "build:ios": "cd roseedhermon-ui-ng && npm run build:ios",
+        "build:mobile": "cd roseedhermon-ui-ng && npm run build:mobile",
+        "open:android": "cd roseedhermon-ui-ng && npm run open:android",
+        "open:ios": "cd roseedhermon-ui-ng && npm run open:ios",
+        "start:services": "cd roseedhermon-services-node && npm start"
+    }
+}

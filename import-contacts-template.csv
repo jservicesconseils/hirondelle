@@ -1,3 +1,8 @@
 firstName,lastName,gender,birthDate,profession,phoneNumber,email,city
-Jean,Dupont,Male,1990-05-15,Developpeur,0612345678,jean.dupont@example.com,Paris
-Marie,Durand,Female,1985-11-20,Graphic Designer,0678901234,marie.durand@example.com,Lyon
+Thomas,Richard,Male,1983-12-18,Chef de projet,0634567890,thomas.richard@example.com,Lille
+Camille,Moreau,Female,1994-06-10,Enseignante,0623456789,camille.moreau@example.com,Rennes
+Antoine,Simon,Male,1991-10-05,Analyste,0611122233,antoine.simon@example.com,Strasbourg
+Julie,Lefebvre,Female,1989-04-22,Consultante,0677788899,julie.lefebvre@example.com,Nice
+David,Roux,Male,1986-08-14,Technicien,0665544332,david.roux@example.com,Grenoble
+Laura,Fournier,Female,1993-02-17,Avocate,0644556677,laura.fournier@example.com,Dijon
+Nicolas,Girard,Male,1987-11-09,Médecin,0688997766,nicolas.girard@example.com,Montpellier

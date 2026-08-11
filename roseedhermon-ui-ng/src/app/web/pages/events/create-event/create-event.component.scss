@@ -1,1676 +1,627 @@
-:host ::ng-deep {
-  .p-dialog {
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+/* Assistant de création d'événement, d'après la maquette : carte blanche arrondie,
+   onglets avec soulignement orange, encart « Conseil » et pied Précédent / Suivant. */
+@use '../../../styles/public-theme' as theme;
 
-    .p-dialog-header {
-      background-color: #2e31a4 !important;
-      color: white !important;
-      padding: 1.5rem !important;
-      border: none !important;
+$navy: #0d1b4b;
+$orange: #f4552e;
+$orange-light: #ff7a45;
+$muted: #667a92;
+$border: #e7eaf0;
+$field-bg: #fdf8f4;
 
-      .modal-header-custom {
-        display: flex;
-        align-items: center;
-        background: #2e31a4 !important;
-        color: #fff;
-        padding: 1rem 1.5rem;
-        border-top-left-radius: 6px;
-        border-top-right-radius: 6px;
-      }
+:host ::ng-deep .event-wizard-dialog {
+  border-radius: 22px;
+  overflow: hidden;
 
-      .modal-header-icon {
-        font-size: 1.5rem;
-        margin-right: 0.75rem;
-        color: #fff;
-      }
-
-      .modal-header-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: #fff;
-      }
-
-      .p-dialog-header-close {
-        color: white;
-        &:hover {
-          background: rgba(255, 255, 255, 0.1);
-        }
-      }
-    }
-
-    .p-dialog-content {
-      padding: 2rem;
-      background: white;
-
-      .field {
-        margin-bottom: 1.5rem;
-        position: relative;
-
-        label.block {
-          display: block;
-          font-size: 0.9rem;
-          font-weight: 500;
-          color: #2c3e50;
-          margin-bottom: 0.5rem;
-        }
-
-        input, textarea {
-          width: 100%;
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          padding: 0.875rem 1rem;
-          font-size: 1rem;
-          color: #2c3e50;
-          transition: all 0.2s ease;
-
-          &:hover {
-            border-color: #cbd5e0;
-            background: #fafafa;
-          }
-
-          &:focus {
-            outline: none;
-            border-color: #2e31a4;
-            background: #ffffff;
-            box-shadow: 0 0 0 3px rgba(46, 49, 164, 0.08);
-          }
-
-          &.ng-invalid.ng-dirty {
-            border-color: #dc3545;
-            &:focus {
-              box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.08);
-            }
-          }
-        }
-
-        textarea {
-          min-height: 120px;
-          resize: vertical;
-          line-height: 1.6;
-        }
-
-        // Styles pour p-calendar
-        p-calendar {
-          display: block;
-          width: 100%;
-
-          .p-calendar {
-            width: 100%;
-            display: block;
-
-            .p-inputtext {
-              width: 100%;
-              background: #ffffff;
-              border: 1px solid #e2e8f0;
-              border-radius: 8px;
-              padding: 0.875rem 1rem;
-              font-size: 1rem;
-              color: #2c3e50;
-              transition: all 0.2s ease;
-
-              &:hover {
-                border-color: #cbd5e0;
-                background: #fafafa;
-              }
-
-              &:focus {
-                outline: none;
-                border-color: #2e31a4;
-                background: #ffffff;
-                box-shadow: 0 0 0 3px rgba(46, 49, 164, 0.08);
-              }
-
-              &.ng-invalid.ng-dirty {
-                border-color: #dc3545;
-                &:focus {
-                  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.08);
-                }
-              }
-            }
-          }
-        }
-
-        small.p-error {
-          position: absolute;
-          bottom: -1.5rem;
-          left: 0.75rem;
-          color: #dc3545;
-          font-size: 0.85rem;
-          font-weight: 500;
-          background: #ffffff;
-          padding: 0.25rem 0.75rem;
-          border-radius: 4px;
-          border: 1px solid rgba(220, 53, 69, 0.1);
-        }
-      }
-
-      .location-group {
-        background: #f8f9fa;
-        padding: 1.5rem;
-        border-radius: 6px;
-        margin-top: 2rem;
-        border: 1px solid #e9ecef;
-
-        h3 {
-          color: #2E31A4;
-          font-size: 1.1rem;
-          font-weight: 600;
-          margin-bottom: 1.5rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-
-          i {
-            color: #2E31A4;
-          }
-        }
-      }
-    }
-
-    .p-dialog-footer {
-      padding: 1.5rem;
-      border-top: 1px solid #e9ecef;
-      background: #f8fafc;
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-
-      .modal-footer-custom {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        margin-top: 2rem;
-        padding-left: 2rem;
-        padding-right: 2rem;
-
-        .p-button-danger {
-          background: #e53935 !important;
-          border: none;
-          
-          &:hover {
-            background: #d32f2f !important;
-          }
-        }
-
-        .p-button-success {
-          background: #43a047 !important;
-          border: none;
-          
-          &:hover {
-            background: #388e3c !important;
-          }
-        }
-      }
-    }
+  /* Le bandeau occupe toute la largeur : on neutralise le rembourrage PrimeNG. */
+  .p-dialog-header {
+    padding: 0;
+    border: none;
   }
 
-  .field {
-    margin-bottom: 1.5rem;
-    position: relative;
+  .p-dialog-content {
+    padding: 1.5rem 2rem;
+  }
+}
 
-    label.block {
-      display: block;
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: #2c3e50;
-      margin-bottom: 0.5rem;
-    }
+/* Titre en blanc, donc bandeau coloré derrière pour rester lisible. Bleu comme
+   toutes les modales de création et de modification. */
+.wizard-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1.5rem 2rem;
+  background: theme.$blue;
 
-    .input-wrapper {
-      position: relative;
-      width: 100%;
+  h2 {
+    margin: 0;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+}
 
-      .input-icon {
-        position: absolute;
-        right: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
-        font-size: 1rem;
-        pointer-events: none;
-        z-index: 1;
-      }
+/* Icône et titre forment un bloc ; le bouton de fermeture reste à l'autre bout. */
+.wizard-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
 
-      input, textarea, p-calendar {
-        width: 100%;
-        padding-right: 2.5rem; // Espace pour l'icône
-      }
+  .header-icon {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.4rem;
+  }
+}
 
-      textarea {
-        padding-top: 0.875rem;
-        .input-icon {
-          top: 1.5rem; // Ajustement pour le textarea
-        }
-      }
+.wizard-close {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
 
-      p-calendar {
-        .p-calendar {
-          width: 100%;
-          
-          .p-inputtext {
-            padding-right: 2.5rem;
-          }
+  &:hover { background: rgba(255, 255, 255, 0.32); }
+}
 
-          .p-datepicker-trigger {
-            right: 2.5rem; // Déplacer le bouton du calendrier pour éviter le chevauchement avec l'icône
-          }
-        }
-      }
-    }
+.event-wizard {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  color: $navy;
+}
 
-    // Styles spécifiques pour le champ date
-    p-calendar {
-      display: block;
-      width: 100%;
+/* ---------- Onglets ---------- */
 
-      .p-calendar {
-        width: 100%;
-        display: block;
+.wizard-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(13, 27, 75, 0.07);
+  overflow: hidden;
+}
 
-        .p-inputtext {
-          width: 100%;
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          padding: 0.875rem 1rem;
-          font-size: 1rem;
-          color: #2c3e50;
-          transition: all 0.2s ease;
+.wizard-tab {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.1rem 1rem;
+  border: none;
+  border-right: 1px solid $border;
+  background: #fff;
+  color: $muted;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
 
-          &:hover {
-            border-color: #cbd5e0;
-            background: #fafafa;
-          }
+  &:last-child { border-right: none; }
 
-          &:focus {
-            outline: none;
-            border-color: #2e31a4;
-            background: #ffffff;
-            box-shadow: 0 0 0 3px rgba(46, 49, 164, 0.08);
-          }
+  &:hover { color: $navy; }
 
-          &.ng-invalid.ng-dirty {
-            border-color: #dc3545;
-            &:focus {
-              box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.08);
-            }
-          }
-        }
-      }
-    }
+  /* Onglet courant : libellé orange et soulignement épais, comme la maquette. */
+  &.active {
+    color: $orange;
+    font-weight: 800;
 
-    input, textarea {
-      width: 100%;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 0.875rem 1rem;
-      font-size: 1rem;
-      color: #2c3e50;
-      transition: all 0.2s ease;
-
-      &:hover {
-        border-color: #cbd5e0;
-        background: #fafafa;
-      }
-
-      &:focus {
-        outline: none;
-        border-color: #2e31a4;
-        background: #ffffff;
-        box-shadow: 0 0 0 3px rgba(46, 49, 164, 0.08);
-      }
-
-      &.ng-invalid.ng-dirty {
-        border-color: #dc3545;
-        &:focus {
-          box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.08);
-        }
-      }
-    }
-
-    textarea {
-      min-height: 120px;
-      resize: vertical;
-      line-height: 1.6;
-    }
-
-    small.p-error {
+    &::after {
+      content: '';
       position: absolute;
-      bottom: -1.5rem;
-      left: 0.75rem;
-      color: #dc3545;
-      font-size: 0.85rem;
-      font-weight: 500;
-      background: #ffffff;
-      padding: 0.25rem 0.75rem;
+      left: 1.25rem;
+      right: 1.25rem;
+      bottom: 0.5rem;
+      height: 4px;
       border-radius: 4px;
-      border: 1px solid rgba(220, 53, 69, 0.1);
+      background: $orange;
     }
   }
+}
 
-  .location-group {
-    background: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 6px;
-    margin-top: 2rem;
-    border: 1px solid #e9ecef;
+.wizard-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.1rem 0 0.5rem;
 
-    h3 {
-      color: #2E31A4;
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 1.5rem;
-      display: flex;
+  .step-counter { color: $muted; font-size: 1.05rem; }
+
+  .step-badge {
+    background: #ffe6d8;
+    color: $orange;
+    border-radius: 999px;
+    padding: 0.35rem 1rem;
+    font-weight: 700;
+  }
+}
+
+/* ---------- Corps ---------- */
+
+.wizard-body {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  padding: 0.75rem 0 0;
+}
+
+.wizard-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.wizard-heading {
+  margin: 0;
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: $navy;
+}
+
+.wizard-sub {
+  margin: 0.25rem 0 1.5rem;
+  color: #667a92;
+  font-size: 1.05rem;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.5rem;
+}
+
+/* Laisse les enfants du groupe imbriqué se placer dans la grille parente. */
+.grid-passthrough {
+  display: contents;
+}
+
+.wizard-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  &.span-2 { grid-column: 1 / -1; }
+
+  label {
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: $navy;
+  }
+
+  .field-hint {
+    color: $muted;
+    font-size: 0.92rem;
+    margin-top: -0.2rem;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    border: 1.5px solid #d5daea;
+    background: #fff;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    font-family: inherit;
+    color: $navy;
+    outline: none;
+
+    &::placeholder { color: #9aa8b9; }
+    &:focus { border-color: $orange; }
+  }
+
+  textarea { resize: vertical; }
+
+  /* Le champ interne du calendrier PrimeNG reprend l'habillage des autres champs. */
+  ::ng-deep .p-calendar {
+    width: 100%;
+
+    .p-inputtext {
+      width: 100%;
+      border: 1.5px solid #d5daea;
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      font-size: 1rem;
+      color: $navy;
+
+      &:focus { border-color: $orange; box-shadow: none; }
+    }
+
+    .p-datepicker-trigger {
+      background: $field-bg;
+      border: 1.5px solid #d5daea;
+      border-left: none;
+      border-radius: 0 12px 12px 0;
+      color: $muted;
+
+      &:hover { color: $orange; background: #fff1eb; }
+    }
+  }
+}
+
+.input-with-icon {
+  position: relative;
+  display: block;
+
+  i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $muted;
+  }
+
+  input { padding-left: 2.7rem; }
+
+  /* Variante icône à droite (date, heure, montant). */
+  &.trailing {
+    i {
+      left: auto;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      transform: none;
+      width: 3rem;
+      display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-
-      i {
-        color: #2E31A4;
-      }
+      justify-content: center;
+      background: $field-bg;
+      border-left: 1.5px solid #d5daea;
+      border-radius: 0 12px 12px 0;
+      font-style: normal;
+      font-weight: 700;
     }
+
+    input { padding-left: 1rem; padding-right: 3.6rem; }
   }
+}
 
-  .ng-invalid.ng-dirty {
-    border-color: #dc3545 !important;
-    
-    &:focus {
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.1) !important;
-    }
-  }
+.field-error {
+  color: #b00020;
+  font-size: 0.85rem;
+}
 
-  // Styles pour la grille
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 1rem;
-  }
+/* ---------- Recherche d'adresse ---------- */
 
-  .col-12 {
-    grid-column: span 12;
-  }
+.address-field {
+  position: relative;
 
-  @media screen and (min-width: 768px) {
-    .md\:col-6 {
-      grid-column: span 6;
-    }
-  }
-
-  // Utilitaires
-  .mb-3 { margin-bottom: 1rem; }
-  .mt-4 { margin-top: 1.5rem; }
-  .p-fluid { width: 100%; }
-  .flex { display: flex; }
-  .justify-content-end { justify-content: flex-end; }
-  .p-text-secondary { color: #6c757d; }
-
-  :host ::ng-deep .update-applicant-dialog.p-dialog .p-dialog-header {
-    background-color: #2e31a4 !important;
-    color: white !important;
-    padding: 1.5rem !important;
-    border: none !important;
-    border-bottom: none !important;
-    border-top: none !important;
-    border-left: none !important;
-    border-right: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    -webkit-box-shadow: none !important;
-    -moz-box-shadow: none !important;
-    -webkit-border-radius: 0 !important;
-    -moz-border-radius: 0 !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-  }
-
-  :host ::ng-deep .update-applicant-dialog.p-dialog {
-    border: none !important;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-  }
-
-  :host ::ng-deep .update-applicant-dialog.p-dialog .p-dialog-content {
-    border: none !important;
-    padding: 2rem !important;
-  }
-
-  // Suppression des styles p-float-label qui ne sont plus nécessaires
-  .p-float-label {
-    display: none;
-  }
-
-  /* Champs du modal - Style identique au modal membre */
-  .p-input-icon-right {
-    width: 100%;
-    margin-bottom: 10px;
-    position: relative;
-  }
-
-  .p-input-icon-right input {
-    width: 100%;
-    padding-right: 2.5rem;
-    box-sizing: border-box;
-  }
-
-  .p-input-icon-right > i {
+  .search-state {
     position: absolute;
     right: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #7b1fa2;
-    pointer-events: none;
-    font-size: 1.2rem;
+    left: auto;
+    color: $orange;
   }
+}
 
-  .p-field {
-    margin-bottom: 10px !important;
-  }
+.address-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0.35rem 0 0;
+  padding: 0.35rem;
+  list-style: none;
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(13, 27, 75, 0.18);
+  max-height: 260px;
+  overflow-y: auto;
 
-  /* Styles pour les boutons larges */
-  .wide-btn {
-    min-width: 140px;
-    font-size: 1.1rem;
-    padding: 0.75rem 2rem;
-  }
-
-  /* Styles pour les messages de confirmation */
-  ::ng-deep {
-    .p-toast {
-      .p-toast-message {
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        
-        &.p-toast-message-success {
-          background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-          border: none;
-          color: white;
-          
-          .p-toast-message-icon {
-            color: white;
-          }
-          
-          .p-toast-message-content {
-            color: white;
-          }
-        }
-      }
-      
-      .p-toast-icon-close {
-        color: white;
-        
-        &:hover {
-          background-color: rgba(255, 255, 255, 0.2);
-        }
-      }
-    }
-  }
-
-  // Style pour les onglets PrimeNG
-  .p-tabview {
-    margin-top: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(46,49,164,0.08);
-    background: #fff;
-  }
-  .p-tabview-nav {
-    background: #2e31a4 !important;
-    border-radius: 12px 12px 0 0;
-    border: 2px solid #2e31a4 !important;
-    padding: 0 20px;
-  }
-  .p-tabview-nav li {
-    margin-right: 16px;
-  }
-  .p-tabview-nav-link {
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: #fff !important;
-    border: 2px solid #2e31a4 !important;
-    border-bottom: none !important;
-    border-radius: 8px 8px 0 0;
-    background: #2e31a4 !important;
-    transition: background 0.2s, color 0.2s;
-    padding: 16px 32px 12px 32px;
+  button {
     display: flex;
-    align-items: center;
-    gap: 16px;
-    z-index: 2;
-  }
-  .p-tabview-nav-link .pi {
-    color: #fff !important;
-    font-size: 1.3rem;
-    margin-right: 16px;
-  }
-  .p-tabview-nav-link.p-highlight {
-    background: #1a1c6b !important;
-    color: #fff !important;
-    border-bottom: 2px solid #1a1c6b !important;
-    z-index: 3;
-  }
-  .p-tabview-nav-link.p-highlight .pi {
-    color: #fff !important;
-  }
-  .p-tabview-panels {
-    border: 2px solid #2e31a4 !important;
-    border-top: none !important;
-    border-radius: 0 0 12px 12px;
-    padding: 32px 40px 24px 40px;
-    background: #2e31a4 !important;
-  }
-
-  :host ::ng-deep .p-tabview-panel {
-    background: #2e31a4 !important;
-    border-radius: 0 0 12px 12px;
-    color: #fff;
-    padding-top: 32px !important;
-  }
-
-  // Pour que les champs restent lisibles sur fond bleu
-  .p-input-icon-right input,
-  .p-input-icon-right textarea {
-    background: #fff !important;
-    color: #222 !important;
-  }
-  .label-inline {
-    color: #fff !important;
-  }
-
-  // Style pour les tables et champs
-  .event-table {
+    align-items: flex-start;
+    gap: 0.6rem;
     width: 100%;
-    margin-bottom: 32px;
-    border-collapse: separate;
-    border-spacing: 0 18px;
-  }
-  .event-table th {
-    background: #f2f4fa;
-    color: #2e31a4;
-    font-size: 1.1rem;
-    font-weight: 700;
-    padding: 12px 0;
-    border-radius: 8px;
-  }
-  .event-table td {
-    padding: 10px 18px 10px 0;
-    vertical-align: middle;
-  }
-  .event-table input[type="text"],
-  .event-table input[type="number"],
-  .event-table textarea {
-    width: 340px;
-    max-width: 100%;
-    padding: 10px 14px;
-    border-radius: 8px;
-    border: 1px solid #dce4ec;
-    font-size: 1rem;
-    margin-right: 8px;
-    margin-bottom: 0;
-    background: #f8f9fa;
-    transition: border-color 0.2s;
-  }
-  .event-table input[type="text"]:focus,
-  .event-table input[type="number"]:focus,
-  .event-table textarea:focus {
-    border-color: #2e31a4;
-    outline: none;
-    background: #fff;
-  }
-  .event-table textarea {
-    min-height: 60px;
-    resize: vertical;
-  }
-  .event-table label {
-    font-weight: 600;
-    color: #1a1c6b;
-    margin-bottom: 0;
-  }
-  .event-table .p-button-danger {
-    margin-left: 8px;
-  }
-  .event-table .p-button {
-    min-width: 44px;
+    border: none;
+    background: none;
+    border-radius: 10px;
+    padding: 0.65rem 0.75rem;
+    text-align: left;
+    font-size: 0.95rem;
+    color: $navy;
+    cursor: pointer;
+
+    i { color: $orange; margin-top: 0.15rem; }
+
+    &:hover { background: #fff0ea; }
   }
 
-  // Amélioration de l'affichage des boutons d'ajout
-  .event-table .p-button[label] {
-    padding-left: 18px;
-    padding-right: 18px;
-    font-weight: 700;
-  }
-
-  // Responsive
-  @media (max-width: 700px) {
-    .p-tabview-panels {
-      padding: 16px 4px 12px 4px;
-    }
-    .event-table input[type="text"],
-    .event-table input[type="number"],
-    .event-table textarea {
-      width: 100%;
-    }
-  }
-
-  // Champs même largeur
-  .p-input-icon-right input,
-  .p-input-icon-right textarea {
-    width: 100% !important;
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-  // Pour le label du champ nombre de jours
-  .label-inline {
-    display: block;
-    font-weight: 600;
-    color: #1a1c6b;
-    margin-bottom: 0.25rem;
-    font-size: 1rem;
-  }
-
-  :host ::ng-deep .p-tabview-left-icon,
-  :host ::ng-deep .p-tabview-left-icon > .pi {
-    margin-right: 16px !important;
-  }
-
-  :host ::ng-deep .p-tabview-nav-link .p-tabview-left-icon + span {
-    margin-left: 16px !important;
-  }
-
-  .p-select-list-container {
-    overflow: auto !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
-  }
-
-  :host ::ng-deep .p-dropdown-panel,
-  :host ::ng-deep .p-dropdown-items-wrapper,
-  :host ::ng-deep .p-dropdown-items {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
-  }
-  :host ::ng-deep .p-dropdown-items-wrapper {
-    overflow: auto !important;
-    max-height: 250px;
+  .no-result {
+    padding: 0.75rem;
+    color: $muted;
+    font-size: 0.92rem;
   }
 }
 
-// Styles pour la grille
-.grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 1rem;
-}
+/* ---------- Visibilité ---------- */
 
-.col-12 {
-  grid-column: span 12;
-}
-
-@media screen and (min-width: 768px) {
-  .md\:col-6 {
-    grid-column: span 6;
-  }
-}
-
-// Styles pour la gestion des fichiers
-.file-upload-section {
-  margin-top: 20px;
-  
-  h4 {
-    color: #fff;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-  }
-  
-  h5 {
-    color: #fff;
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    margin-top: 1.5rem;
-  }
-}
-
-.section-description {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.95rem;
-  line-height: 1.5;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  border-left: 4px solid #2196f3;
-}
-
-.click-hint {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9rem;
-  line-height: 1.4;
-  margin-bottom: 1.5rem;
-  padding: 0.75rem 1rem;
-  background: rgba(255, 193, 7, 0.2);
-  border-radius: 6px;
-  border-left: 3px solid #ffc107;
+.visibility-toggle {
   display: flex;
+  gap: 0.75rem;
+  margin-top: 0.3rem;
+}
+
+.visibility {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 2rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  background: #eceef7;
+  color: #667a92;
+
+  &.public.active {
+    background: #17a45a;
+    color: #fff;
+  }
+
+  &.private.active {
+    background: #445069;
+    color: #fff;
+  }
+}
+
+/* ---------- Présentateurs ---------- */
+
+.presenter-card {
+  border: 1px solid $border;
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(13, 27, 75, 0.05);
+}
+
+.presenter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+
+  strong { font-size: 1.1rem; }
+}
+
+.link-remove {
+  border: none;
+  background: none;
+  color: $orange;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-add-presenter {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  
-  i {
-    color: #ffc107;
-    font-size: 1rem;
-  }
-  
-  strong {
-    color: #fff;
-  }
+  border: 1.5px dashed $orange;
+  background: #fff0ea;
+  color: $orange;
+  border-radius: 12px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:hover { background: #ffe9e0; }
 }
 
-// Styles pour la photo de présentation
-.presentation-photo-section {
-  margin-top: 20px;
-  
-  h4 {
-    color: #2c3e50;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-  }
-}
+/* ---------- Photos et documents ---------- */
 
-// Tableau des photos de présentation
-.photos-table-section {
-  margin-top: 1rem;
-  
-  h5 {
-    color: #2c3e50;
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-  }
-}
-
-.table-container {
-  overflow-x: auto;
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 1rem;
-  border: 1px solid #e9ecef;
-}
-
-.photos-table {
-  width: 100%;
-  border-collapse: collapse;
-  color: #2c3e50;
-  
-  th {
-    background: #e9ecef;
-    color: #495057;
-    font-weight: 600;
-    padding: 12px 8px;
-    text-align: left;
-    border-bottom: 2px solid #dee2e6;
-    font-size: 0.9rem;
-  }
-  
-  td {
-    padding: 12px 8px;
-    border-bottom: 1px solid #dee2e6;
-    vertical-align: middle;
-    background: #ffffff;
-  }
-  
-  tr {
-    transition: background-color 0.3s ease;
-    
-    &:hover {
-      background: #f8f9fa;
-    }
-    
-    &.main-photo-row {
-      background: #fff3cd;
-      border-left: 4px solid #ffc107;
-      
-      td {
-        border-bottom-color: #ffeaa7;
-        background: #fff3cd;
-      }
-    }
-  }
-}
-
-.photo-cell {
-  width: 80px;
-}
-
-// Amélioration de l'affichage des images
-.photo-image-small {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 2px;
-  
-  // Fallback pour les images qui ne se chargent pas
-  &:not([src]), &[src=""], &[src*="undefined"], &[src*="null"] {
-    background: #f8f9fa;
-    border: 1px dashed #dee2e6;
-    
-    &::after {
-      content: '🖼️';
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      font-size: 1.2rem;
-      color: #6c757d;
-    }
-  }
-}
-
-// Amélioration de la visibilité des textes
-.text-info {
-  color: #495057;
-  font-size: 0.9rem;
-  background: #e3f2fd;
-  padding: 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #bbdefb;
-  margin-top: 1rem;
-  
-  i {
-    color: #1976d2;
-    margin-right: 0.5rem;
-  }
-}
-
-// Amélioration des boutons d'action
-.actions-cell {
-  width: 80px;
-  text-align: center;
-  
-  .p-button-sm {
-    padding: 6px 8px;
-    font-size: 0.8rem;
-    border-radius: 4px;
-    
-    &.p-button-danger {
-      background: #dc3545;
-      border-color: #dc3545;
-      
-      &:hover {
-        background: #c82333;
-        border-color: #bd2130;
-      }
-    }
-  }
-}
-
-// Tableau des fichiers (Documents)
-.files-table-section {
-  margin-top: 1rem;
-  
-  h5 {
-    color: #fff;
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-  }
-}
-
-.files-table {
-  width: 100%;
-  border-collapse: collapse;
-  color: #fff;
-  
-  th {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-weight: 600;
-    padding: 12px 8px;
-    text-align: left;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-    font-size: 0.9rem;
-  }
-  
-  td {
-    padding: 12px 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    vertical-align: middle;
-  }
-  
-  tr {
-    transition: background-color 0.3s ease;
-    
-    &:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
-    
-    &.main-photo-row {
-      background: rgba(255, 68, 68, 0.1);
-      border-left: 4px solid #ff4444;
-      
-      td {
-        border-bottom-color: rgba(255, 68, 68, 0.2);
-      }
-    }
-  }
-}
-
-.file-thumbnail-small {
-  width: 60px;
-  height: 40px;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  
-  .file-image-small {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.file-icon-placeholder {
-  width: 60px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  
-  .file-type-icon {
-    font-size: 1.5rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-}
-
-.type-cell {
-  width: 120px;
-  
-  .file-type-badge {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.8rem;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 4px 8px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    display: inline-block;
-  }
-}
-
-.not-applicable {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.8rem;
-  font-style: italic;
-}
-
-.main-photo-upload {
-  margin-top: 1rem;
-}
-
-.main-photo-display {
-  margin-top: 1rem;
-}
-
-.photo-preview {
+.dropzone {
   position: relative;
-  display: inline-block;
-  margin-bottom: 1rem;
-  
-  .main-photo-image {
-    max-width: 300px;
-    max-height: 200px;
-    border-radius: 8px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    object-fit: cover;
-  }
-  
-  .photo-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 0.5rem;
-    opacity: 0;
-    transition: opacity 0.3s;
-    border-radius: 8px;
-    
-    &:hover {
-      opacity: 1;
-    }
-  }
-}
-
-.photo-info {
-  text-align: center;
-  
-  h5 {
-    color: #fff;
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-  
-  .photo-details {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.9rem;
-    
-    .file-size, .upload-date {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-    }
-  }
-}
-
-.no-photo {
-  text-align: center;
-  padding: 2rem;
-  
-  .upload-placeholder {
-    i {
-      margin-bottom: 1rem;
-      color: #6c757d;
-    }
-    
-    p {
-      color: #495057;
-      margin-bottom: 0.5rem;
-      
-      &.upload-hint {
-        font-size: 0.9rem;
-        color: #6c757d;
-        font-style: italic;
-      }
-    }
-  }
-}
-
-.uploaded-files {
-  margin-top: 1rem;
-}
-
-.file-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-}
-
-.file-item {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  background: #ffffff;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
-  transition: all 0.3s ease;
-  
-  &.clickable-photo {
+  gap: 0.4rem;
+  border: 2px dashed #f0b8a5;
+  border-radius: 16px;
+  background: #fff7f4;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+
+  &:hover { border-color: $orange; background: #fff1eb; }
+
+  strong { font-size: 1.2rem; font-weight: 800; }
+  .dropzone-hint { color: $muted; }
+  .dropzone-icon { font-size: 2.2rem; color: $orange; }
+
+  /* L'input couvre toute la zone : le clic ouvre le sélecteur partout. */
+  input[type='file'] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
     cursor: pointer;
-    
-    &:hover {
-      background: #f8f9fa;
-      border-color: #ced4da;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-  }
-  
-  &.main-photo-selected {
-    border: 3px solid #ffc107 !important;
-    background: #fff3cd;
-    box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
-    position: relative;
-    
-    &::before {
-      content: '';
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      border: 2px solid #ffc107;
-      border-radius: 10px;
-      animation: pulse-border 2s infinite;
-    }
+    font-size: 0;
   }
 }
 
-.file-info {
+.media-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.media-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-  
-  i {
-    color: #6c757d;
+  gap: 0.85rem;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: 0.7rem 0.9rem;
+  background: #fff;
+
+  &.pending { background: $field-bg; }
+
+  img {
+    width: 54px;
+    height: 54px;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+
+  .media-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-radius: 12px;
+    background: #eceef7;
+    color: #667a92;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.2rem;
   }
-  
-  .file-name {
-    color: #2c3e50;
-    font-weight: 500;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+
+  .media-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1 1 auto;
+
+    strong { font-size: 0.98rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    span { color: $muted; font-size: 0.85rem; }
   }
-  
-  .file-size {
-    color: #6c757d;
-    font-size: 0.85rem;
-    background: #f8f9fa;
-    padding: 2px 6px;
-    border-radius: 4px;
-    border: 1px solid #dee2e6;
-  }
+
+  .media-actions { display: flex; gap: 0.4rem; }
 }
 
-.file-actions {
-  display: flex;
-  gap: 0.5rem;
-  
-  .p-button-sm {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9rem;
-  }
+.chip {
+  border: 1.5px solid #d5daea;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.45rem 0.8rem;
+  font-weight: 700;
+  color: #667a92;
+  cursor: pointer;
+
+  &.active { border-color: $orange; color: $orange; background: #fff0ea; }
+  &.danger:hover { border-color: #b00020; color: #b00020; }
+}
+
+.empty-hint {
+  margin-top: 1rem;
+  color: $muted;
 }
 
 .upload-progress {
   margin-top: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  
-  p {
-    color: #fff;
-    margin-top: 0.5rem;
-    text-align: center;
-  }
-}
-
-.pending-files, .pending-photos {
-  margin-top: 1rem;
-  
-  h5 {
-    color: #2c3e50;
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-  }
-}
-
-.file-item.pending, .photo-item.pending {
-  background: #fff3cd;
-  border-color: #ffeaa7;
-  
-  .file-status, .photo-status {
-    color: #856404;
-    background: #fff3cd;
-    border: 1px solid #ffeaa7;
-  }
-}
-
-.photo-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.35rem;
+  color: $muted;
 }
 
-.photo-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #ffffff;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
-  transition: all 0.3s ease;
-  
-  &.pending {
-    background: #fff3cd;
-    border-color: #ffeaa7;
-  }
-  
-  .photo-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex: 1;
-    
-    i {
-      color: #6c757d;
-      font-size: 1.2rem;
-    }
-    
-    .photo-name {
-      color: #2c3e50;
-      font-weight: 500;
-      max-width: 200px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    
-    .photo-size {
-      color: #6c757d;
-      font-size: 0.85rem;
-      background: #f8f9fa;
-      padding: 2px 6px;
-      border-radius: 4px;
-      border: 1px solid #dee2e6;
-    }
-    
-    .photo-status {
-      color: #856404;
-      font-size: 0.8rem;
-      background: #fff3cd;
-      padding: 2px 6px;
-      border-radius: 4px;
-      border: 1px solid #ffeaa7;
-      text-transform: uppercase;
-      font-weight: 500;
-    }
-  }
-}
-
-.upload-notice {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: rgba(33, 150, 243, 0.2);
-  border: 1px solid rgba(33, 150, 243, 0.3);
-  border-radius: 8px;
-  
-  .text-info {
-    color: #fff;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0;
-    
-    i {
-      color: #2196f3;
-    }
-  }
-}
-
-// Styles pour le composant FileUpload de PrimeNG
-:host ::ng-deep {
-  .p-fileupload {
-    .p-fileupload-buttonbar {
-      background: transparent;
-      border: none;
-      padding: 0;
-      
-      .p-fileupload-choose {
-        background: #2e31a4;
-        border: 2px solid #fff;
-        color: #fff;
-        font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        transition: all 0.2s;
-        
-        &:hover {
-          background: #1a1c6b;
-          border-color: #fff;
-        }
-        
-        &:disabled {
-          background: rgba(255, 255, 255, 0.3);
-          border-color: rgba(255, 255, 255, 0.3);
-          color: rgba(255, 255, 255, 0.7);
-          cursor: not-allowed;
-        }
-      }
-    }
-    
-    .p-fileupload-content {
-      background: transparent;
-      border: none;
-      padding: 0;
-      margin-top: 1rem;
-    }
-  }
-  
-  .p-progressbar {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    overflow: hidden;
-    
-      .p-progressbar-value {
-    background: linear-gradient(90deg, #4caf50, #8bc34a);
-    border-radius: 8px;
-  }
-}
-
-// Animation de pulsation pour la bordure rouge
-@keyframes pulse-border {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.02);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-}
-
-.filename-cell {
-  width: 200px;
-  
-  .filename {
-    font-weight: 500;
-    color: #2c3e50;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-    max-width: 180px;
-  }
-}
-
-.comment-cell {
-  width: 250px;
-  
-  .comment-input {
-    width: 100%;
-    background: #ffffff;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    padding: 6px 8px;
-    color: #495057;
-    font-size: 0.9rem;
-    
-    &:focus {
-      outline: none;
-      border-color: #2e31a4;
-      background: #ffffff;
-      box-shadow: 0 0 0 2px rgba(46, 49, 164, 0.2);
-    }
-    
-    &::placeholder {
-      color: #6c757d;
-    }
-  }
-}
-
-.size-cell, .date-cell {
-  width: 120px;
-  text-align: center;
-  
-  .file-size, .upload-date {
-    color: #6c757d;
-    font-size: 0.85rem;
-    background: #f8f9fa;
-    padding: 4px 8px;
-    border-radius: 4px;
-    display: inline-block;
-    border: 1px solid #dee2e6;
-  }
-}
-
-.main-photo-cell {
-  width: 120px;
-  text-align: center;
-  
-  .checkbox-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    
-    .main-photo-radio {
-      display: none;
-    }
-    
-    .radio-label {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border: 2px solid #6c757d;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background: #ffffff;
-      
-      i {
-        color: #6c757d;
-        font-size: 0.9rem;
-        transition: all 0.3s ease;
-      }
-      
-      &:hover {
-        border-color: #ffc107;
-        background: #fff3cd;
-        
-        i {
-          color: #856404;
-        }
-      }
-    }
-    
-    .main-photo-radio:checked + .radio-label {
-      border-color: #ffc107;
-      background: #ffc107;
-      
-      i {
-        color: #ffffff;
-      }
-    }
-  }
-}
-
-.photo-thumbnail-small {
-  width: 60px;
-  height: 40px;
-  border-radius: 4px;
+.progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #eceef7;
   overflow: hidden;
-  border: 2px solid #dee2e6;
-  background: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: relative;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    border-color: #2e31a4;
-  }
-  
-  &.clickable {
-    cursor: pointer;
-    
-    &:hover .photo-overlay-hint {
-      opacity: 1;
-    }
-  }
-  
-  .photo-image-small {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.2s ease;
-  }
-  
-  .photo-overlay-hint {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    
-    i {
-      color: #ffffff;
-      font-size: 1.2rem;
-    }
-  }
-  
-  .photo-placeholder {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px dashed #dee2e6;
-    
-    i {
-      color: #6c757d;
-      font-size: 1.5rem;
-    }
-  }
 }
 
-// Styles pour le modal d'image
-:host ::ng-deep .image-modal-dialog {
-  .p-dialog {
-    max-width: 800px;
-    max-height: 600px;
-    
-    .p-dialog-content {
-      padding: 0;
-      overflow: hidden;
-    }
-  }
-}
-
-.image-modal-header {
-  display: flex;
-  align-items: center;
-  background: #2e31a4;
-  color: #fff;
-  padding: 0.75rem 1rem;
-  
-  .modal-header-icon {
-    font-size: 1.25rem;
-    margin-right: 0.5rem;
-    color: #fff;
-  }
-  
-  .modal-header-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #fff;
-  }
-}
-
-.image-modal-content {
-  display: flex;
-  flex-direction: column;
+.progress-value {
   height: 100%;
-  
-  .image-container {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    background: #f8f9fa;
-    min-height: 300px;
-    
-    .modal-image {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      border-radius: 6px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      border: 1px solid #ffffff;
-    }
-  }
-  
-  .image-details {
-    padding: 1rem;
-    background: #ffffff;
-    border-top: 1px solid #dee2e6;
-    
-    h4 {
-      color: #2c3e50;
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    
-    p {
-      color: #495057;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      margin: 0;
-    }
-  }
-  
-  .image-metadata {
-    padding: 1rem;
-    background: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    
-    .metadata-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.4rem 0;
-      border-bottom: 1px solid #e9ecef;
-      font-size: 0.85rem;
-      
-      &:last-child {
-        border-bottom: none;
-      }
-      
-      strong {
-        color: #2c3e50;
-        font-weight: 600;
-        min-width: 100px;
-      }
-      
-      span {
-        color: #495057;
-        text-align: right;
-      }
-    }
-  }
+  background: linear-gradient(90deg, $orange, $orange-light);
+  transition: width 0.2s ease;
 }
 
-.image-modal-footer {
+/* ---------- Encart conseil ---------- */
+
+.wizard-tip {
+  flex: 0 0 300px;
+  align-self: stretch;
+  background: #ffe6cf;
+  border-radius: 16px;
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  color: #8a4a1d;
+
+  .tip-icon { font-size: 1.6rem; color: $orange; }
+
+  strong {
+    display: block;
+    margin: 0.5rem 0 0.35rem;
+    color: $orange;
+    font-size: 1.2rem;
+    font-weight: 800;
+  }
+
+  p { margin: 0; font-size: 0.98rem; }
+}
+
+/* ---------- Pied ---------- */
+
+.wizard-actions {
   display: flex;
-  justify-content: flex-end;
-  padding: 0.75rem 1rem;
-  background: #f8f9fa;
-  border-top: 1px solid #dee2e6;
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+
+.btn-prev,
+.btn-next {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border: none;
+  border-radius: 14px;
+  padding: 1rem 1.5rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.btn-prev {
+  background: #e9ebf3;
+  color: #667a92;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:not(:disabled):hover { background: #dfe2ee; }
+}
+
+.btn-next {
+  flex: 2 1 0;
+  background: $orange;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(244, 85, 46, 0.3);
+
+  &:hover { background: $orange-light; }
+}
+
+@media (max-width: 900px) {
+  .wizard-title-row h2 { font-size: 1.6rem; }
+  .wizard-tabs { flex-direction: column; }
+  .wizard-tab { border-right: none; border-bottom: 1px solid $border; }
+  .wizard-body { flex-direction: column; }
+  .wizard-tip { flex: 1 1 auto; width: 100%; }
+  .field-grid { grid-template-columns: 1fr; }
+  .wizard-actions { flex-direction: column-reverse; }
 }

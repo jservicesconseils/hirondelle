@@ -21,6 +21,15 @@ const groupSchema = new Schema(
     phone: { type: String },
     email: { type: String },
     website: { type: String },
+    /**
+     * Modules attribués au groupe : EVENTS, MEMBERS, ou les deux.
+     *
+     * Champ ajouté après coup, donc sans valeur par défaut : les documents
+     * existants n'en portent pas, et `normalizeFeatures` traite cette absence
+     * comme « toutes les fonctionnalités ». Côté Java, un `List<String> features`
+     * s'ajoutera sans migration.
+     */
+    features: { type: [String] },
     _class: { type: String, default: GROUP_CLASS },
   },
   {

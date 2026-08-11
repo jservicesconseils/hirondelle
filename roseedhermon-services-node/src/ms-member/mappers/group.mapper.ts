@@ -1,4 +1,4 @@
-import { toStringOrNull } from '../../common';
+import { toStringOrNull, normalizeFeatures, type Feature } from '../../common';
 import type { GroupDocument } from '../models/group.model';
 
 /** Champs modifiables d'un groupe (l'id est porté par `_id`). */
@@ -12,6 +12,8 @@ export interface GroupInput {
   phone: string | null;
   email: string | null;
   website: string | null;
+  /** `null` = absent du corps, à distinguer d'une liste vide (voir `groupFromBody`). */
+  features: Feature[] | null;
 }
 
 /** `GroupEntity` -> JSON, dans l'ordre produit par Jackson. */
@@ -27,6 +29,8 @@ export function groupToJson(doc: GroupDocument) {
     phone: doc.phone ?? null,
     email: doc.email ?? null,
     website: doc.website ?? null,
+    // Toujours explicite : le client n'a pas à deviner ce que signifie l'absence.
+    features: normalizeFeatures(doc.features),
   };
 }
 
@@ -41,5 +45,11 @@ export function groupFromBody(body: Record<string, unknown>): GroupInput {
     phone: toStringOrNull(body.phone),
     email: toStringOrNull(body.email),
     website: toStringOrNull(body.website),
+    /**
+     * On distingue « non transmis » de « transmis vide ». Le premier laisse le
+     * champ absent — `withoutNulls` l'écarte — pour que `updateGroup` reconduise
+     * la valeur enregistrée au lieu d'accorder tous les modules par omission.
+     */
+    features: body.features === undefined ? null : normalizeFeatures(body.features),
   };
 }

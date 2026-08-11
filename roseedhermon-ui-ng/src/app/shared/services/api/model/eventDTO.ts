@@ -9,12 +9,15 @@
  */
 import { EventLocation } from './eventLocation';
 import { PresenterDTO } from './presenterDTO';
+import { EventFileDTO } from './eventFileDTO';
 
 
 export interface EventDTO { 
     id?: string;
     name?: string;
     date?: string;
+    /** Heure de début « HH:mm ». */
+    time?: string;
     location?: EventLocation;
     description?: string;
     amount?: number;
@@ -26,5 +29,13 @@ export interface EventDTO {
     eventType?: string;
     eventStatus?: string;
     free?: boolean;
+    /** « PUBLIC » ou « PRIVATE » : un événement privé n'est visible que par son groupe. */
+    visibility?: string;
+    /** Groupe organisateur ; renseigné par le serveur d'après le compte connecté. */
+    groupId?: string;
+    /** Fichiers joints, renvoyés par `/events/with-files`. */
+    files?: Array<EventFileDTO>;
+    /** Identifiant du fichier servant de visuel principal. */
+    mainPhotoId?: string;
 }
 

@@ -36,6 +36,7 @@ function toDocument(fields: EventFields): Record<string, unknown> {
   return withoutNulls({
     name: fields.name,
     date: fields.date,
+    time: fields.time,
     location: fields.location === null ? null : withoutNulls({ ...fields.location }),
     description: fields.description,
     isFree: fields.isFree,
@@ -48,6 +49,8 @@ function toDocument(fields: EventFields): Record<string, unknown> {
     lastRegistrationDate: fields.lastRegistrationDate,
     eventType: fields.eventType,
     eventStatus: fields.eventStatus,
+    visibility: fields.visibility,
+    groupId: fields.groupId,
     files: fields.files === null ? null : fields.files.map((file) => embeddedFileToDocument(file)),
     mainPhotoId: fields.mainPhotoId,
     _class: EVENT_CLASS,

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/web/pages/members/invalid-modal/invalid-modal.component.scss"],
-  "sourcesContent": [".p-dialog-footer {\n  padding-top: 40px !important;\n}\n\n.nombre-ligne {\n    padding: 40px 40px 40px 0px!important;\n  }"],
-  "mappings": ";AAAA,CAAA;AACE,eAAA;;AAGF,CAAA;AACI,WAAA,KAAA,KAAA,KAAA;;",
-  "names": []
-}

@@ -1,0 +1,94 @@
+<!-- ============ Pastille, en haut à droite des cartes ============ -->
+<button *ngIf="variant === 'compact'"
+        type="button"
+        class="chip"
+        [class.is-done]="interested()"
+        [disabled]="busy || interested()"
+        [title]="interested() ? 'Votre intérêt est enregistré' : 'Je suis intéressé'"
+        (click)="onChipClick($event)">
+  <i class="pi" [ngClass]="interested() ? 'pi-check' : 'pi-heart'"></i>
+  <span class="chip-text">{{ label }}</span>
+  <span class="chip-count" *ngIf="count()">{{ count() }}</span>
+</button>
+
+<!-- ============ Bouton rond, sur un visuel ============ -->
+<button *ngIf="variant === 'icon'"
+        type="button"
+        class="round"
+        [class.is-done]="interested()"
+        [disabled]="busy || interested()"
+        [attr.aria-pressed]="interested()"
+        [attr.aria-label]="interested() ? 'Votre intérêt est enregistré' : 'Je suis intéressé'"
+        [title]="interested() ? 'Votre intérêt est enregistré' : 'Je suis intéressé'"
+        (click)="onChipClick($event)">
+  <i class="pi" [ngClass]="interested() ? 'pi-heart-fill' : 'pi-heart'"></i>
+</button>
+
+<!-- ============ Bouton large, sur la fiche ============ -->
+<div *ngIf="variant === 'full'" class="full">
+  <button type="button"
+          class="wide"
+          [class.is-done]="interested()"
+          [disabled]="busy || interested()"
+          (click)="toggle()">
+    <i class="pi" [ngClass]="interested() ? 'pi-check' : 'pi-heart'"></i>
+    {{ label }}
+  </button>
+
+  <!-- Ce que le grisé ne dit pas à lui seul : que c'est bien enregistré -->
+  <p class="done-note" *ngIf="interested()">
+    <i class="pi pi-check-circle"></i> Votre intérêt est enregistré.
+  </p>
+
+  <p class="count" *ngIf="count()">
+    <i class="pi pi-users"></i> {{ countLabel }}
+  </p>
+  <p class="count muted" *ngIf="!count() && !askEmail">
+    Soyez la première personne à vous manifester.
+  </p>
+
+  <!-- Le champ tient dans la fiche : pas besoin de le sortir du flux -->
+  <div class="email-inline" *ngIf="askEmail">
+    <label [attr.for]="'interest-email-' + eventId">Votre courriel</label>
+    <div class="email-row">
+      <input [id]="'interest-email-' + eventId"
+             type="email"
+             placeholder="vous@exemple.com"
+             autocomplete="email"
+             [(ngModel)]="emailInput"
+             (keyup.enter)="submitEmail()" />
+      <button type="button" class="send" [disabled]="busy" (click)="submitEmail()" aria-label="Valider">
+        <i class="pi pi-check"></i>
+      </button>
+    </div>
+    <button type="button" class="cancel" (click)="cancelEmail()">Annuler</button>
+  </div>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+</div>
+
+<!--
+  Sur une carte, le champ ne peut pas s'insérer dans le flux : les cartes d'une
+  même grille doivent garder la même hauteur, et elles rognent ce qui dépasse.
+  Il s'ouvre donc en position fixe, au-dessus de la page.
+-->
+<div class="ask-overlay" *ngIf="askEmail && variant !== 'full'" (click)="cancelEmail()">
+  <div class="ask-box" (click)="$event.stopPropagation()">
+    <strong>Suivre cet événement</strong>
+    <p>Laissez votre courriel : vous serez prévenu des nouveautés, sans réserver de place.</p>
+
+    <div class="email-row">
+      <input type="email"
+             placeholder="vous@exemple.com"
+             autocomplete="email"
+             [(ngModel)]="emailInput"
+             (keyup.enter)="submitEmail()" />
+      <button type="button" class="send" [disabled]="busy" (click)="submitEmail()" aria-label="Valider">
+        <i class="pi pi-check"></i>
+      </button>
+    </div>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+    <button type="button" class="cancel" (click)="cancelEmail()">Annuler</button>
+  </div>
+</div>

@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EventDTO } from '../../../api/model/eventDTO';
+import { EventDTO } from '../../services/api/model/eventDTO';
 import { EventImageService } from '../../services/events/event-image.service';
 
 @Component({

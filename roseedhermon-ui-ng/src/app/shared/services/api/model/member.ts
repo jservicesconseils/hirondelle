@@ -23,6 +23,10 @@ export interface Member {
     location?: string;
     photo?: string;
     socialLinks?: Array<string>;
+    /** Rôles de la plateforme : SUPER_ADMIN, GROUP_ADMIN, MEMBER. */
+    roles?: Array<string>;
+    /** Groupe d'appartenance ; c'est lui qui borne ce que le membre peut voir. */
+    groupId?: string;
 }
 export namespace Member {
     export type GenderEnum = 'MALE' | 'FEMALE' | 'OTHER';

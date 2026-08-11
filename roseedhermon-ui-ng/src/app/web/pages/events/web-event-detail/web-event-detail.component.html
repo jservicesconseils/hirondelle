@@ -1,0 +1,143 @@
+<app-public-header></app-public-header>
+
+<p class="state" *ngIf="loading">Chargement de l'événement…</p>
+
+<section class="state-block" *ngIf="loadError">
+  <h1>Événement indisponible</h1>
+  <p>{{ loadError }}</p>
+  <a class="cta" routerLink="/web">Retour à l'accueil</a>
+</section>
+
+<ng-container *ngIf="card as event">
+  <!-- ============================ Bandeau ============================ -->
+  <section class="detail-hero" [style.background]="event.style.gradient">
+    <img
+      class="detail-hero-photo"
+      *ngIf="event.visual"
+      [src]="event.visual"
+      [alt]="event.name"
+      (error)="onVisualError()" />
+
+    <div class="detail-hero-veil"></div>
+
+    <div class="shell detail-hero-inner">
+      <a class="back" routerLink="/web"><i class="pi pi-arrow-left"></i> Tous les événements</a>
+
+      <span class="tag" *ngIf="event.category" [style.background]="event.style.tint" [style.color]="event.style.color">
+        {{ event.category }}
+      </span>
+
+      <h1>{{ event.name }}</h1>
+
+      <ul class="hero-facts">
+        <li *ngIf="event.longDate"><i class="pi pi-calendar"></i> {{ event.longDate }}</li>
+        <li *ngIf="event.time"><i class="pi pi-clock"></i> {{ event.time }}</li>
+        <li *ngIf="event.place"><i class="pi pi-map-marker"></i> {{ event.place }}</li>
+      </ul>
+
+      <span class="past-flag" *ngIf="event.date && !event.upcoming">Événement passé</span>
+    </div>
+  </section>
+
+  <!-- ============================ Contenu ============================ -->
+  <section class="detail-body">
+    <div class="shell detail-grid">
+      <div class="detail-main">
+        <article class="panel" *ngIf="event.description">
+          <h2>À propos de cet événement</h2>
+          <p class="prose">{{ event.description }}</p>
+        </article>
+
+        <article class="panel" *ngIf="presenters.length">
+          <h2>Intervenants</h2>
+          <ul class="presenters">
+            <li *ngFor="let person of presenters">
+              <span class="avatar" [style.background]="event.style.gradient">
+                {{ (person.firstName || person.lastName || '?').charAt(0).toUpperCase() }}
+              </span>
+              <div>
+                <strong>{{ person.firstName }} {{ person.lastName }}</strong>
+                <small *ngIf="person.title">{{ person.title }}</small>
+                <p *ngIf="person.resume">{{ person.resume }}</p>
+              </div>
+            </li>
+          </ul>
+        </article>
+
+        <article class="panel">
+          <h2>Informations pratiques</h2>
+          <dl class="facts">
+            <div *ngIf="event.longDate">
+              <dt><i class="pi pi-calendar"></i> Date</dt>
+              <dd>{{ event.longDate }}<span *ngIf="event.time"> à {{ event.time }}</span></dd>
+            </div>
+            <div *ngIf="event.days">
+              <dt><i class="pi pi-hourglass"></i> Durée</dt>
+              <dd>{{ event.days }} {{ event.days > 1 ? 'jours' : 'jour' }}</dd>
+            </div>
+            <div *ngIf="event.event.location?.placeName">
+              <dt><i class="pi pi-building"></i> Lieu</dt>
+              <dd>{{ event.event.location?.placeName }}</dd>
+            </div>
+            <div *ngIf="event.address">
+              <dt><i class="pi pi-map-marker"></i> Adresse</dt>
+              <dd>{{ event.address }}</dd>
+            </div>
+            <div *ngIf="event.seats">
+              <dt><i class="pi pi-users"></i> Places annoncées</dt>
+              <dd>{{ event.seats }}</dd>
+            </div>
+            <div *ngIf="event.event.lastRegistrationDate">
+              <dt><i class="pi pi-clock"></i> Clôture des inscriptions</dt>
+              <dd>{{ event.event.lastRegistrationDate }}</dd>
+            </div>
+            <div *ngIf="event.event.visibility === 'PRIVATE'">
+              <dt><i class="pi pi-lock"></i> Accès</dt>
+              <dd>Réservé aux membres du groupe organisateur</dd>
+            </div>
+          </dl>
+        </article>
+      </div>
+
+      <!-- Panneau de réservation, collant au défilement -->
+      <aside class="booking">
+        <div class="booking-card">
+          <div class="booking-date" *ngIf="event.date">
+            <strong>{{ event.day }}</strong>
+            <small>{{ event.month }}</small>
+          </div>
+
+          <p class="booking-price" *ngIf="event.price">{{ event.price }}</p>
+          <p class="booking-price muted" *ngIf="!event.price">Tarif non communiqué</p>
+
+          <p class="booking-seats" *ngIf="event.seats">
+            <i class="pi pi-users"></i> {{ event.seats }} places annoncées
+          </p>
+
+          <!--
+            L'intérêt vient avant la réservation, parce que c'est l'ordre du
+            parcours : on se signale d'abord, on réserve ensuite — ou jamais. Et
+            l'organisateur mesure l'engouement avant que les places ne partent.
+          -->
+          <div class="interest-slot">
+            <app-interest-button [eventId]="event.id!" variant="full"></app-interest-button>
+          </div>
+
+          <button type="button" class="cta cta-block" (click)="book()" [disabled]="!bookable">
+            {{ bookable ? 'Réserver ma place' : 'Événement passé' }}
+            <i class="pi pi-arrow-right" *ngIf="bookable"></i>
+          </button>
+
+          <p class="booking-note" *ngIf="bookable && !event.free && event.amount">
+            Le paiement se fait à l'étape suivante.
+          </p>
+          <p class="booking-note" *ngIf="bookable && event.free">
+            Entrée gratuite — votre billet est délivré immédiatement.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </section>
+</ng-container>
+
+<app-public-footer></app-public-footer>

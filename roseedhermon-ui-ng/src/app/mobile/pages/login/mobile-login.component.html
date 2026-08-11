@@ -1,0 +1,93 @@
+<div class="login-screen">
+  <!-- Bandeau haut -->
+  <header class="hero">
+    <span class="brand-mark">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M21 4c-4.2.5-7.4 2.2-9.6 5.1C9.6 11.6 8.6 14.6 8.3 18l-2.6 3h3.5c.4-2.9 1.2-5.3 2.6-7.2 1.9-2.6 4.7-4.1 8.2-4.6L21 4z"
+          fill="currentColor" />
+      </svg>
+    </span>
+
+    <h1>{{ challenge ? 'Nouveau mot de passe' : 'Bienvenue' }}</h1>
+    <p>
+      {{ challenge
+        ? 'Remplacez le mot de passe reçu par texto.'
+        : 'Connectez-vous pour retrouver votre groupe, vos événements et vos billets.' }}
+    </p>
+  </header>
+
+  <!-- Feuille blanche -->
+  <section class="sheet">
+    <form (ngSubmit)="submit()" novalidate>
+      <ng-container *ngIf="!challenge">
+        <label class="field">
+          <span>Courriel</span>
+          <input type="email" name="email" inputmode="email" autocomplete="username" [(ngModel)]="email"
+            placeholder="vous@exemple.ca" />
+        </label>
+
+        <label class="field">
+          <span>Mot de passe</span>
+          <input type="password" name="password" autocomplete="current-password" [(ngModel)]="password" />
+        </label>
+
+        <label class="field" *ngIf="!auth.configured && needsGroup">
+          <span>Votre groupe</span>
+          <select name="groupId" [(ngModel)]="groupId">
+            <option value="" disabled>Choisissez un groupe</option>
+            <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
+          </select>
+        </label>
+      </ng-container>
+
+      <ng-container *ngIf="challenge">
+        <label class="field">
+          <span>Nouveau mot de passe</span>
+          <input type="password" name="newPassword" autocomplete="new-password" [(ngModel)]="newPassword" />
+        </label>
+
+        <label class="field">
+          <span>Confirmation</span>
+          <input type="password" name="confirmation" autocomplete="new-password" [(ngModel)]="confirmation" />
+        </label>
+      </ng-container>
+
+      <p class="error" *ngIf="error">{{ error }}</p>
+
+      <button type="submit" class="submit" [disabled]="busy">
+        {{ busy ? 'Vérification…' : (challenge ? 'Enregistrer' : 'Se connecter') }}
+      </button>
+    </form>
+
+    <button type="button" class="ghost" (click)="browse()">
+      Parcourir sans compte
+    </button>
+
+    <!-- Comptes de démonstration, en local seulement -->
+    <div class="demo" *ngIf="!auth.configured">
+      <button type="button" class="demo-toggle" (click)="demoOpen = !demoOpen">
+        <i class="pi pi-wrench"></i>
+        Comptes de test
+        <i class="pi" [class.pi-chevron-down]="!demoOpen" [class.pi-chevron-up]="demoOpen"></i>
+      </button>
+
+      <div class="demo-list" *ngIf="demoOpen">
+        <button type="button" class="demo-card" *ngFor="let account of accounts" (click)="pick(account)">
+          <span class="demo-icon" [style.background]="account.color">
+            <i class="pi" [ngClass]="account.icon"></i>
+          </span>
+          <span class="demo-text">
+            <strong>{{ account.label }}</strong>
+            <small>{{ account.email }}</small>
+          </span>
+        </button>
+
+        <p class="demo-note">
+          Mot de passe : <code>{{ demoPassword }}</code>. Ces comptes n'existent qu'en
+          local — ils disparaissent dès qu'Amazon Cognito est configuré.
+        </p>
+      </div>
+    </div>
+  </section>
+</div>

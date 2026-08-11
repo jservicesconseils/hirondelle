@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="Illustration : retraite">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd879" />
+      <stop offset="0.55" stop-color="#efa31d" />
+      <stop offset="1" stop-color="#b9700a" />
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="450" fill="url(#bg)" />
+
+  <!-- Soleil et rayons -->
+  <circle cx="400" cy="188" r="76" fill="#fff" fill-opacity=".95" />
+  <g stroke="#fff" stroke-opacity=".45" stroke-width="12" stroke-linecap="round">
+    <path d="M400 60v-24M400 340v24M528 188h24M248 188h-24M490 98l18-18M310 278l-18 18M490 278l18 18M310 98l-18-18" />
+  </g>
+
+  <!-- Reliefs -->
+  <path d="M0 450l210-176 132 110 118-96 340 162z" fill="#fff" fill-opacity=".28" />
+  <path d="M0 450l260-136 156 82 384-64v118z" fill="#fff" fill-opacity=".18" />
+</svg>

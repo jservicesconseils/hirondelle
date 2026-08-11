@@ -1,4 +1,11 @@
-import { runtimeError, springIdFilter, toSpringId, toStringOrNull, withoutNulls } from '../../common';
+import {
+  forgetGroupFeatures,
+  runtimeError,
+  springIdFilter,
+  toSpringId,
+  toStringOrNull,
+  withoutNulls,
+} from '../../common';
 import { groupFromBody } from '../mappers/group.mapper';
 import { GROUP_CLASS, GroupModel, type GroupDocument } from '../models/group.model';
 import { MEMBER_CLASS, MemberModel } from '../models/member.model';
@@ -48,18 +55,34 @@ export async function getAllGroups(): Promise<GroupDocument[]> {
  * — c'est-à-dire un remplacement complet du document, y compris s'il n'existait pas.
  */
 export async function updateGroup(id: string, body: Record<string, unknown>): Promise<GroupDocument> {
+  const document = toDocument(body);
+
+  /**
+   * Seule entorse au remplacement intégral : `features` porte des droits. Une
+   * modification qui ne le mentionne pas — l'écran d'identité du groupe, par
+   * exemple — reconduit la valeur enregistrée plutôt que de l'effacer, ce qui
+   * reviendrait à accorder tous les modules par omission.
+   */
+  if (body.features === undefined) {
+    const existing = await GroupModel.findOne(springIdFilter(id)).exec();
+    const kept = existing?.get('features');
+    if (Array.isArray(kept)) document.features = kept;
+  }
+
   const replaced = await GroupModel.findOneAndReplace(
     springIdFilter(id),
-    { _id: toSpringId(id), ...toDocument(body) },
+    { _id: toSpringId(id), ...document },
     { upsert: true, returnDocument: 'after' },
   ).exec();
 
   if (!replaced) throw runtimeError(`Group could not be saved with id ${id}`);
+  forgetGroupFeatures(id);
   return replaced;
 }
 
 export async function deleteGroup(id: string): Promise<void> {
   await GroupModel.findOneAndDelete(springIdFilter(id)).exec();
+  forgetGroupFeatures(id);
 }
 
 /**

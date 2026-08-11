@@ -32,6 +32,8 @@ export interface PresenterFields {
 export interface EventFields {
   name: string | null;
   date: string | null;
+  /** Heure de début « HH:mm ». Champ additif, absent de l'entité Java. */
+  time: string | null;
   location: EventLocationFields | null;
   description: string | null;
   /** Champ `isFree` en base, propriété JSON `free`. */
@@ -44,6 +46,8 @@ export interface EventFields {
   lastRegistrationDate: string | null;
   eventType: string | null;
   eventStatus: string | null;
+  visibility: string | null;
+  groupId: string | null;
   files: EventFileInput[] | null;
   mainPhotoId: string | null;
 }
@@ -95,6 +99,7 @@ export function eventFromBody(body: unknown): EventFields & { id: string | null 
     id: toStringOrNull(source.id),
     name: toStringOrNull(source.name),
     date: toStringOrNull(source.date),
+    time: toStringOrNull(source.time),
     location: locationFromBody(source.location),
     description: toStringOrNull(source.description),
     // `EventDTO` déclarait `setIsFree` (Jackson attendait donc `isFree`) tandis que
@@ -108,6 +113,10 @@ export function eventFromBody(body: unknown): EventFields & { id: string | null 
     lastRegistrationDate: toStringOrNull(source.lastRegistrationDate),
     eventType: toStringOrNull(source.eventType),
     eventStatus: toStringOrNull(source.eventStatus),
+    // Un événement sans visibilité explicite est public : c'était le comportement
+    // des documents existants, créés avant l'introduction des groupes.
+    visibility: toStringOrNull(source.visibility) ?? 'PUBLIC',
+    groupId: toStringOrNull(source.groupId),
     files: filesFromBody(source.files),
     mainPhotoId: toStringOrNull(source.mainPhotoId),
   };
@@ -190,6 +199,7 @@ export function eventToJson(
     id: springIdToString(raw._id ?? raw.id),
     name: toStringOrNull(raw.name),
     date: toStringOrNull(raw.date),
+    time: toStringOrNull(raw.time),
     location: locationToJson(raw.location),
     description: toStringOrNull(raw.description),
     // Jackson produisait `free` (getter `isFree()`) ; `isFree` est ajouté pour le
@@ -204,6 +214,8 @@ export function eventToJson(
     lastRegistrationDate: toStringOrNull(raw.lastRegistrationDate),
     eventType: toStringOrNull(raw.eventType),
     eventStatus: toStringOrNull(raw.eventStatus),
+    visibility: toStringOrNull(raw.visibility) ?? 'PUBLIC',
+    groupId: toStringOrNull(raw.groupId),
     files: overrideFiles === undefined ? embeddedFiles : overrideFiles,
     mainPhotoId: toStringOrNull(raw.mainPhotoId),
   };

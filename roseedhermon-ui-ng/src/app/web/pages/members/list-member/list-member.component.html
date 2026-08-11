@@ -1,103 +1,250 @@
-<div class="container">
-  <div class="toolbar">
-    <div class="filter-section">
-      <div class="filter-item">
-        <label for="firstNameFilter">Prénom</label>
-        <p-autoComplete 
-          id="firstNameFilter"
-          [(ngModel)]="firstNameFilter" 
-          [suggestions]="firstNameSuggestions"
-          (completeMethod)="filterFirstName($event)"
-          (onSelect)="onFirstNameSelect($event)"
-          (onClear)="onFirstNameClear()"
-          (input)="onFirstNameChange()"
-          placeholder="Filtrer par prénom..."
-          [dropdown]="true"
-          [showClear]="true"
-          class="filter-autocomplete">
-        </p-autoComplete>
+<div class="members-page">
+
+  <!-- Bandeau, même dégradé et même typographie que le menu et les pages publiques -->
+  <header class="head">
+    <div class="head-inner">
+      <div class="head-text">
+        <span class="eyebrow">
+          <span class="eyebrow-bar"></span>
+          Communauté
+        </span>
+
+        <h1>Membres</h1>
+
+        <p class="lead">
+          L'annuaire de votre communauté : fiches, coordonnées et rattachements,
+          au même endroit.
+        </p>
       </div>
-      <div class="filter-item">
-        <label for="lastNameFilter">Nom</label>
-        <p-autoComplete 
-          id="lastNameFilter"
-          [(ngModel)]="lastNameFilter" 
-          [suggestions]="lastNameSuggestions"
-          (completeMethod)="filterLastName($event)"
-          (onSelect)="onLastNameSelect($event)"
-          (onClear)="onLastNameClear()"
-          (input)="onLastNameChange()"
-          placeholder="Filtrer par nom..."
-          [dropdown]="true"
-          [showClear]="true"
-          class="filter-autocomplete">
-        </p-autoComplete>
-      </div>
-      <div class="filter-item">
-        <label for="phoneFilter">Téléphone</label>
-        <p-autoComplete 
-          id="phoneFilter"
-          [(ngModel)]="phoneFilter" 
-          [suggestions]="phoneSuggestions"
-          (completeMethod)="filterPhone($event)"
-          (onSelect)="onPhoneSelect($event)"
-          (onClear)="onPhoneClear()"
-          (input)="onPhoneChange()"
-          placeholder="Filtrer par téléphone..."
-          [dropdown]="true"
-          [showClear]="true"
-          class="filter-autocomplete">
-        </p-autoComplete>
+
+      <div class="head-actions">
+        <button type="button" class="head-ghost" (click)="exportCsv()">
+          <i class="pi pi-download"></i> Exporter CSV
+        </button>
+        <button type="button" class="head-ghost" (click)="importWizardVisible = true">
+          <i class="pi pi-upload"></i> Importer en lot
+        </button>
+        <button type="button" class="head-cta" (click)="showAddMemberDialog()">
+          <i class="pi pi-plus"></i> Ajouter un membre
+        </button>
       </div>
     </div>
-    <div style="flex: 1 1 auto;"></div>
-<app-import-contact
-  (validRows)="handleValidRows($event)"
-  (invalidRows)="handleInvalidRows($event)">
-</app-import-contact>
-    <button pButton 
-            icon="pi pi-user-plus" 
-            label="Ajouter" 
-            class="p-button-success add-contact-btn"
-            (click)="showAddMemberDialog()">
-    </button>
-  </div>
-  
-  <div [class.reduced]="showDetailPanel" class="grid-section">
-<ag-grid-angular
-      style="width: 100%; height: 100%;"
-  class="ag-theme-alpine"
-      [rowData]="filteredMemberList"
-  [columnDefs]="columnDefs"
-  [defaultColDef]="defaultColDef"
-      [gridOptions]="gridOptions"
-      [theme]="'legacy'"
-  [pagination]="true"
-      [paginationPageSize]="15"
-      [paginationAutoPageSize]="false"
-      [paginationPageSizeSelector]="false"
-      (rowClicked)="onRowClicked($event)"
-      (gridReady)="onGridReady($event)"
-      [suppressColumnVirtualisation]="true"
-      [suppressHorizontalScroll]="true"
-      #agGrid
-></ag-grid-angular>
+
+    <!-- Indicateurs calculés sur les fiches réellement chargées -->
+    <ul class="head-stats">
+      <li>
+        <strong>{{ totalMembers }}</strong>
+        <span>Membres</span>
+      </li>
+      <li>
+        <strong>{{ newMembers }}</strong>
+        <span>Ajoutés en {{ currentMonthLabel }}</span>
+      </li>
+      <li>
+        <strong>{{ citiesCount }}</strong>
+        <span>Villes représentées</span>
+      </li>
+      <li *ngIf="citiesCount">
+        <strong class="stat-text">{{ topCity }}</strong>
+        <span>Ville principale</span>
+      </li>
+    </ul>
+  </header>
+
+  <div class="body">
+
+    <!-- Recherche -->
+    <div class="search">
+      <i class="pi pi-search"></i>
+      <input type="text"
+             placeholder="Rechercher un membre (nom, courriel, ville)"
+             [(ngModel)]="globalSearch"
+             (input)="onGlobalSearchChange()" />
+      <button type="button" class="clear" *ngIf="globalSearch"
+              (click)="globalSearch = ''; onGlobalSearchChange()" aria-label="Effacer">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <!-- Tri et bascule d'affichage -->
+    <div class="controls">
+      <nav class="tabs">
+        <button type="button" [class.is-active]="sortKey === 'firstName'" (click)="setSortKey('firstName')">
+          <i class="pi pi-sort-alpha-down"></i>
+          <span>Prénom</span>
+        </button>
+        <button type="button" [class.is-active]="sortKey === 'lastName'" (click)="setSortKey('lastName')">
+          <i class="pi pi-sort-alpha-down"></i>
+          <span>Nom</span>
+        </button>
+        <button type="button" [class.is-active]="sortKey === 'city'" (click)="setSortKey('city')">
+          <i class="pi pi-map-marker"></i>
+          <span>Ville</span>
+        </button>
+      </nav>
+
+      <div class="view-switch">
+        <button type="button" [class.is-active]="viewMode === 'grid'" (click)="setViewMode('grid')"
+                title="Affichage en cartes">
+          <i class="pi pi-th-large"></i>
+        </button>
+        <button type="button" [class.is-active]="viewMode === 'table'" (click)="setViewMode('table')"
+                title="Affichage en tableau">
+          <i class="pi pi-list"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Liste et tiroir de détail partagent la même rangée : le tiroir prend 30 %
+         de la largeur et la liste se réduit d'autant. -->
+    <div class="content-row">
+      <div class="content-main">
+
+    <!-- Vue en cartes -->
+    <section class="cards-section" *ngIf="viewMode === 'grid'">
+      <div class="section-head">
+        <h2>Vue en cartes</h2>
+        <span class="section-note">{{ pagedRows.length }} membres affichés</span>
+      </div>
+
+      <div class="cards-grid">
+        <article class="list-card" *ngFor="let row of pagedRows; trackBy: trackByRow" (click)="openMember(row)">
+          <div class="card-top">
+            <span class="avatar">{{ row.initials }}</span>
+            <div class="card-identity">
+              <strong>{{ row.fullName }}</strong>
+              <span class="card-email">{{ row.email }}</span>
+            </div>
+            <span class="status-pill"><span class="dot"></span>Actif</span>
+          </div>
+          <div class="card-meta">
+            <span class="city"><i class="pi pi-map-marker"></i>{{ row.cityLabel }}</span>
+            <span class="role-pill">{{ row.role }}</span>
+          </div>
+          <button type="button" class="btn-message" (click)="sendMessage(row); $event.stopPropagation()">
+            <i class="pi pi-comment"></i> Message
+          </button>
+        </article>
+      </div>
+
+      <p class="empty" *ngIf="!pagedRows.length">Aucun membre ne correspond à la recherche.</p>
+    </section>
+
+    <!-- Vue tableau -->
+    <section class="table-section" *ngIf="viewMode === 'table'">
+      <div class="section-head">
+        <h2>Tous les membres <span class="section-sub">— Vue tableau</span></h2>
+        <button type="button" class="sort-link" (click)="setSortKey('addedAt')">
+          Trié par: <strong>Date d'ajout</strong>
+          <i class="pi" [ngClass]="sortDescending && sortKey === 'addedAt' ? 'pi-arrow-down' : 'pi-arrow-up'"></i>
+        </button>
+      </div>
+
+      <div class="table-card">
+        <table class="list-table">
+          <thead>
+            <tr>
+              <th><i class="pi pi-user"></i> MEMBRE</th>
+              <th><i class="pi pi-map-marker"></i> VILLE</th>
+              <th><span class="dot"></span> STATUT</th>
+              <th><i class="pi pi-id-card"></i> RÔLE</th>
+              <th><i class="pi pi-calendar"></i> DATE D'AJOUT</th>
+              <th class="actions-col">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of pagedRows; trackBy: trackByRow">
+              <td>
+                <div class="cell-member">
+                  <span class="avatar small">{{ row.initials }}</span>
+                  <div>
+                    <strong>{{ row.fullName }}</strong>
+                    <span class="cell-email">{{ row.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="cell-city">{{ row.cityLabel }}</td>
+              <td><span class="status-pill"><span class="dot"></span>Actif</span></td>
+              <td><span class="role-pill">{{ row.role }}</span></td>
+              <td class="cell-date">{{ row.addedAt ? (row.addedAt | date:'dd MMM y') : '—' }}</td>
+              <td class="actions-col">
+                <button type="button" class="icon-action" (click)="openMember(row)" aria-label="Aperçu">
+                  <i class="pi pi-eye"></i>
+                </button>
+                <button type="button" class="btn-view" (click)="openMember(row)">Voir</button>
+              </td>
+            </tr>
+            <tr *ngIf="!pagedRows.length">
+              <td colspan="6" class="empty-row">Aucun membre ne correspond à la recherche.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+      </div>
+
+    </div>
+
+    <!-- Pagination commune aux deux vues, sous les deux colonnes -->
+    <div class="table-footer">
+      <span class="range">Affichage de {{ rangeStart }} à {{ rangeEnd }} sur {{ filteredRows.length }} résultats</span>
+      <div class="pagination">
+        <button type="button"
+                class="page"
+                *ngFor="let page of pageNumbers"
+                [class.active]="page === currentPage"
+                (click)="goToPage(page)">{{ page + 1 }}</button>
+        <button type="button" class="page chevron" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+          <i class="pi pi-chevron-right"></i>
+        </button>
+        <button type="button" class="page next" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Suivant</button>
+      </div>
+    </div>
   </div>
 
-  <div *ngIf="showDetailPanel && selectedMember" class="detail-panel">
+  <!--
+    Détail d'un membre, en modale plutôt qu'en tiroir : le tableau garde toute
+    sa largeur, et le bandeau reprend celui des modales de création.
+  -->
+  <p-dialog
+    *ngIf="showDetailPanel && selectedMember"
+    [visible]="true"
+    [modal]="true"
+    [style]="{width: 'min(760px, 94vw)'}"
+    [breakpoints]="{'960px': '96vw'}"
+    [draggable]="false"
+    [resizable]="false"
+    [closable]="false"
+    [dismissableMask]="true"
+    (onHide)="closeDetailPanel()"
+    styleClass="detail-dialog">
+    <ng-template pTemplate="header">
+      <div class="modal-header-band">
+        <span class="header-icon"><i class="pi pi-user"></i></span>
+        <div class="header-text">
+          <strong>{{ selectedMember.firstName }} {{ selectedMember.lastName }}</strong>
+          <small>{{ selectedMember.email || 'Sans courriel' }}<span *ngIf="selectedMember.city"> • {{ selectedMember.city }}</span></small>
+        </div>
+        <button type="button" class="header-close" (click)="closeDetailPanel()" aria-label="Fermer">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+    </ng-template>
+
     <app-detail-member
       [member]="selectedMember"
       (close)="closeDetailPanel()"
       (edit)="editMember()"
       (save)="onSaveMember($event)">
     </app-detail-member>
-  </div>
+  </p-dialog>
 
   <!-- Modal d'ajout de membre -->
-  <p-dialog 
-    [(visible)]="addMemberDialogVisible" 
-    [modal]="true" 
-    [style]="{width: '650px'}" 
+  <p-dialog
+    [(visible)]="addMemberDialogVisible"
+    [modal]="true"
+    [style]="{width: '720px'}"
     [contentStyle]="{'padding':'2rem'}"
     [baseZIndex]="1100"
     [closable]="false"
@@ -109,83 +256,93 @@
     [blockScroll]="true"
     [header]="''">
     <ng-template pTemplate="header">
-      <div class="modal-header-custom">
-        <i class="pi pi-user-plus modal-header-icon"></i>
-        <span class="modal-header-title">Ajouter</span>
+      <div class="modal-header-band">
+        <span class="header-icon"><i class="pi pi-user-plus"></i></span>
+        <div class="header-text">
+          <strong>Ajouter un membre</strong>
+          <small>Rosée d'Hermon • Nouveau membre</small>
+        </div>
+        <button type="button" class="header-close" (click)="onCancelAddMember()" aria-label="Fermer">
+          <i class="pi pi-times"></i>
+        </button>
       </div>
     </ng-template>
-    <form [formGroup]="addMemberForm" (ngSubmit)="onAddMemberSubmit()">
-      <div class="p-fluid p-formgrid p-grid">
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="firstName" placeholder="Prénom" />
-            <i class="pi pi-user"></i>
-          </span>
+
+    <form [formGroup]="addMemberForm" (ngSubmit)="onAddMemberSubmit()" class="member-form">
+
+      <!-- Photo du membre : stockée en data URL dans le champ `photo`. -->
+      <div class="photo-upload">
+        <label class="photo-circle">
+          <img *ngIf="photoPreview" [src]="photoPreview" alt="Photo du membre" />
+          <i *ngIf="!photoPreview" class="pi pi-user"></i>
+          <span class="photo-plus"><i class="pi pi-plus"></i></span>
+          <input type="file" accept="image/png,image/jpeg" (change)="onPhotoSelected($event)" />
+        </label>
+        <strong class="photo-title">Téléverser la photo</strong>
+        <small class="photo-hint">JPG ou PNG, max 2 Mo • Cliquer pour téléverser</small>
+        <small class="photo-error" *ngIf="photoError">{{ photoError }}</small>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="add-lastName">Nom</label>
+          <input id="add-lastName" type="text" formControlName="lastName" placeholder="Dubois" />
         </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="lastName" placeholder="Nom" />
-            <i class="pi pi-id-card"></i>
-          </span>
+        <div class="form-field">
+          <label for="add-firstName">Prénom</label>
+          <input id="add-firstName" type="text" formControlName="firstName" placeholder="Marie" />
         </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="gender" placeholder="Genre" />
-            <i class="pi pi-venus-mars"></i>
-          </span>
+        <div class="form-field">
+          <label for="add-email">Email</label>
+          <input id="add-email" type="email" formControlName="email" placeholder="marie.example@email.com" />
         </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <p-calendar 
-              formControlName="birthDate" 
-              placeholder="Date de naissance"
-              dateFormat="yy-mm-dd"
-              showIcon="true"
-              [showButtonBar]="true"
-              [monthNavigator]="true"
-              [yearNavigator]="true"
-              yearRange="1900:2100"
-            ></p-calendar>
-            <i class="pi pi-calendar"></i>
-          </span>
+        <div class="form-field">
+          <label for="add-phone">Téléphone</label>
+          <input id="add-phone" type="text" formControlName="phoneNumber" placeholder="+33 6 12 34 56 78" />
         </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="profession" placeholder="Profession" />
-            <i class="pi pi-briefcase"></i>
-          </span>
+        <div class="form-field">
+          <label for="add-city">Ville</label>
+          <input id="add-city" type="text" formControlName="city" placeholder="Hermon" />
         </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="phoneNumber" placeholder="Téléphone" />
-            <i class="pi pi-phone"></i>
-          </span>
+        <div class="form-field">
+          <label for="add-gender">Genre</label>
+          <input id="add-gender" type="text" formControlName="gender" placeholder="Femme" />
         </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="email" placeholder="Email" />
-            <i class="pi pi-envelope"></i>
-          </span>
+        <div class="form-field">
+          <label for="add-birthDate">Date de naissance</label>
+          <p-calendar
+            inputId="add-birthDate"
+            formControlName="birthDate"
+            placeholder="1990-05-15"
+            dateFormat="yy-mm-dd"
+            [showButtonBar]="true"
+            [monthNavigator]="true"
+            [yearNavigator]="true"
+            yearRange="1900:2100"
+          ></p-calendar>
         </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="city" placeholder="Ville" />
-            <i class="pi pi-map-marker"></i>
-          </span>
+        <div class="form-field">
+          <label for="add-profession">Profession</label>
+          <input id="add-profession" type="text" formControlName="profession" placeholder="Enseignante" />
         </div>
       </div>
-      <div class="modal-footer-custom">
-        <button pButton type="button" class="p-button-danger wide-btn" icon="pi pi-ban" label="Annuler" (click)="onCancelAddMember()"></button>
-        <button pButton type="submit" class="p-button-success wide-btn" icon="pi pi-save" label="Enregistrer" [disabled]="addMemberForm.invalid"></button>
+
+      <div class="form-actions">
+        <button type="button" class="btn-outline" (click)="onCancelAddMember()">Annuler</button>
+        <button type="submit" class="btn-gradient" [disabled]="addMemberForm.invalid">
+          <i class="pi pi-check-circle"></i> Enregistrer
+        </button>
       </div>
+
+      <p class="form-note">Les informations du membre seront enregistrées dans l'annuaire des membres.</p>
     </form>
   </p-dialog>
 
   <!-- Modal d'édition de membre -->
-  <p-dialog 
-    [(visible)]="editMemberDialogVisible" 
-    [modal]="true" 
-    [style]="{width: '650px'}" 
+  <p-dialog
+    [(visible)]="editMemberDialogVisible"
+    [modal]="true"
+    [style]="{width: '720px'}"
     [contentStyle]="{'padding':'2rem'}"
     [baseZIndex]="1100"
     [closable]="false"
@@ -197,119 +354,106 @@
     [blockScroll]="true"
     [header]="''">
     <ng-template pTemplate="header">
-      <div class="modal-header-custom">
-        <i class="pi pi-user-edit modal-header-icon"></i>
-        <span class="modal-header-title">Modifier un membre</span>
+      <div class="modal-header-band">
+        <span class="header-icon"><i class="pi pi-user-edit"></i></span>
+        <div class="header-text">
+          <strong>Modifier un membre</strong>
+          <small>Rosée d'Hermon • Fiche du membre</small>
+        </div>
+        <button type="button" class="header-close" (click)="onCancelEditMember()" aria-label="Fermer">
+          <i class="pi pi-times"></i>
+        </button>
       </div>
     </ng-template>
-    <form [formGroup]="editMemberForm" (ngSubmit)="onEditMemberSubmit()">
-      <div class="p-fluid p-formgrid p-grid">
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="firstName" placeholder="Prénom" />
-            <i class="pi pi-user"></i>
-          </span>
-          <div *ngIf="editMemberForm.get('firstName')?.invalid && (editMemberForm.get('firstName')?.dirty || editMemberForm.get('firstName')?.touched)" class="error-message">
-            Prénom requis
-          </div>
-        </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="lastName" placeholder="Nom" />
-            <i class="pi pi-id-card"></i>
-          </span>
-          <div *ngIf="editMemberForm.get('lastName')?.invalid && (editMemberForm.get('lastName')?.dirty || editMemberForm.get('lastName')?.touched)" class="error-message">
+
+    <form [formGroup]="editMemberForm" (ngSubmit)="onEditMemberSubmit()" class="member-form">
+
+      <!-- Photo du membre : stockée en data URL dans le champ `photo`. -->
+      <div class="photo-upload">
+        <label class="photo-circle">
+          <img *ngIf="editPhotoPreview" [src]="editPhotoPreview" alt="Photo du membre" />
+          <i *ngIf="!editPhotoPreview" class="pi pi-user"></i>
+          <span class="photo-plus"><i class="pi pi-pencil"></i></span>
+          <input type="file" accept="image/png,image/jpeg" (change)="onEditPhotoSelected($event)" />
+        </label>
+        <strong class="photo-title">{{ editPhotoPreview ? 'Changer la photo' : 'Téléverser la photo' }}</strong>
+        <small class="photo-hint">JPG ou PNG, max 2 Mo • Cliquer pour téléverser</small>
+        <small class="photo-error" *ngIf="editPhotoError">{{ editPhotoError }}</small>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="edit-lastName">Nom</label>
+          <input id="edit-lastName" type="text" formControlName="lastName" placeholder="Dubois" />
+          <span class="error-message" *ngIf="editMemberForm.get('lastName')?.invalid && (editMemberForm.get('lastName')?.dirty || editMemberForm.get('lastName')?.touched)">
             Nom requis
-          </div>
-        </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="gender" placeholder="Genre" />
-            <i class="pi pi-venus-mars"></i>
           </span>
-          <div *ngIf="editMemberForm.get('gender')?.invalid && (editMemberForm.get('gender')?.dirty || editMemberForm.get('gender')?.touched)" class="error-message">
+        </div>
+        <div class="form-field">
+          <label for="edit-firstName">Prénom</label>
+          <input id="edit-firstName" type="text" formControlName="firstName" placeholder="Marie" />
+          <span class="error-message" *ngIf="editMemberForm.get('firstName')?.invalid && (editMemberForm.get('firstName')?.dirty || editMemberForm.get('firstName')?.touched)">
+            Prénom requis
+          </span>
+        </div>
+        <div class="form-field">
+          <label for="edit-email">Email</label>
+          <input id="edit-email" type="email" formControlName="email" placeholder="marie.example@email.com" />
+        </div>
+        <div class="form-field">
+          <label for="edit-phone">Téléphone</label>
+          <input id="edit-phone" type="text" formControlName="phoneNumber" placeholder="+33 6 12 34 56 78" />
+        </div>
+        <div class="form-field">
+          <label for="edit-city">Ville</label>
+          <input id="edit-city" type="text" formControlName="city" placeholder="Hermon" />
+        </div>
+        <div class="form-field">
+          <label for="edit-gender">Genre</label>
+          <input id="edit-gender" type="text" formControlName="gender" placeholder="Femme" />
+          <span class="error-message" *ngIf="editMemberForm.get('gender')?.invalid && (editMemberForm.get('gender')?.dirty || editMemberForm.get('gender')?.touched)">
             Genre requis
-          </div>
-        </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <p-calendar 
-              formControlName="birthDate" 
-              placeholder="Date de naissance"
-              dateFormat="yy-mm-dd"
-              showIcon="true"
-              [showButtonBar]="true"
-              [monthNavigator]="true"
-              [yearNavigator]="true"
-              yearRange="1900:2100"
-            ></p-calendar>
-            <i class="pi pi-calendar"></i>
           </span>
-          <div *ngIf="editMemberForm.get('birthDate')?.invalid && (editMemberForm.get('birthDate')?.dirty || editMemberForm.get('birthDate')?.touched)" class="error-message">
+        </div>
+        <div class="form-field">
+          <label for="edit-birthDate">Date de naissance</label>
+          <p-calendar
+            inputId="edit-birthDate"
+            formControlName="birthDate"
+            placeholder="1990-05-15"
+            dateFormat="yy-mm-dd"
+            [showButtonBar]="true"
+            [monthNavigator]="true"
+            [yearNavigator]="true"
+            yearRange="1900:2100"
+          ></p-calendar>
+          <span class="error-message" *ngIf="editMemberForm.get('birthDate')?.invalid && (editMemberForm.get('birthDate')?.dirty || editMemberForm.get('birthDate')?.touched)">
             Date de naissance requise
-          </div>
-        </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="profession" placeholder="Profession" />
-            <i class="pi pi-briefcase"></i>
           </span>
-          <div *ngIf="editMemberForm.get('profession')?.invalid && (editMemberForm.get('profession')?.dirty || editMemberForm.get('profession')?.touched)" class="error-message">
-            Profession requise
-          </div>
         </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="phoneNumber" placeholder="Téléphone" />
-            <i class="pi pi-phone"></i>
-          </span>
-          <div *ngIf="editMemberForm.get('phoneNumber')?.invalid && (editMemberForm.get('phoneNumber')?.dirty || editMemberForm.get('phoneNumber')?.touched)" class="error-message">
-            Téléphone requis
-          </div>
-        </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="email" placeholder="Email" />
-            <i class="pi pi-envelope"></i>
-          </span>
-          <div *ngIf="editMemberForm.get('email')?.invalid && (editMemberForm.get('email')?.dirty || editMemberForm.get('email')?.touched)" class="error-message">
-            <span *ngIf="editMemberForm.get('email')?.errors?.['required']">Email requis</span>
-            <span *ngIf="editMemberForm.get('email')?.errors?.['email']">Format d'email invalide</span>
-          </div>
-        </div>
-        <div class="p-field p-col-12 p-md-6">
-          <span class="p-input-icon-right">
-            <input pInputText formControlName="city" placeholder="Ville" />
-            <i class="pi pi-map-marker"></i>
-          </span>
-          <div *ngIf="editMemberForm.get('city')?.invalid && (editMemberForm.get('city')?.dirty || editMemberForm.get('city')?.touched)" class="error-message">
-            Ville requise
-          </div>
+        <div class="form-field">
+          <label for="edit-profession">Profession</label>
+          <input id="edit-profession" type="text" formControlName="profession" placeholder="Enseignante" />
         </div>
       </div>
-      <div class="modal-footer-custom">
-        <button pButton type="button" class="p-button-danger wide-btn" icon="pi pi-ban" label="Annuler" (click)="onCancelEditMember()"></button>
-        <button pButton type="submit" class="p-button-success wide-btn" icon="pi pi-save" label="Enregistrer" (click)="onEditButtonClick()"></button>
+
+      <div class="form-actions">
+        <button type="button" class="btn-outline" (click)="onCancelEditMember()">Annuler</button>
+        <button type="submit" class="btn-gradient" (click)="onEditButtonClick()">
+          <i class="pi pi-check-circle"></i> Enregistrer
+        </button>
       </div>
+
+      <p class="form-note">Les modifications remplaceront la fiche existante du membre.</p>
     </form>
   </p-dialog>
 </div>
 
-<app-import-modal
-  [visible]="importModalVisible"
-  [previewData]="previewData"
-  [loading]="loading"
-  [progress]="progress"
-  (confirm)="startImport()"
-  (cancel)="importModalVisible = false"
-  [showSuccessMessage]="showSuccessMessage" 
-></app-import-modal>
-
-<app-invalid-modal
-  [visible]="invalidModalVisible"
-  [invalidRows]="invalidRows"
-  [total]="invalidRows.length"
-  (close)="invalidModalVisible = false"
-></app-invalid-modal>
+<app-import-wizard
+  [visible]="importWizardVisible"
+  [existingMembers]="memberList"
+  (closed)="importWizardVisible = false"
+  (imported)="loadMembers()"
+></app-import-wizard>
 
 <p-toast></p-toast>

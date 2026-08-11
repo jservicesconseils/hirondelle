@@ -66,6 +66,12 @@ const eventSchema = new Schema(
     name: String,
     /** Chaîne libre côté Java (format « JJ/MM/AAAA »), pas une date BSON. */
     date: String,
+    /**
+     * Heure de début « HH:mm ». Champ additif, absent de l'entité Java : Spring Data
+     * ignore les champs inconnus à la lecture, la reprise du service Java reste donc
+     * possible sans migration.
+     */
+    time: String,
     location: { type: eventLocationSchema, default: undefined },
     description: String,
     /** `private boolean isFree` → champ `isFree` en base, propriété JSON `free`. */
@@ -79,6 +85,10 @@ const eventSchema = new Schema(
     lastRegistrationDate: String,
     eventType: String,
     eventStatus: String,
+    // Champs additifs : Spring Data les ignore en lecture, le retour au service
+    // Java reste donc possible sans migration.
+    visibility: String,
+    groupId: String,
     files: { type: [embeddedEventFileSchema], default: undefined },
     mainPhotoId: String,
     _class: { type: String, default: EVENT_CLASS },

@@ -4,7 +4,7 @@ import { RippleModule } from 'primeng/ripple';
 import { FormsModule } from '@angular/forms';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { DropdownModule } from 'primeng/dropdown';
-import { EVENT_CATEGORIES } from '../../../model/model';
+import { EVENT_CATEGORIES } from '../../../shared/models/model';
 
 @Component({
     selector: 'hero-widget',

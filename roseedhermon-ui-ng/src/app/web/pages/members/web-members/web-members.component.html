@@ -1,0 +1,81 @@
+<app-public-header></app-public-header>
+
+<section class="members">
+  <div class="shell">
+    <header class="members-head">
+      <div>
+        <span class="kicker">Annuaire</span>
+        <h1>Les membres <em>de votre groupe</em></h1>
+        <p class="lead" *ngIf="selectedGroup as group">
+          {{ group.name }}<span *ngIf="group.city"> · {{ group.city }}</span>
+        </p>
+      </div>
+
+      <!-- Choix du groupe : proposé au super administrateur, rappelé aux autres -->
+      <div class="group-picker" *ngIf="groups.length">
+        <label *ngIf="canSwitchGroup">
+          <span>Groupe</span>
+          <select [(ngModel)]="selectedGroupId" (ngModelChange)="onGroupChange()">
+            <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
+          </select>
+        </label>
+
+        <span class="group-fixed" *ngIf="!canSwitchGroup && selectedGroup as group">
+          <i class="pi pi-sitemap"></i> {{ group.name }}
+        </span>
+      </div>
+    </header>
+
+    <!-- Recherche -->
+    <div class="toolbar" *ngIf="cards.length">
+      <label class="search">
+        <i class="pi pi-search"></i>
+        <input type="text" [(ngModel)]="query" placeholder="Nom, métier, ville, courriel…" />
+      </label>
+      <span class="count">{{ filtered.length }} {{ filtered.length > 1 ? 'membres' : 'membre' }}</span>
+    </div>
+
+    <p class="state" *ngIf="loading">Chargement de l'annuaire…</p>
+    <p class="state error" *ngIf="loadError">{{ loadError }}</p>
+
+    <p class="state" *ngIf="!loading && !loadError && !groups.length">
+      Aucun groupe ne vous est rattaché.
+    </p>
+
+    <p class="state" *ngIf="!loading && !loadError && groups.length && !cards.length">
+      Ce groupe ne compte encore aucun membre.
+    </p>
+
+    <p class="state" *ngIf="!loading && cards.length && !filtered.length">
+      Aucun membre ne correspond à cette recherche.
+    </p>
+
+    <div class="member-grid" *ngIf="shown.length">
+      <article class="member-card" *ngFor="let card of shown">
+        <span class="member-avatar" [style.background]="card.color">
+          <img *ngIf="card.photo" [src]="card.photo" [alt]="card.name" />
+          <ng-container *ngIf="!card.photo">{{ card.initials }}</ng-container>
+        </span>
+
+        <h3>{{ card.name }}</h3>
+        <span class="member-role" [class.is-admin]="card.role !== 'Membre'">{{ card.role }}</span>
+
+        <p class="member-job" *ngIf="card.profession">{{ card.profession }}</p>
+
+        <ul class="member-meta">
+          <li *ngIf="card.city"><i class="pi pi-map-marker"></i> {{ card.city }}</li>
+          <li *ngIf="card.email"><i class="pi pi-envelope"></i> {{ card.email }}</li>
+          <li *ngIf="card.phoneNumber"><i class="pi pi-phone"></i> {{ card.phoneNumber }}</li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="more" *ngIf="remaining">
+      <button type="button" (click)="loadMore()">
+        Charger plus <small>({{ remaining }} restants)</small>
+      </button>
+    </div>
+  </div>
+</section>
+
+<app-public-footer></app-public-footer>

@@ -1,0 +1,371 @@
+// Réservation mobile, sur la charte des pages publiques.
+@use '../../../web/styles/public-theme' as theme;
+
+:host {
+  display: block;
+  font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.reserve-screen {
+  min-height: 100%;
+  background: theme.$cream;
+  color: theme.$text;
+}
+
+/* ---------- Bandeau ---------- */
+
+.head {
+  padding: 1.1rem 1.15rem 1.5rem;
+  background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 62%, #3d78d6 100%);
+  color: #fff;
+
+  h1 {
+    margin: 0.55rem 0 1.1rem;
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #fff;
+  }
+}
+
+.round-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+
+  svg { width: 20px; height: 20px; }
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.eyebrow-bar {
+  display: block;
+  width: 28px;
+  height: 3px;
+  border-radius: 2px;
+  background: theme.$accent;
+}
+
+/* ---------- Étapes ---------- */
+
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.74rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  span {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 0.68rem;
+    font-weight: 800;
+  }
+
+  // Étape franchie : lisible, mais elle n'attire plus l'œil.
+  .is-done {
+    color: rgba(255, 255, 255, 0.85);
+
+    span { background: rgba(255, 255, 255, 0.32); }
+  }
+
+  // Étape courante : la seule en orange, la seule qui compte maintenant.
+  .is-current {
+    color: #fff;
+
+    span { background: theme.$accent; }
+  }
+}
+
+/* ---------- Corps ---------- */
+
+.body {
+  padding: 1.15rem 1.15rem 2rem;
+}
+
+.state {
+  margin: 3rem 0;
+  color: theme.$muted;
+  text-align: center;
+  font-size: 0.95rem;
+
+  &.is-error { color: #b00020; font-weight: 600; }
+}
+
+/* ---------- Rappel de l'événement ---------- */
+
+.recap {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid theme.$line;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(16, 28, 48, 0.07);
+}
+
+.recap-visual {
+  flex: 0 0 60px;
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.recap-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+
+  strong {
+    font-size: 1rem;
+    font-weight: 800;
+    color: theme.$ink;
+    line-height: 1.25;
+  }
+
+  span {
+    color: theme.$muted;
+    font-size: 0.82rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ---------- Panneaux ---------- */
+
+.panel {
+  padding: 1.1rem 1.05rem;
+  margin-bottom: 1rem;
+  border: 1px solid theme.$line;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(16, 28, 48, 0.06);
+
+  h2 {
+    margin: 0 0 0.9rem;
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: theme.$ink;
+  }
+}
+
+/* ---------- Champs ---------- */
+
+.field-row {
+  display: flex;
+  gap: 0.7rem;
+
+  .field { flex: 1 1 0; min-width: 0; }
+}
+
+.field {
+  display: block;
+  margin-bottom: 0.85rem;
+
+  &:last-child { margin-bottom: 0; }
+
+  > span {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: theme.$ink;
+    font-size: 0.82rem;
+    font-weight: 700;
+
+    small {
+      color: theme.$muted;
+      font-size: 0.74rem;
+      font-weight: 600;
+    }
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid theme.$line;
+    border-radius: 14px;
+    background: #fff;
+    color: theme.$text;
+    font-family: inherit;
+    // 16 px au moins : en dessous, iOS zoome à la mise au point du champ.
+    font-size: 1rem;
+    outline: none;
+
+    &::placeholder { color: #9aa8b9; }
+
+    &:focus {
+      border-color: theme.$accent;
+      box-shadow: 0 0 0 3px rgba(244, 85, 29, 0.14);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    line-height: 1.5;
+  }
+}
+
+.error,
+.hint {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.76rem;
+  font-style: normal;
+  line-height: 1.4;
+}
+
+.error { color: #b00020; font-weight: 700; }
+.hint { color: theme.$muted; }
+
+/* ---------- Places ---------- */
+
+/** Un pas à pas plutôt qu'une liste : la cible est large, et le chiffre est lisible. */
+.seats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4rem;
+  padding: 0.5rem 0;
+
+  button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid theme.$line;
+    border-radius: 50%;
+    background: #fff;
+    color: theme.$accent;
+
+    svg { width: 20px; height: 20px; }
+
+    &:disabled {
+      color: #c3ccd6;
+      background: #f6f8fb;
+    }
+  }
+}
+
+.seats-value {
+  min-width: 2.5rem;
+  text-align: center;
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: theme.$ink;
+  font-variant-numeric: tabular-nums;
+}
+
+.seats-note {
+  margin: 0.2rem 0 0.9rem;
+  color: theme.$muted;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* ---------- Total ---------- */
+
+.total {
+  padding: 1rem 1.05rem;
+  margin-bottom: 1rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
+  color: #fff;
+}
+
+.total-line {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.84rem;
+  margin-bottom: 0.35rem;
+}
+
+.total-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+
+  span {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  strong {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .is-free { color: #8ef0cd; }
+}
+
+/* ---------- Action ---------- */
+
+.cta {
+  display: block;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: theme.$accent;
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  box-shadow: 0 12px 26px rgba(244, 85, 29, 0.3);
+
+  &:active { background: theme.$accent-dark; }
+}
+
+.foot-note {
+  margin: 0.85rem 0 0;
+  color: theme.$muted;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  text-align: center;
+}

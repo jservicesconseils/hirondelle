@@ -4,8 +4,11 @@ import { Observable, map } from 'rxjs';
 import { EventDTO } from '../api/model/eventDTO';
 import { EventRegistrationDTO } from '../api/model/eventRegistrationDTO';
 import { EventFeedbackDTO } from '../api/model/eventFeedbackDTO';
+import { environment } from '../../../../environments/environment';
 
-const BASE_PATH = 'http://localhost:8081/api/v1/events';
+// Tous les appels passent par la passerelle : une URL en dur casserait les
+// paquets iOS et Android, où « localhost » désigne le téléphone.
+const BASE_PATH = `${environment.host}/api/v1/events`;
 
 @Injectable({
   providedIn: 'root'

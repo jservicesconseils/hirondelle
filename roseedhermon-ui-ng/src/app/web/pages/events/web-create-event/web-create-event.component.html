@@ -1,0 +1,248 @@
+<app-public-header></app-public-header>
+
+<section class="create">
+  <div class="shell">
+    <header class="create-head">
+      <a class="back" routerLink="/web"><i class="pi pi-arrow-left"></i> Retour à l'accueil</a>
+      <span class="kicker">Organisateurs</span>
+      <h1>Créer un <em>événement</em></h1>
+      <p class="lead">
+        Un événement public est visible de tous et se crée sans compte. Un événement
+        réservé à un groupe demande une session d'administration.
+      </p>
+    </header>
+
+    <form class="create-grid" (ngSubmit)="submit()" novalidate>
+      <div class="create-main">
+        <!-- Visibilité : le choix qui conditionne tout le reste -->
+        <article class="panel">
+          <h2>Qui peut le voir ?</h2>
+
+          <div class="choices">
+            <button
+              type="button"
+              class="choice"
+              [class.is-active]="visibility === 'PUBLIC'"
+              (click)="chooseVisibility('PUBLIC')">
+              <span class="choice-icon public"><i class="pi pi-globe"></i></span>
+              <span class="choice-text">
+                <strong>Public</strong>
+                <small>Visible de tout le monde sur le site. Aucun compte requis.</small>
+              </span>
+              <i class="pi pi-check-circle" *ngIf="visibility === 'PUBLIC'"></i>
+            </button>
+
+            <button
+              type="button"
+              class="choice"
+              [class.is-active]="visibility === 'PRIVATE'"
+              [class.is-locked]="!canCreatePrivate"
+              [disabled]="!canCreatePrivate"
+              (click)="chooseVisibility('PRIVATE')">
+              <span class="choice-icon private"><i class="pi pi-lock"></i></span>
+              <span class="choice-text">
+                <strong>Réservé à mon groupe</strong>
+                <small *ngIf="canCreatePrivate">Seuls les membres de votre groupe le verront.</small>
+                <small *ngIf="!canCreatePrivate">Réservé aux administrateurs de groupe.</small>
+              </span>
+              <i class="pi pi-check-circle" *ngIf="visibility === 'PRIVATE'"></i>
+            </button>
+          </div>
+
+          <p class="locked-note" *ngIf="!canCreatePrivate">
+            <i class="pi pi-info-circle"></i>
+            <span>
+              Vous n'êtes pas connecté comme administrateur de groupe.
+              <a routerLink="/login" [queryParams]="{ redirect: '/web/creer-un-evenement' }">Se connecter</a>
+              pour créer un événement privé.
+            </span>
+          </p>
+        </article>
+
+        <!-- L'essentiel -->
+        <article class="panel">
+          <h2>L'essentiel</h2>
+
+          <label class="field">
+            <span>Nom de l'événement</span>
+            <input type="text" name="name" [(ngModel)]="name" placeholder="Ex. Atelier de rentrée" />
+            <em class="error" *ngIf="touched && !nameValid">Donnez un nom d'au moins 3 caractères.</em>
+          </label>
+
+          <div class="field-row">
+            <label class="field">
+              <span>Catégorie</span>
+              <select name="category" [(ngModel)]="category">
+                <option value="" disabled>Choisissez une catégorie</option>
+                <option *ngFor="let entry of categories" [value]="entry.label">{{ entry.label }}</option>
+              </select>
+              <em class="error" *ngIf="touched && !categoryValid">Choisissez une catégorie.</em>
+            </label>
+
+            <label class="field">
+              <span>Durée <small>en jours, facultatif</small></span>
+              <input type="number" name="numberOfDays" min="1" [(ngModel)]="numberOfDays" />
+            </label>
+          </div>
+
+          <div class="field-row">
+            <label class="field">
+              <span>Date</span>
+              <input
+                type="text"
+                name="date"
+                inputmode="numeric"
+                placeholder="JJ/MM/AAAA"
+                [ngModel]="date"
+                (ngModelChange)="onDateInput($event)" />
+              <em class="error" *ngIf="touched && !dateValid">Indiquez une date au format JJ/MM/AAAA.</em>
+            </label>
+
+            <label class="field">
+              <span>Heure <small>facultatif</small></span>
+              <input type="time" name="time" [(ngModel)]="time" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Description <small>facultatif</small></span>
+            <textarea
+              name="description"
+              rows="5"
+              [(ngModel)]="description"
+              placeholder="Ce qui attend les participants, le déroulement, ce qu'il faut apporter…"></textarea>
+          </label>
+        </article>
+
+        <!-- Le lieu -->
+        <article class="panel">
+          <h2>Le lieu</h2>
+
+          <div class="field-row">
+            <label class="field">
+              <span>Nom du lieu</span>
+              <input type="text" name="placeName" [(ngModel)]="placeName" placeholder="Ex. Centre communautaire" />
+            </label>
+
+            <label class="field">
+              <span>Ville</span>
+              <input type="text" name="city" [(ngModel)]="city" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Adresse</span>
+            <input type="text" name="address" [(ngModel)]="address" />
+          </label>
+
+          <div class="field-row">
+            <label class="field">
+              <span>Code postal</span>
+              <input type="text" name="postalCode" [(ngModel)]="postalCode" />
+            </label>
+
+            <label class="field">
+              <span>Pays</span>
+              <input type="text" name="country" [(ngModel)]="country" />
+            </label>
+          </div>
+        </article>
+
+        <!-- Billetterie -->
+        <article class="panel">
+          <h2>Billetterie</h2>
+
+          <div class="choices">
+            <button type="button" class="choice" [class.is-active]="free" (click)="free = true">
+              <span class="choice-icon free"><i class="pi pi-heart"></i></span>
+              <span class="choice-text">
+                <strong>Gratuit</strong>
+                <small>Le billet est délivré aussitôt après la réservation.</small>
+              </span>
+              <i class="pi pi-check-circle" *ngIf="free"></i>
+            </button>
+
+            <button type="button" class="choice" [class.is-active]="!free" (click)="free = false">
+              <span class="choice-icon paid"><i class="pi pi-dollar"></i></span>
+              <span class="choice-text">
+                <strong>Payant</strong>
+                <small>Le paiement est demandé avant la délivrance du billet.</small>
+              </span>
+              <i class="pi pi-check-circle" *ngIf="!free"></i>
+            </button>
+          </div>
+
+          <div class="field-row">
+            <label class="field" *ngIf="!free">
+              <span>Prix par place ($)</span>
+              <input type="number" name="amount" min="1" [(ngModel)]="amount" />
+              <em class="error" *ngIf="touched && !amountValid">Indiquez un montant supérieur à zéro.</em>
+            </label>
+
+            <label class="field">
+              <span>Places disponibles <small>facultatif</small></span>
+              <input type="number" name="availableSeats" min="1" [(ngModel)]="availableSeats" />
+              <em class="hint">Laissé vide, le nombre de places n'est pas limité.</em>
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Clôture des inscriptions <small>facultatif</small></span>
+            <input
+              type="text"
+              name="lastRegistrationDate"
+              inputmode="numeric"
+              placeholder="JJ/MM/AAAA"
+              [ngModel]="lastRegistrationDate"
+              (ngModelChange)="onDeadlineInput($event)" />
+          </label>
+        </article>
+      </div>
+
+      <!-- Aperçu de la carte telle qu'elle paraîtra -->
+      <aside class="preview">
+        <div class="preview-card">
+          <span class="preview-label">Aperçu</span>
+
+          <div class="preview-visual" [style.background]="style.gradient">
+            <img [src]="style.illustration" alt="" />
+            <span class="preview-date">
+              <strong>{{ dayLabel }}</strong>
+              <small>{{ monthLabel }}</small>
+            </span>
+            <span class="preview-private" *ngIf="visibility === 'PRIVATE'">
+              <i class="pi pi-lock"></i> Groupe
+            </span>
+          </div>
+
+          <div class="preview-body">
+            <span class="tag" *ngIf="category" [style.background]="style.tint" [style.color]="style.color">
+              {{ category }}
+            </span>
+            <h3>{{ name || 'Nom de votre événement' }}</h3>
+
+            <p class="preview-meta" *ngIf="placeLabel"><i class="pi pi-map-marker"></i> {{ placeLabel }}</p>
+            <p class="preview-meta" *ngIf="time"><i class="pi pi-clock"></i> {{ time }}</p>
+            <p class="preview-meta" *ngIf="availableSeats"><i class="pi pi-users"></i> {{ availableSeats }} places</p>
+
+            <div class="preview-foot">
+              <span class="price">{{ priceLabel }}</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="error block" *ngIf="submitError">{{ submitError }}</p>
+
+        <button type="submit" class="cta cta-block" [disabled]="submitting">
+          {{ submitting ? 'Publication…' : 'Publier l\'événement' }}
+        </button>
+
+        <p class="preview-note">
+          L'événement est publié immédiatement et apparaît sur la page d'accueil.
+        </p>
+      </aside>
+    </form>
+  </div>
+</section>
+
+<app-public-footer></app-public-footer>

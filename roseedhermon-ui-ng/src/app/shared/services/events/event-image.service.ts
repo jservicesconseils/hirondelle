@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
-import { EventDTO } from '../../../api/model/eventDTO';
-import { EventFileDTO } from '../../../api/model/eventFileDTO';
+import { EventDTO } from '../api/model/eventDTO';
+import { EventFileDTO } from '../api/model/eventFileDTO';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EventImageService {
-  private baseUrl = 'http://localhost:8081/api/v1/files/events';
+  // Les fichiers passent par la passerelle, comme tous les autres appels de l'application.
+  private baseUrl = `${environment.host}/api/v1/files/events`;
   private localFallbackImages = [
     'assets/images/placeholder-event-1.jpg',
     'assets/images/placeholder-event-2.jpg',

@@ -1,13 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { AgGridModule } from 'ag-grid-angular';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { AutoCompleteModule } from 'primeng/autocomplete';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
-import { ClientSideRowModelModule, ColDef, ModuleRegistry, GridOptions, DomLayoutType, PaginationModule } from 'ag-grid-community';
 import { Member } from '../../../../shared/services/api/model/member';
 import { MemberService } from '../../../../shared/services/members/members.service';
 import { MessageService } from 'primeng/api';
@@ -15,13 +12,25 @@ import { ToastModule } from 'primeng/toast';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 
-import { ImportContactComponent } from '../import-contact/import-contact.component';
-import { ImportModalComponent } from '../import-modal/import-modal.component';
-import { InvalidModalComponent } from '../invalid-modal/invalid-modal.component';
+import { ImportWizardComponent } from '../import-wizard/import-wizard.component';
 import { DetailMemberComponent } from '../detail-member/detail-member.component';
 import { CalendarModule } from 'primeng/calendar';
 
-ModuleRegistry.registerModules([ClientSideRowModelModule, PaginationModule]);
+/** Colonnes de la maquette qui n'existent pas telles quelles dans `Member`, précalculées. */
+interface MemberRow {
+  member: Member;
+  initials: string;
+  fullName: string;
+  email: string;
+  cityLabel: string;
+  role: string;
+  /** Date d'ajout : l'`ObjectId` MongoDB porte l'horodatage de création sur ses 4 premiers octets. */
+  addedAt: Date | null;
+  active: boolean;
+}
+
+type SortKey = 'firstName' | 'lastName' | 'city' | 'addedAt';
+const PAGE_SIZE = 6;
 
 @Component({
   selector: 'app-list-member',
@@ -31,16 +40,12 @@ ModuleRegistry.registerModules([ClientSideRowModelModule, PaginationModule]);
   imports: [
     CommonModule,
     HttpClientModule,
-    AgGridModule,
     ButtonModule,
     DialogModule,
     InputTextModule,
-    AutoCompleteModule,
     ReactiveFormsModule,
     FormsModule,
-    ImportContactComponent,
-    ImportModalComponent,
-    InvalidModalComponent,
+    ImportWizardComponent,
     DetailMemberComponent,
     CalendarModule,
     ToastModule
@@ -49,159 +54,38 @@ ModuleRegistry.registerModules([ClientSideRowModelModule, PaginationModule]);
 })
 export class ListMemberComponent implements OnInit, OnDestroy {
   memberList: Member[] = [];
-  previewData: Member[] = [];
-  invalidRows: any[] = [];
-  paginationPageSize = 15;
+  rows: MemberRow[] = [];
+  filteredRows: MemberRow[] = [];
 
-  showSuccessMessage = false;
   selectedMember: Member | null = null;
   showDetailPanel = false;
 
-  // Modal d'ajout de membre
+  // Barre d'outils
+  globalSearch = '';
+  sortKey: SortKey = 'firstName';
+  sortDescending = false;
+  viewMode: 'grid' | 'table' = 'table';
+
+  // Pagination du tableau (et des cartes, qui affichent la même page)
+  readonly pageSize = PAGE_SIZE;
+  currentPage = 0;
+
+  // Modales
   addMemberDialogVisible = false;
   addMemberForm: FormGroup;
-
-  // Modal d'édition de membre
   editMemberDialogVisible = false;
   editMemberForm: FormGroup;
   memberBeingEdited: Member | null = null;
+  importWizardVisible = false;
 
-  // Filtres autocomplete avec debounce
-  firstNameFilter: string = '';
-  lastNameFilter: string = '';
-  phoneFilter: string = '';
-  firstNameSuggestions: string[] = [];
-  lastNameSuggestions: string[] = [];
-  phoneSuggestions: string[] = [];
-  filteredMemberList: Member[] = [];
+  /** Aperçu de la photo choisie, en data URL : c'est aussi ce qui part à l'API. */
+  photoPreview: string | null = null;
+  photoError = '';
+  editPhotoPreview: string | null = null;
+  editPhotoError = '';
 
-  // Subject pour le debounce
   private filterSubject = new Subject<void>();
   private destroy$ = new Subject<void>();
-
-  columnDefs: ColDef<Member>[] = [
-    { 
-      headerName: 'Numéro',
-      width: 80,
-      cellRenderer: (params: any) => {
-        const page = params.api.paginationGetCurrentPage?.() || 0;
-        const pageSize = params.api.paginationGetPageSize?.() || 15;
-        const displayNumber = (page * pageSize) + (params.node.rowIndex ?? 0) + 1;
-        return `
-          <span class="icon-cell">
-            <i class="pi pi-hashtag" style="color:#6c757d; margin-right:6px;"></i>${displayNumber}
-          </span>
-        `;
-      }
-    },
-    { 
-      field: 'id', 
-      headerName: 'ID',
-      width: 120,
-      hide: true,
-      cellRenderer: (params: any) => `
-        <span class="icon-cell">
-          <i class="pi pi-key" style="color:#2e31a4; margin-right:6px;"></i>${params.value || 'N/A'}
-        </span>
-      `
-    },
-    { 
-      field: 'firstName', 
-      headerName: 'Prénom',
-      cellRenderer: (params: any) => `
-        <span class="icon-cell">
-          <i class="pi pi-user" style="color:#2e31a4; margin-right:6px;"></i>${params.value}
-        </span>
-      `
-    },
-    { 
-      field: 'lastName', 
-      headerName: 'Nom',
-      cellRenderer: (params: any) => `
-        <span class="icon-cell">
-          <i class="pi pi-id-card" style="color:#3f51b5; margin-right:6px;"></i>${params.value}
-        </span>
-      `
-    },
-    { 
-      field: 'gender', 
-      headerName: 'Genre',
-      cellRenderer: (params: any) => `
-        <span class="icon-cell">
-          <i class="pi pi-venus-mars" style="color:#4caf50; margin-right:6px;"></i>${params.value}
-        </span>
-      `
-    },
-    { 
-      field: 'birthDate', 
-      headerName: 'Date de naissance',
-      cellRenderer: (params: any) => {
-        const date = new Date(params.value);
-        return `
-          <span class="icon-cell">
-            <i class="pi pi-calendar" style="color:#ff9800; margin-right:6px;"></i>${date.toLocaleDateString('fr-FR')}
-          </span>
-        `;
-      }
-    },
-    { 
-      field: 'profession', 
-      headerName: 'Profession',
-      cellRenderer: (params: any) => `
-        <span class="icon-cell">
-          <i class="pi pi-briefcase" style="color:#9c27b0; margin-right:6px;"></i>${params.value}
-        </span>
-      `
-    },
-    { 
-      field: 'phoneNumber', 
-      headerName: 'Téléphone',
-      cellRenderer: (params: any) => `
-        <span class="icon-cell">
-          <i class="pi pi-phone" style="color:#2196f3; margin-right:6px;"></i>${params.value}
-        </span>
-      `
-    },
-    { 
-      field: 'email', 
-      headerName: 'Email',
-      cellRenderer: (params: any) => `
-        <span class="icon-cell">
-          <i class="pi pi-envelope" style="color:#f44336; margin-right:6px;"></i>${params.value}
-        </span>
-      `
-    },
-    { 
-      field: 'city', 
-      headerName: 'Ville',
-      cellRenderer: (params: any) => `
-        <span class="icon-cell">
-          <i class="pi pi-map-marker" style="color:#607d8b; margin-right:6px;"></i>${params.value}
-        </span>
-      `
-    }
-  ];
-  defaultColDef = {
-    sortable: true,
-    filter: true,
-    resizable: true
-  };
-
-  gridOptions: GridOptions<Member> = {
-    suppressColumnVirtualisation: true,
-    suppressRowVirtualisation: false,
-    suppressHorizontalScroll: true,
-    domLayout: 'normal' as DomLayoutType,
-    pagination: true,
-    paginationPageSize: 15,
-    paginationAutoPageSize: false,
-    paginationPageSizeSelector: false
-  };
-
-  importModalVisible = false;
-  invalidModalVisible = false;
-  progress = 0;
-  loading = false;
 
   constructor(
     private memberService: MemberService,
@@ -217,7 +101,8 @@ export class ListMemberComponent implements OnInit, OnDestroy {
       profession: [''],
       phoneNumber: [''],
       email: [''],
-      city: ['']
+      city: [''],
+      photo: ['']
     });
 
     this.editMemberForm = this.fb.group({
@@ -228,45 +113,70 @@ export class ListMemberComponent implements OnInit, OnDestroy {
       profession: [''],
       phoneNumber: [''],
       email: [''],
-      city: ['']
+      city: [''],
+      photo: ['']
     });
 
-    // Configuration du debounce pour le filtrage en temps réel
     this.filterSubject.pipe(
-      debounceTime(300), // 300ms de délai
+      debounceTime(300),
       takeUntil(this.destroy$)
-    ).subscribe(() => {
-      this.applyFilters();
-    });
+    ).subscribe(() => this.applyFilters());
   }
 
   ngOnInit(): void {
     this.loadMembers();
   }
 
-  onGridReady(params: any) {
-    // Force la configuration de pagination après l'initialisation du grid
-    setTimeout(() => {
-      params.api.paginationSetPageSize(15);
-      params.api.paginationGoToPage(0);
-    }, 100);
+  // --- Statistiques de l'entête -------------------------------------------------
+
+  get totalMembers(): number {
+    return this.rows.length;
   }
+
+  /** Villes distinctes réellement renseignées sur les fiches. */
+  get citiesCount(): number {
+    return this.cityCounts().size;
+  }
+
+  /** Ville la plus représentée, avec son effectif. */
+  get topCity(): string {
+    const counts = [...this.cityCounts().entries()].sort((a, b) => b[1] - a[1]);
+    return counts.length ? `${counts[0][0]} (${counts[0][1]})` : '—';
+  }
+
+  private cityCounts(): Map<string, number> {
+    const counts = new Map<string, number>();
+    this.rows.forEach((row) => {
+      const city = (row.member.city || '').trim();
+      if (city) counts.set(city, (counts.get(city) || 0) + 1);
+    });
+    return counts;
+  }
+
+  get newMembers(): number {
+    const now = new Date();
+    return this.rows.filter((row) =>
+      row.addedAt &&
+      row.addedAt.getFullYear() === now.getFullYear() &&
+      row.addedAt.getMonth() === now.getMonth()
+    ).length;
+  }
+
+  get currentMonthLabel(): string {
+    return new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  }
+
+  // --- Chargement ---------------------------------------------------------------
 
   loadMembers() {
     this.memberService.getMembers().subscribe({
       next: (data) => {
         this.memberList = data;
-        this.filteredMemberList = [...data];
-        this.updateSuggestions();
+        this.rows = data.map((member) => this.toRow(member));
+        this.applyFilters();
       },
       error: (err) => {
         console.error('Erreur lors du chargement des membres', err);
-        console.error('Détails de l\'erreur:', {
-          status: err.status,
-          statusText: err.statusText,
-          message: err.message,
-          url: err.url
-        });
         this.messageService.add({
           severity: 'error',
           summary: '❌ Erreur de connexion',
@@ -279,9 +189,165 @@ export class ListMemberComponent implements OnInit, OnDestroy {
     });
   }
 
-  onRowClicked(event: any) {
-    this.selectedMember = event.data;
+  private toRow(member: Member): MemberRow {
+    const first = (member.firstName || '').trim();
+    const last = (member.lastName || '').trim();
+    const roles = (member as any).roles as string[] | undefined;
+
+    return {
+      member,
+      initials: `${first.charAt(0)}${last.charAt(0)}`.toUpperCase() || '?',
+      fullName: `${first} ${last}`.trim() || 'Sans nom',
+      email: member.email || '—',
+      cityLabel: member.city ? `${member.city}, France` : '—',
+      role: roles?.length ? this.humanizeRole(roles[0]) : (member.profession || 'Membre'),
+      addedAt: this.creationDate(member.id),
+      active: true
+    };
+  }
+
+  private humanizeRole(role: string): string {
+    const label = role.toLowerCase().replace(/_/g, ' ');
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  /** Les 8 premiers caractères d'un `ObjectId` sont l'horodatage de création, en secondes. */
+  private creationDate(id?: string): Date | null {
+    if (!id || !/^[0-9a-f]{24}$/i.test(id)) return null;
+    return new Date(parseInt(id.substring(0, 8), 16) * 1000);
+  }
+
+  // --- Recherche, tri, pagination -----------------------------------------------
+
+  onGlobalSearchChange() {
+    this.filterSubject.next();
+  }
+
+  setSortKey(key: SortKey) {
+    if (this.sortKey === key) {
+      this.sortDescending = !this.sortDescending;
+    } else {
+      this.sortKey = key;
+      this.sortDescending = key === 'addedAt';
+    }
+    this.applyFilters();
+  }
+
+  setViewMode(mode: 'grid' | 'table') {
+    this.viewMode = mode;
+  }
+
+  applyFilters() {
+    const query = this.globalSearch?.toLowerCase().trim() || '';
+
+    const filtered = this.rows.filter((row) => {
+      if (!query) return true;
+      const haystack = [
+        row.fullName,
+        row.member.email,
+        row.member.city,
+        row.member.phoneNumber,
+        row.member.profession
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+
+    this.filteredRows = filtered.sort((a, b) => this.compareRows(a, b));
+    this.currentPage = Math.min(this.currentPage, Math.max(0, this.totalPages - 1));
+  }
+
+  private compareRows(a: MemberRow, b: MemberRow): number {
+    const direction = this.sortDescending ? -1 : 1;
+
+    if (this.sortKey === 'addedAt') {
+      return direction * ((a.addedAt?.getTime() ?? 0) - (b.addedAt?.getTime() ?? 0));
+    }
+
+    const value = (row: MemberRow) =>
+      (this.sortKey === 'firstName' ? row.member.firstName
+        : this.sortKey === 'lastName' ? row.member.lastName
+        : row.member.city) || '';
+
+    return direction * value(a).localeCompare(value(b), 'fr', { sensitivity: 'base' });
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredRows.length / this.pageSize));
+  }
+
+  get pagedRows(): MemberRow[] {
+    const start = this.currentPage * this.pageSize;
+    return this.filteredRows.slice(start, start + this.pageSize);
+  }
+
+  /** Fenêtre de 5 numéros de page, comme sur la maquette. */
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const start = Math.max(0, Math.min(this.currentPage - 2, total - 5));
+    return Array.from({ length: Math.min(5, total) }, (_, index) => start + index);
+  }
+
+  get rangeStart(): number {
+    return this.filteredRows.length === 0 ? 0 : this.currentPage * this.pageSize + 1;
+  }
+
+  get rangeEnd(): number {
+    return Math.min((this.currentPage + 1) * this.pageSize, this.filteredRows.length);
+  }
+
+  goToPage(page: number) {
+    this.currentPage = Math.max(0, Math.min(page, this.totalPages - 1));
+  }
+
+  nextPage() {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  previousPage() {
+    this.goToPage(this.currentPage - 1);
+  }
+
+  // --- Actions de la maquette ----------------------------------------------------
+
+  openMember(row: MemberRow) {
+    this.selectedMember = row.member;
     this.showDetailPanel = true;
+  }
+
+  sendMessage(row: MemberRow) {
+    if (row.member.email) {
+      window.location.href = `mailto:${row.member.email}`;
+    }
+  }
+
+  exportCsv() {
+    const header = ['Prénom', 'Nom', 'Genre', 'Date de naissance', 'Profession', 'Téléphone', 'Email', 'Ville'];
+    const lines = this.filteredRows.map((row) => [
+      row.member.firstName,
+      row.member.lastName,
+      row.member.gender,
+      row.member.birthDate,
+      row.member.profession,
+      row.member.phoneNumber,
+      row.member.email,
+      row.member.city
+    ]);
+
+    // Le point-virgule et le BOM sont ce qu'Excel en français attend.
+    const csv = [header, ...lines]
+      .map((cells) => cells.map((cell) => `"${(cell ?? '').toString().replace(/"/g, '""')}"`).join(';'))
+      .join('\r\n');
+
+    const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'membres.csv';
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   closeDetailPanel() {
@@ -291,8 +357,6 @@ export class ListMemberComponent implements OnInit, OnDestroy {
 
   editMember() {
     if (this.selectedMember) {
-      console.log('Membre sélectionné pour modification:', this.selectedMember);
-      console.log('ID du membre:', this.selectedMember.id);
       this.editMemberForm.patchValue({
         firstName: this.selectedMember.firstName || '',
         lastName: this.selectedMember.lastName || '',
@@ -301,14 +365,15 @@ export class ListMemberComponent implements OnInit, OnDestroy {
         profession: this.selectedMember.profession || '',
         phoneNumber: this.selectedMember.phoneNumber || '',
         email: this.selectedMember.email || '',
-        city: this.selectedMember.city || ''
+        city: this.selectedMember.city || '',
+        photo: this.selectedMember.photo || ''
       });
+      this.editPhotoPreview = this.selectedMember.photo || null;
+      this.editPhotoError = '';
       this.cdr.detectChanges();
-      console.log('editMemberForm status:', this.editMemberForm.status, this.editMemberForm.value);
       this.editMemberDialogVisible = true;
       this.memberBeingEdited = this.selectedMember;
     } else {
-      console.error('Aucun membre sélectionné pour la modification');
       this.messageService.add({
         severity: 'error',
         summary: '❌ Erreur',
@@ -327,89 +392,124 @@ export class ListMemberComponent implements OnInit, OnDestroy {
   }
 
   onEditButtonClick() {
-    console.log('Bouton Enregistrer cliqué');
-    console.log('Appel de onEditMemberSubmit depuis le bouton...');
     this.onEditMemberSubmit();
   }
 
   onEditMemberSubmit() {
-    console.log('=== DÉBUT onEditMemberSubmit ===');
-    console.log('memberBeingEdited:', this.memberBeingEdited);
-    console.log('editMemberForm.value:', this.editMemberForm.value);
-    console.log('editMemberForm.status:', this.editMemberForm.status);
-    console.log('editMemberForm.valid:', this.editMemberForm.valid);
-    console.log('editMemberForm.errors:', this.editMemberForm.errors);
     this.editMemberForm.updateValueAndValidity();
     this.cdr.detectChanges();
-    console.log('SUBMIT: editMemberForm status:', this.editMemberForm.status, 'ID:', this.memberBeingEdited?.id, 'Form values:', this.editMemberForm.value);
-    if (this.editMemberForm.valid) {
-      if (!this.memberBeingEdited || !this.memberBeingEdited.id) {
-        console.error('Aucun membre sélectionné ou ID manquant pour la modification');
-        console.error('memberBeingEdited:', this.memberBeingEdited);
-        if (this.memberBeingEdited) {
-          console.error('ID du membre:', this.memberBeingEdited.id);
-        }
+
+    if (!this.editMemberForm.valid) {
+      console.warn('Formulaire invalide à la soumission', this.editMemberForm.errors, this.editMemberForm.value);
+      return;
+    }
+
+    if (!this.memberBeingEdited || !this.memberBeingEdited.id) {
+      this.messageService.add({
+        severity: 'error',
+        summary: '❌ Erreur',
+        detail: 'Impossible de modifier : aucun membre sélectionné',
+        life: 5000,
+        closable: true,
+        key: 'memberEditErrorToast'
+      });
+      return;
+    }
+
+    const updatedMember: Member = {
+      ...this.memberBeingEdited,
+      ...this.editMemberForm.value,
+      birthDate: this.editMemberForm.value.birthDate
+        ? this.editMemberForm.value.birthDate.toISOString().split('T')[0]
+        : null
+    };
+
+    this.memberService.updateMember(updatedMember).subscribe({
+      next: () => {
+        this.editMemberDialogVisible = false;
+        this.memberBeingEdited = null;
+        this.loadMembers();
+        this.messageService.add({
+          severity: 'success',
+          summary: '✅ Modification réussie',
+          detail: `Le membre ${updatedMember.firstName} ${updatedMember.lastName} a été modifié avec succès`,
+          life: 5000,
+          closable: true,
+          key: 'memberEditToast'
+        });
+      },
+      error: (err) => {
+        console.error('Erreur lors de la mise à jour:', err);
         this.messageService.add({
           severity: 'error',
           summary: '❌ Erreur',
-          detail: 'Impossible de modifier : aucun membre sélectionné',
+          detail: 'Erreur lors de la modification du membre',
           life: 5000,
           closable: true,
           key: 'memberEditErrorToast'
         });
-        return;
       }
-      console.log('Formulaire valide, mise à jour du membre...');
-      console.log('ID du membre à modifier:', this.memberBeingEdited.id);
-      const updatedMember: Member = {
-        ...this.memberBeingEdited,
-        ...this.editMemberForm.value,
-        birthDate: this.editMemberForm.value.birthDate ? this.editMemberForm.value.birthDate.toISOString().split('T')[0] : null
-      };
-      console.log('Membre mis à jour avec ID:', updatedMember.id);
-      console.log('updatedMember:', updatedMember);
-      this.memberService.updateMember(updatedMember).subscribe({
-        next: () => {
-          console.log('Mise à jour réussie');
-          this.editMemberDialogVisible = false;
-          this.memberBeingEdited = null;
-          this.loadMembers();
-          this.messageService.add({
-            severity: 'success',
-            summary: '✅ Modification réussie',
-            detail: `Le membre ${updatedMember.firstName} ${updatedMember.lastName} a été modifié avec succès`,
-            life: 5000,
-            closable: true,
-            key: 'memberEditToast'
-          });
-        },
-        error: (err) => {
-          console.error('Erreur lors de la mise à jour:', err);
-          this.messageService.add({
-            severity: 'error',
-            summary: '❌ Erreur',
-            detail: 'Erreur lors de la modification du membre',
-            life: 5000,
-            closable: true,
-            key: 'memberEditErrorToast'
-          });
-          console.error(err);
-        }
-      });
-    } else {
-      console.warn('Formulaire invalide à la soumission', this.editMemberForm.errors, this.editMemberForm.value);
-    }
-    console.log('=== FIN onEditMemberSubmit ===');
+    });
   }
 
-  // Modal d'ajout de membre
   showAddMemberDialog() {
     this.addMemberDialogVisible = true;
     this.addMemberForm.reset();
+    this.photoPreview = null;
+    this.photoError = '';
   }
 
   onCancelAddMember() {
     this.addMemberDialogVisible = false;
+  }
+
+  onPhotoSelected(event: Event) {
+    this.photoError = '';
+    this.readPhoto(
+      event,
+      (dataUrl) => {
+        this.photoPreview = dataUrl;
+        this.addMemberForm.patchValue({ photo: dataUrl });
+      },
+      (message) => (this.photoError = message)
+    );
+  }
+
+  onEditPhotoSelected(event: Event) {
+    this.editPhotoError = '';
+    this.readPhoto(
+      event,
+      (dataUrl) => {
+        this.editPhotoPreview = dataUrl;
+        this.editMemberForm.patchValue({ photo: dataUrl });
+      },
+      (message) => (this.editPhotoError = message)
+    );
+  }
+
+  /** La photo est conservée en data URL : le champ `photo` de l'API est une chaîne. */
+  private readPhoto(event: Event, apply: (dataUrl: string) => void, fail: (message: string) => void) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    if (!/^image\/(png|jpe?g)$/i.test(file.type)) {
+      fail('Formats acceptés : JPG ou PNG.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      fail('Image trop lourde : 2 Mo maximum.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => fail('La photo n\'a pas pu être lue.');
+    reader.onload = () => {
+      apply(String(reader.result));
+      this.cdr.detectChanges();
+    };
+    reader.readAsDataURL(file);
   }
 
   onAddMemberSubmit() {
@@ -436,49 +536,6 @@ export class ListMemberComponent implements OnInit, OnDestroy {
     }
   }
 
-  handleValidRows(validRows: Member[]) {
-    this.previewData = validRows;
-    this.importModalVisible = true;
-  }
-
-  handleInvalidRows(invalidRows: any[]) {
-    this.invalidRows = invalidRows;
-    this.invalidModalVisible = true;
-  }
-
-  startImport() {
-    this.loading = true;
-    this.progress = 0;
-    this.showSuccessMessage = false;
-
-    const total = this.previewData.length;
-    let completed = 0;
-
-    const importNext = () => {
-      if (completed >= total) {
-        this.loading = false;
-        this.progress = 100;
-        this.showSuccessMessage = true;
-        this.loadMembers();
-        return;
-      }
-      this.memberService.createMember(this.previewData[completed]).subscribe({
-        next: () => {
-          completed++;
-          this.progress = Math.round((completed / total) * 100);
-          importNext();
-        },
-        error: (err) => {
-          console.error(`Erreur d'import à la ligne ${completed + 1}`, err);
-          completed++;
-          this.progress = Math.round((completed / total) * 100);
-          importNext();
-        }
-      });
-    };
-    importNext();
-  }
-
   onSaveMember(updatedMember: Member) {
     this.memberService.updateMember(updatedMember).subscribe({
       next: () => {
@@ -497,97 +554,7 @@ export class ListMemberComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Méthodes de filtrage autocomplete avec debounce
-  updateSuggestions() {
-    const uniqueFirstNames = [...new Set(this.memberList.map(m => m.firstName).filter((name): name is string => Boolean(name)))];
-    const uniqueLastNames = [...new Set(this.memberList.map(m => m.lastName).filter((name): name is string => Boolean(name)))];
-    const uniquePhones = [...new Set(this.memberList.map(m => m.phoneNumber).filter((phone): phone is string => Boolean(phone)))];
-    
-    this.firstNameSuggestions = uniqueFirstNames;
-    this.lastNameSuggestions = uniqueLastNames;
-    this.phoneSuggestions = uniquePhones;
-  }
-
-  // Méthodes pour le filtrage en temps réel avec debounce
-  onFirstNameChange() {
-    this.filterSubject.next();
-  }
-
-  onLastNameChange() {
-    this.filterSubject.next();
-  }
-
-  onPhoneChange() {
-    this.filterSubject.next();
-  }
-
-  // Méthodes pour les suggestions autocomplete (gardées pour compatibilité)
-  filterFirstName(event: any) {
-    const query = event.query.toLowerCase();
-    this.firstNameSuggestions = this.memberList
-      .map(m => m.firstName)
-      .filter((name): name is string => Boolean(name))
-      .filter(name => name.toLowerCase().includes(query));
-  }
-
-  filterLastName(event: any) {
-    const query = event.query.toLowerCase();
-    this.lastNameSuggestions = this.memberList
-      .map(m => m.lastName)
-      .filter((name): name is string => Boolean(name))
-      .filter(name => name.toLowerCase().includes(query));
-  }
-
-  filterPhone(event: any) {
-    const query = event.query.toLowerCase();
-    this.phoneSuggestions = this.memberList
-      .map(m => m.phoneNumber)
-      .filter((phone): phone is string => Boolean(phone))
-      .filter(phone => phone.toLowerCase().includes(query));
-  }
-
-  onFirstNameSelect(event: any) {
-    this.firstNameFilter = event.value || event;
-    this.applyFilters();
-  }
-
-  onLastNameSelect(event: any) {
-    this.lastNameFilter = event.value || event;
-    this.applyFilters();
-  }
-
-  onPhoneSelect(event: any) {
-    this.phoneFilter = event.value || event;
-    this.applyFilters();
-  }
-
-  onFirstNameClear() {
-    this.firstNameFilter = '';
-    this.applyFilters();
-  }
-
-  onLastNameClear() {
-    this.lastNameFilter = '';
-    this.applyFilters();
-  }
-
-  onPhoneClear() {
-    this.phoneFilter = '';
-    this.applyFilters();
-  }
-
-  applyFilters() {
-    this.filteredMemberList = this.memberList.filter(member => {
-      const firstNameMatch = !this.firstNameFilter || 
-        (member.firstName && member.firstName.toLowerCase().includes(this.firstNameFilter.toLowerCase()));
-      const lastNameMatch = !this.lastNameFilter || 
-        (member.lastName && member.lastName.toLowerCase().includes(this.lastNameFilter.toLowerCase()));
-      const phoneMatch = !this.phoneFilter || 
-        (member.phoneNumber && member.phoneNumber.toLowerCase().includes(this.phoneFilter.toLowerCase()));
-      
-      return firstNameMatch && lastNameMatch && phoneMatch;
-    });
-  }
+  trackByRow = (_: number, row: MemberRow) => row.member.id ?? row.fullName;
 
   ngOnDestroy(): void {
     this.destroy$.next();

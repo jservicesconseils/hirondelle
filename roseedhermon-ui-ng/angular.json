@@ -21,6 +21,7 @@
                         "index": "src/index.html",
                         "browser": "src/main.ts",
                         "polyfills": [
+                            "src/polyfills.ts",
                             "zone.js"
                         ],
                         "tsConfig": "tsconfig.app.json",
@@ -32,8 +33,6 @@
                             }
                         ],
                         "styles": [
-                            "node_modules/ag-grid-community/styles/ag-grid.css",
-                            "node_modules/ag-grid-community/styles/ag-theme-alpine.css",
                             "node_modules/primeicons/primeicons.css",
                             "node_modules/@ionic/angular/css/core.css",
                             "node_modules/@ionic/angular/css/normalize.css",
@@ -49,23 +48,35 @@
                             "src/assets/mobile-icons.css",
                             "src/styles.scss"
                         ],
-                        "scripts": []
+                        "scripts": [],
+                        "allowedCommonJsDependencies": [
+                            "qrcode",
+                            "buffer",
+                            "@aws-crypto/sha256-js",
+                            "isomorphic-unfetch"
+                        ]
                     },
                     "configurations": {
                         "production": {
                             "budgets": [
                                 {
                                     "type": "initial",
-                                    "maximumWarning": "1mb",
-                                    "maximumError": "5mb"
+                                    "maximumWarning": "2.5mb",
+                                    "maximumError": "4mb"
                                 },
                                 {
                                     "type": "anyComponentStyle",
-                                    "maximumWarning": "2kb",
-                                    "maximumError": "4kb"
+                                    "maximumWarning": "20kb",
+                                    "maximumError": "40kb"
                                 }
                             ],
-                            "outputHashing": "all"
+                            "outputHashing": "all",
+                            "fileReplacements": [
+                                {
+                                    "replace": "src/environments/environment.ts",
+                                    "with": "src/environments/environment.prod.ts"
+                                }
+                            ]
                         },
                         "development": {
                             "optimization": false,
@@ -115,6 +126,6 @@
         }
     },
     "cli": {
-      "analytics": false
+        "analytics": false
     }
 }

@@ -1,0 +1,121 @@
+<app-public-header></app-public-header>
+
+<main class="page">
+  <!-- Bandeau, sur le dégradé de la charte publique -->
+  <header class="head">
+    <div class="shell">
+      <span class="eyebrow">
+        <span class="eyebrow-bar"></span>
+        {{ groupName }}
+      </span>
+      <h1>Vos événements</h1>
+      <p class="lead">
+        Ceux qui sont réservés à votre communauté, et tout ce que la plateforme propose
+        publiquement près de chez vous.
+      </p>
+    </div>
+  </header>
+
+  <div class="shell body">
+    <!-- Onglets -->
+    <nav class="tabs">
+      <button type="button" [class.is-active]="scope === 'group'" (click)="show('group')">
+        <i class="pi pi-lock"></i>
+        <span>Réservés à {{ groupName }}</span>
+        <em>{{ reserved.length }}</em>
+      </button>
+      <button type="button" [class.is-active]="scope === 'public'" (click)="show('public')">
+        <i class="pi pi-globe"></i>
+        <span>Ouverts à tous</span>
+        <em>{{ publicUpcoming.length }}</em>
+      </button>
+      <button type="button" [class.is-active]="scope === 'past'" (click)="show('past')">
+        <i class="pi pi-history"></i>
+        <span>Passés</span>
+        <em>{{ past.length }}</em>
+      </button>
+    </nav>
+
+    <div class="search">
+      <i class="pi pi-search"></i>
+      <input type="text" [(ngModel)]="query" placeholder="Rechercher par nom, ville ou catégorie" />
+      <button type="button" class="clear" *ngIf="query" (click)="query = ''" aria-label="Effacer">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <p class="state" *ngIf="loading">Chargement de votre agenda…</p>
+    <p class="state is-error" *ngIf="failed">
+      Impossible de joindre le serveur. Réessayez dans un instant.
+    </p>
+
+    <ng-container *ngIf="!loading && !failed">
+      <p class="state" *ngIf="!shown.length">{{ emptyMessage }}</p>
+
+      <div class="grid" *ngIf="shown.length">
+        <article class="event-card" *ngFor="let card of shown; trackBy: trackByCard">
+          <a class="event-visual" [routerLink]="['/web/evenements', card.id]"
+             [style.background]="card.style.gradient">
+            <img *ngIf="card.visual" [src]="card.visual" [alt]="card.name" (error)="onVisualError(card)" />
+            <i class="pi visual-mark" *ngIf="!card.visual" [ngClass]="card.style.icon"></i>
+
+            <span class="date-chip" *ngIf="card.date">
+              <strong>{{ card.day }}</strong>
+              <small>{{ card.month }}</small>
+            </span>
+
+            <!-- Coin haut droit : l'intérêt, puis ce qui distingue un événement
+                 de groupe d'un événement du catalogue -->
+            <div class="visual-corner">
+              <app-interest-button [eventId]="card.id!" variant="compact"></app-interest-button>
+              <span class="reserved-chip" *ngIf="isReserved(card)">
+                <i class="pi pi-lock"></i> Réservé
+              </span>
+            </div>
+          </a>
+
+          <div class="event-body">
+            <!--
+              Les emplacements sont tenus même vides : sans catégorie, sans lieu ou
+              sans tarif, les titres et les pieds de deux cartes voisines resteraient
+              alignés. C'est ce qui donne une grille régulière plutôt qu'un damier.
+            -->
+            <div class="event-slot-tag">
+              <span class="tag" [style.background]="card.style.tint" [style.color]="card.style.color"
+                    *ngIf="card.category">
+                {{ card.category }}
+              </span>
+            </div>
+
+            <h2><a [routerLink]="['/web/evenements', card.id]">{{ card.name }}</a></h2>
+
+            <div class="event-slot-meta">
+              <p class="meta" *ngIf="card.longDate">
+                <i class="pi pi-calendar"></i>
+                {{ card.longDate }}<span *ngIf="card.time"> · {{ card.time }}</span>
+              </p>
+              <p class="meta" *ngIf="card.place">
+                <i class="pi pi-map-marker"></i> {{ card.place }}
+              </p>
+            </div>
+
+            <div class="event-foot">
+              <span class="price" *ngIf="card.price">{{ card.price }}</span>
+              <a class="cta" [routerLink]="['/web/evenements', card.id]">
+                Voir <i class="pi pi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="more" *ngIf="remaining">
+        <button type="button" (click)="loadMore()">
+          Voir {{ remaining > 9 ? 9 : remaining }} événement(s) de plus
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</main>
+
+<app-public-footer></app-public-footer>

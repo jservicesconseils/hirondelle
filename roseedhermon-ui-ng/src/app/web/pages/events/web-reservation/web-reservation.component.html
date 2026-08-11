@@ -1,0 +1,195 @@
+<app-public-header></app-public-header>
+
+<p class="state" *ngIf="loading">Chargement…</p>
+
+<section class="state-block" *ngIf="loadError">
+  <h1>Réservation impossible</h1>
+  <p>{{ loadError }}</p>
+  <a class="cta" routerLink="/web">Retour à l'accueil</a>
+</section>
+
+<section class="reservation" *ngIf="card as event">
+  <div class="shell">
+    <header class="reservation-head">
+      <button type="button" class="back" (click)="back()"><i class="pi pi-arrow-left"></i> Retour à l'événement</button>
+      <h1>Réserver ma place</h1>
+      <ol class="steps">
+        <li class="is-done"><span>1</span> Événement</li>
+        <li class="is-current"><span>2</span> {{ requiresPayment ? 'Paiement' : 'Confirmation' }}</li>
+        <li><span>3</span> Billet</li>
+      </ol>
+    </header>
+
+    <form class="reservation-grid" (ngSubmit)="submit()" novalidate>
+      <div class="reservation-main">
+        <!-- Qui réserve -->
+        <article class="panel">
+          <h2>Participant</h2>
+
+          <div class="field-row">
+            <label class="field">
+              <span>Prénom</span>
+              <input type="text" name="firstName" autocomplete="given-name" [(ngModel)]="firstName" />
+              <em class="error" *ngIf="touched && !firstNameValid">Indiquez votre prénom.</em>
+            </label>
+
+            <label class="field">
+              <span>Nom</span>
+              <input type="text" name="lastName" autocomplete="family-name" [(ngModel)]="lastName" />
+              <em class="error" *ngIf="touched && !lastNameValid">Indiquez votre nom.</em>
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Courriel</span>
+            <input type="email" name="email" autocomplete="email" placeholder="vous@exemple.ca" [(ngModel)]="email" />
+            <em class="error" *ngIf="touched && !emailValid">Ce courriel n'est pas valide.</em>
+            <em class="hint">C'est par lui que votre billet sera retrouvé.</em>
+          </label>
+
+          <div class="field-row">
+            <label class="field">
+              <span>Téléphone <small>facultatif</small></span>
+              <input type="tel" name="phoneNumber" autocomplete="tel" [(ngModel)]="phoneNumber" />
+            </label>
+
+            <label class="field">
+              <span>Nombre de places</span>
+              <select name="seats" [(ngModel)]="seats">
+                <option *ngFor="let count of seatChoices" [ngValue]="count">{{ count }}</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Message à l'organisateur <small>facultatif</small></span>
+            <textarea name="note" rows="3" [(ngModel)]="note"></textarea>
+          </label>
+        </article>
+
+        <!-- Paiement, seulement si un montant est fixé -->
+        <article class="panel" *ngIf="requiresPayment">
+          <h2>Paiement par carte</h2>
+
+          <div class="card-preview">
+            <span class="card-brand">{{ brandLabel }}</span>
+            <span class="card-number">{{ maskedNumber }}</span>
+            <span class="card-row">
+              <small>{{ holder || 'NOM DU TITULAIRE' }}</small>
+              <small>{{ expiry || 'MM/AA' }}</small>
+            </span>
+          </div>
+
+          <label class="field">
+            <span>Numéro de carte</span>
+            <input
+              type="text"
+              name="cardNumber"
+              inputmode="numeric"
+              autocomplete="cc-number"
+              placeholder="0000 0000 0000 0000"
+              [ngModel]="cardNumber"
+              (ngModelChange)="onCardNumberChange($event)" />
+            <em class="error" *ngIf="touched && !numberValid">Ce numéro de carte est invalide.</em>
+          </label>
+
+          <label class="field">
+            <span>Titulaire</span>
+            <input
+              type="text"
+              name="holder"
+              autocomplete="cc-name"
+              placeholder="Tel qu'inscrit sur la carte"
+              [(ngModel)]="holder" />
+            <em class="error" *ngIf="touched && !holderValid">Indiquez le nom du titulaire.</em>
+          </label>
+
+          <div class="field-row">
+            <label class="field">
+              <span>Expiration</span>
+              <input
+                type="text"
+                name="expiry"
+                inputmode="numeric"
+                autocomplete="cc-exp"
+                placeholder="MM/AA"
+                [ngModel]="expiry"
+                (ngModelChange)="onExpiryChange($event)" />
+              <em class="error" *ngIf="touched && !expiryValid">Date invalide ou dépassée.</em>
+            </label>
+
+            <label class="field">
+              <span>Code de sécurité</span>
+              <input
+                type="text"
+                name="cvc"
+                inputmode="numeric"
+                autocomplete="cc-csc"
+                [placeholder]="brand === 'amex' ? '4 chiffres' : '3 chiffres'"
+                [ngModel]="cvc"
+                (ngModelChange)="onCvcChange($event)" />
+              <em class="error" *ngIf="touched && !cvcValid">Code incomplet.</em>
+            </label>
+          </div>
+
+          <p class="demo-notice">
+            <i class="pi pi-exclamation-triangle"></i>
+            Aucune passerelle de paiement n'est branchée : ces informations sont
+            vérifiées puis abandonnées, et <strong>aucun débit n'est effectué</strong>.
+          </p>
+        </article>
+      </div>
+
+      <!-- Récapitulatif -->
+      <aside class="summary">
+        <div class="summary-card">
+          <div class="summary-visual" [style.background]="event.style.gradient">
+            <img *ngIf="event.visual" [src]="event.visual" [alt]="event.name" />
+          </div>
+
+          <div class="summary-body">
+            <span class="tag" *ngIf="event.category" [style.background]="event.style.tint" [style.color]="event.style.color">
+              {{ event.category }}
+            </span>
+            <h3>{{ event.name }}</h3>
+
+            <p class="summary-meta" *ngIf="event.longDate">
+              <i class="pi pi-calendar"></i> {{ event.longDate }}<span *ngIf="event.time"> · {{ event.time }}</span>
+            </p>
+            <p class="summary-meta" *ngIf="event.place">
+              <i class="pi pi-map-marker"></i> {{ event.place }}
+            </p>
+
+            <dl class="summary-total">
+              <div>
+                <dt>Places</dt>
+                <dd>{{ seats }}</dd>
+              </div>
+              <div *ngIf="event.amount">
+                <dt>Prix unitaire</dt>
+                <dd>{{ event.amount }} $</dd>
+              </div>
+              <div class="total">
+                <dt>Total</dt>
+                <dd>{{ event.free ? 'Gratuit' : (total ? total + ' $' : 'Non communiqué') }}</dd>
+              </div>
+            </dl>
+
+            <p class="error block" *ngIf="submitError">{{ submitError }}</p>
+
+            <button type="submit" class="cta cta-block" [disabled]="submitting">
+              {{ submitLabel }}
+            </button>
+
+            <p class="summary-note">
+              Une seule réservation par courriel et par événement. Le billet est
+              délivré immédiatement après la confirmation.
+            </p>
+          </div>
+        </div>
+      </aside>
+    </form>
+  </div>
+</section>
+
+<app-public-footer></app-public-footer>

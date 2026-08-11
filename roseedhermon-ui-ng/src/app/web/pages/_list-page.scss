@@ -1,0 +1,991 @@
+/* Feuille partagée des pages d'administration (tableau de bord, groupes,
+   membres, événements).
+
+   Elle reprend désormais le thème des pages publiques : fond crème, panneaux
+   blancs arrondis, accent orange, libellés en capitales. Les noms de classes et
+   de variables n'ont pas changé — seules les valeurs l'ont — pour que les quatre
+   pages suivent sans qu'aucun gabarit soit touché. */
+@use '../styles/public-theme' as theme;
+
+/* Anciens noms conservés : `groups.component.scss` et le tableau de bord s'en
+   servent encore. Ils pointent maintenant sur la palette publique. */
+$ink: theme.$ink;
+$muted: theme.$muted;
+$border: theme.$line;
+$page-bg: theme.$cream;
+$accent: theme.$accent;
+$accent-dark: theme.$accent-dark;
+$accent-soft: theme.$accent-soft;
+$green: theme.$green;
+$sky: theme.$sky;
+
+$indigo: theme.$ink;
+$blue: theme.$accent;
+$cyan: #ff8748;
+$gradient: linear-gradient(135deg, #{theme.$accent} 0%, #ff8748 100%);
+$gradient-bar: linear-gradient(90deg, #{theme.$accent-dark} 0%, #{theme.$accent} 55%, #ff8748 100%);
+$blue-soft: theme.$accent-soft;
+$orange: theme.$accent;
+$orange-light: #ff8748;
+$orange-gradient: $gradient;
+
+/* Bandeau des modales de création / modification : bleu et non orange, pour le
+   distinguer des bandeaux de page, qui eux annoncent une consultation. */
+$modal-band: theme.$blue;
+
+$radius: 20px;
+$shadow: 0 14px 32px rgba(16, 28, 48, 0.07);
+
+:host {
+  display: block;
+}
+
+.list-page {
+  background: $page-bg;
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+  color: $ink;
+  font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ---------- Corps de page ---------- */
+
+/* Transparent : ce sont les cartes qui se détachent sur le crème, comme sur les
+   pages publiques. Un fond blanc ici donnerait du blanc sur du blanc. */
+.page-body {
+  background: none;
+  padding: 0;
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+
+  .page-title { flex: 1 1 260px; }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 3.4vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: $ink;
+  }
+
+  p {
+    margin: 0.4rem 0 0;
+    color: $muted;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+}
+
+/* Les actions sont alignées à droite du titre. */
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.btn-ghost,
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.8rem 1.4rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease,
+    background 0.18s ease, color 0.18s ease;
+}
+
+.btn-ghost {
+  background: #fff;
+  color: $ink;
+  border: 1px solid $border;
+
+  &:hover {
+    border-color: $accent;
+    color: $accent;
+  }
+}
+
+/* Action principale : la pilule orange des pages publiques. */
+.btn-primary {
+  background: $accent;
+  color: #fff;
+  border: none;
+
+  &:hover {
+    background: $accent-dark;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(244, 85, 29, 0.32);
+  }
+}
+
+/* Le bouton d'import garde son comportement mais adopte le style des autres. */
+.import-slot ::ng-deep {
+  .import-panel { margin: 0; padding: 0; }
+
+  .upload-btn {
+    background: #fff !important;
+    color: $accent;
+    border: 1px solid $accent;
+    border-radius: 999px;
+    padding: 0.8rem 1.4rem;
+    min-height: 0;
+    min-width: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+
+    &:hover {
+      background: $accent-soft !important;
+      border-color: $accent-dark;
+      color: $accent-dark;
+    }
+  }
+
+  .errors { position: absolute; color: $accent; }
+}
+
+/* ---------- Barre d'outils ---------- */
+
+.toolbar-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  padding: 0.8rem 0.9rem;
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  flex-wrap: wrap;
+}
+
+.search-field {
+  position: relative;
+  flex: 1 1 260px;
+  min-width: 220px;
+
+  i {
+    position: absolute;
+    left: 1.05rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $accent;
+    font-size: 0.9rem;
+  }
+
+  input {
+    width: 100%;
+    border: 1px solid $border;
+    background: #fff;
+    border-radius: 999px;
+    padding: 0.75rem 1rem 0.75rem 2.7rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: $ink;
+    outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+
+    &:focus {
+      border-color: $accent;
+      box-shadow: 0 0 0 3px rgba(244, 85, 29, 0.14);
+    }
+
+    &::placeholder { color: #9aa8b9; }
+  }
+}
+
+.pill-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pill {
+  border-radius: 999px;
+  border: 1px solid $border;
+  background: #fff;
+  color: $ink;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 0.7rem 1.2rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+
+  &:hover { border-color: $accent; color: $accent; }
+
+  &.active {
+    background: $accent;
+    border-color: $accent;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(244, 85, 29, 0.28);
+  }
+}
+
+.view-toggle {
+  display: flex;
+  gap: 0.4rem;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid $border;
+    border-radius: 999px;
+    background: #fff;
+    color: $muted;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.92rem;
+    padding: 0.7rem 1.1rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+
+    &:hover { border-color: $accent; color: $accent; }
+
+    &.active {
+      background: $accent;
+      border-color: $accent;
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(244, 85, 29, 0.28);
+    }
+  }
+}
+
+/* ---------- Sections ---------- */
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 2rem 0 1rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: $ink;
+  }
+
+  .section-sub { font-weight: 500; color: $muted; }
+  .section-note { color: $accent; font-weight: 700; }
+}
+
+.sort-link {
+  border: none;
+  background: none;
+  color: $muted;
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  strong { color: $accent; }
+}
+
+/* ---------- Cartes ---------- */
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.1rem;
+}
+
+.list-card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 1.2rem;
+  box-shadow: $shadow;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 38px rgba(16, 28, 48, 0.13);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+  }
+
+  .card-identity {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    strong { font-size: 1rem; font-weight: 800; color: $ink; }
+  }
+
+  .card-email,
+  .cell-email {
+    color: $muted;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+
+    .city {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: $muted;
+      font-size: 0.88rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}
+
+.avatar {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  border-radius: 50%;
+  background: $gradient;
+  color: #fff;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &.small {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+    font-size: 0.9rem;
+  }
+}
+
+.status-pill {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #e3f7f1;
+  color: $green;
+  border-radius: 999px;
+  padding: 0.22rem 0.7rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #12a583;
+  }
+}
+
+.role-pill {
+  background: $accent-soft;
+  color: $accent-dark;
+  border-radius: 999px;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.btn-message {
+  width: 100%;
+  border: 1px solid $border;
+  border-radius: 999px;
+  padding: 0.72rem 1rem;
+  background: #fff;
+  color: $ink;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.94rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: border-color 0.18s ease, color 0.18s ease;
+
+  &:hover { border-color: $accent; color: $accent; }
+}
+
+/* ---------- Tableau ---------- */
+
+.table-card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  /* Tiroir ouvert, le tableau n'a plus que 70 % de la largeur : il défile
+     horizontalement dans sa carte au lieu de déborder. */
+  overflow-x: auto;
+}
+
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  /* Entête discrète et en capitales, comme les libellés des formulaires publics. */
+  thead th {
+    background: #fdf8f4;
+    color: $muted;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid $border;
+    white-space: nowrap;
+
+    i { color: $accent; margin-right: 0.4rem; }
+
+    .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #12a583;
+      margin-right: 0.35rem;
+    }
+  }
+
+  tbody td {
+    padding: 0.95rem 1.25rem;
+    border-top: 1px solid $border;
+    vertical-align: middle;
+    font-size: 0.94rem;
+  }
+
+  tbody tr:first-child td { border-top: none; }
+  tbody tr:hover { background: #fffaf7; }
+
+  .cell-member {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    div { display: flex; flex-direction: column; min-width: 0; }
+    strong { font-size: 0.96rem; font-weight: 800; color: $ink; }
+  }
+
+  .cell-city { color: $accent; font-weight: 600; }
+  .cell-date { color: $muted; white-space: nowrap; }
+
+  .empty-row {
+    text-align: center;
+    color: $muted;
+    padding: 2.5rem;
+  }
+
+  .actions-col {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .icon-action {
+    border: 1px solid $border;
+    background: #fff;
+    border-radius: 999px;
+    width: 36px;
+    height: 36px;
+    color: $muted;
+    cursor: pointer;
+    margin-right: 0.4rem;
+    transition: border-color 0.18s ease, color 0.18s ease;
+
+    &:hover { border-color: $accent; color: $accent; }
+  }
+
+  .btn-view {
+    border: none;
+    border-radius: 999px;
+    padding: 0.55rem 1.25rem;
+    background: $ink;
+    color: #fff;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: background 0.18s ease;
+
+    &:hover { background: $accent; }
+  }
+}
+
+/* Sortie de la carte tableau : elle sert aussi la vue en grille. */
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.1rem;
+  padding: 1rem 1.35rem;
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  flex-wrap: wrap;
+
+  .range { color: $muted; font-weight: 600; font-size: 0.92rem; }
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  .page {
+    min-width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid $border;
+    background: #fff;
+    color: $ink;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+
+    &:hover:not(:disabled) { border-color: $accent; color: $accent; }
+    &:disabled { opacity: 0.4; cursor: default; }
+
+    &.active {
+      background: $accent;
+      border-color: $accent;
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(244, 85, 29, 0.28);
+    }
+
+    &.chevron { background: none; border-color: transparent; min-width: 32px; }
+
+    &.next {
+      background: $accent-soft;
+      border-color: transparent;
+      color: $accent-dark;
+      padding: 0 1.15rem;
+    }
+  }
+}
+
+.empty {
+  color: $muted;
+  padding: 1rem 0;
+}
+
+/* ---------- Bouton d'import ---------- */
+
+.btn-import {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.8rem 1.4rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  background: #fff;
+  color: $accent;
+  border: 1px solid $accent;
+  transition: transform 0.18s ease, background 0.18s ease;
+
+  &:hover { transform: translateY(-1px); background: $accent-soft; }
+}
+
+/* ---------- Modales de création / modification ---------- */
+
+/* L'entête de la maquette occupe toute la largeur : on neutralise le rembourrage
+   que PrimeNG applique autour du gabarit d'entête. */
+:host ::ng-deep .p-dialog .p-dialog-header {
+  padding: 0;
+  border: none;
+}
+
+:host ::ng-deep .p-dialog {
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.modal-header-band {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1.5rem 1.75rem;
+  background: $modal-band;
+  color: #fff;
+
+  .header-icon {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+  }
+
+  .header-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+
+    strong { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.01em; }
+    small { font-size: 0.92rem; color: rgba(255, 255, 255, 0.88); }
+  }
+
+  .header-close {
+    margin-left: auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+    cursor: pointer;
+
+    &:hover { background: rgba(255, 255, 255, 0.36); }
+  }
+}
+
+.photo-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 1.75rem;
+
+  .photo-circle {
+    position: relative;
+    width: 118px;
+    height: 118px;
+    border-radius: 50%;
+    border: 2px dashed rgba(244, 85, 29, 0.42);
+    background: $accent-soft;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.18s ease;
+
+    &:hover { border-color: $accent; }
+
+    i.pi-user { font-size: 3rem; color: $accent; }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .photo-plus {
+      position: absolute;
+      right: 6px;
+      bottom: 10px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: $gradient;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid #fff;
+      font-size: 0.85rem;
+    }
+
+    /* L'input couvre tout le cercle : le clic ouvre le sélecteur partout. */
+    input[type='file'] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      font-size: 0;
+    }
+  }
+
+  .photo-title {
+    margin-top: 0.75rem;
+    color: $ink;
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+
+  .photo-hint { color: $muted; font-size: 0.88rem; }
+  .photo-error { color: #c62828; font-weight: 600; }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.15rem 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  /* Libellés en capitales, comme sur les formulaires publics. */
+  label {
+    color: $muted;
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  input,
+  select,
+  textarea,
+  ::ng-deep .p-calendar .p-inputtext {
+    width: 100%;
+    border: 1px solid $border;
+    background: #fff;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    font-family: inherit;
+    font-size: 1rem;
+    color: $ink;
+    outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+
+    &::placeholder { color: #9aa8b9; }
+
+    &:focus {
+      border-color: $accent;
+      box-shadow: 0 0 0 3px rgba(244, 85, 29, 0.14);
+    }
+  }
+
+  ::ng-deep .p-calendar { width: 100%; }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 2rem;
+
+  .btn-outline,
+  .btn-gradient {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 170px;
+    border-radius: 999px;
+    padding: 0.9rem 1.75rem;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease,
+      background 0.18s ease, color 0.18s ease;
+  }
+
+  .btn-outline {
+    background: #fff;
+    color: $ink;
+    border: 1px solid $border;
+
+    &:hover { border-color: $accent; color: $accent; }
+  }
+
+  .btn-gradient {
+    background: $accent;
+    color: #fff;
+    border: none;
+
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    &:not(:disabled):hover {
+      background: $accent-dark;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(244, 85, 29, 0.32);
+    }
+  }
+}
+
+.form-note {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  color: $muted;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .form-actions { flex-direction: column-reverse; }
+}
+
+/* ---------- Panneau de détail et modales ---------- */
+
+/* Le tiroir n'est pas une surcouche : il occupe une colonne de la même rangée
+   que la liste, donc la même hauteur et le même plan qu'elle. */
+.content-row {
+  display: flex;
+  align-items: stretch;
+  gap: 1.1rem;
+}
+
+.content-main {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.content-row.with-drawer .content-main {
+  flex: 0 0 70%;
+  max-width: 70%;
+}
+
+.detail-panel {
+  flex: 0 0 30%;
+  max-width: 30%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Habillage identique à `.table-card`. */
+.detail-card {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  overflow: hidden;
+
+  /* Le contenu reste dans le flux : la carte grandit vers le bas jusqu'à afficher
+     tout le détail, sans défilement interne ni section tronquée. */
+  app-detail-member,
+  app-detail-event {
+    display: block;
+  }
+
+  ::ng-deep .detail-container {
+    height: auto;
+  }
+}
+
+.error-message {
+  color: #c62828;
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+::ng-deep {
+  .p-toast {
+    .p-toast-message {
+      border-radius: 14px;
+      box-shadow: 0 14px 32px rgba(16, 28, 48, 0.18);
+
+      &.p-toast-message-success {
+        background: linear-gradient(135deg, #12a583 0%, #0e8f72 100%);
+        border: none;
+        color: white;
+
+        .p-toast-message-icon { color: white; }
+        .p-toast-message-content { color: white; }
+      }
+    }
+
+    .p-toast-icon-close {
+      color: white;
+
+      &:hover { background-color: rgba(255, 255, 255, 0.2); }
+    }
+  }
+}
+
+/* ---------- Adaptatif ---------- */
+
+@media (max-width: 900px) {
+  .list-page { padding: 0.9rem; }
+  .page-head h1 { font-size: 1.8rem; }
+  .list-table { display: block; overflow-x: auto; white-space: nowrap; }
+
+  /* Trop étroit pour deux colonnes : le tiroir passe sous la liste. */
+  .content-row { flex-direction: column; }
+  .content-row.with-drawer .content-main,
+  .detail-panel {
+    flex: 1 1 auto;
+    max-width: 100%;
+  }
+  .detail-panel { margin-top: 1rem; }
+}
+
+
+/* ---------- Modale de détail ---------- */
+
+/**
+ * Même habillage que l'assistant de création : bandeau bleu pleine largeur,
+ * coins arrondis, contenu qui défile seul. Le détail d'un événement ou d'un
+ * membre s'ouvre désormais par-dessus la liste plutôt que dans un tiroir
+ * latéral, où il rognait la largeur du tableau.
+ */
+:host ::ng-deep .detail-dialog {
+  display: flex;
+  flex-direction: column;
+  border-radius: 22px;
+  overflow: hidden;
+  /* Bornée à l'écran : sans cela le détail déborde et son pied d'actions,
+     pourtant collant, se retrouve hors de vue. */
+  max-height: 92vh;
+
+  /* Le bandeau occupe toute la largeur : on neutralise le rembourrage PrimeNG. */
+  .p-dialog-header {
+    flex: 0 0 auto;
+    padding: 0;
+    border: none;
+  }
+
+  /* Seul le contenu défile ; le bandeau reste en place. */
+  .p-dialog-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+    overflow-y: auto;
+  }
+}

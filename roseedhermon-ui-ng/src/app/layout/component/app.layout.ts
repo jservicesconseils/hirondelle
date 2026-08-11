@@ -2,167 +2,112 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AppFooter } from './app.footer';
-import { MenubarModule } from 'primeng/menubar';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { MenuItem } from 'primeng/api';
+import { AppHeader } from './app.header';
+import { AppSidebar } from './app.sidebar';
 
+/**
+ * Gabarit de l'application, calé sur la hauteur de la fenêtre : menu vertical à
+ * gauche, barre supérieure et page à droite, pied de page sur toute la largeur en
+ * dessous. Seule la zone de contenu défile ; la fenêtre elle-même ne défile pas.
+ */
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    AppFooter,
-    MenubarModule,
-    ButtonModule,
-    InputTextModule
-  ],
+  imports: [CommonModule, RouterModule, AppHeader, AppFooter, AppSidebar],
   template: `
-    <div>
-      <p-menubar [model]="items" class="custom-menubar">
-        <ng-template pTemplate="start">
-          <div class="menubar-logo">
-            <span class="app-name">ROSEE D'HERMON</span>
-          </div>
-        </ng-template>
+    <div class="layout-shell">
+      <div class="layout-body">
+        <app-sidebar [open]="menuOpen" (closed)="menuOpen = false"></app-sidebar>
 
-        <ng-template pTemplate="end">
-          <div class="menubar-actions">
-            <!-- Usager -->
-            <span class="user-name">Bienvenue, {{ userName }}</span>
+        <!-- Voile de fermeture du tiroir sur petit écran -->
+        <div class="layout-scrim" *ngIf="menuOpen" (click)="menuOpen = false"></div>
 
-            <!-- Recherche -->
-            <div class="search-container">
-              <i class="pi pi-search search-icon"></i>
-              <input type="text" pInputText placeholder="Rechercher..." class="search-input" />
+        <!--
+          Le pied de page appartient à la colonne de contenu, pas à la coquille :
+          placé dessous, il formait une bande courant sous le menu, et le bas de
+          la page ne respirait plus comme le haut.
+        -->
+        <div class="layout-content">
+          <app-header (toggleMenu)="menuOpen = !menuOpen"></app-header>
+
+          <div class="layout-main-container">
+            <div class="layout-main">
+              <router-outlet></router-outlet>
             </div>
-
-            <!-- Langue -->
-            <button
-              type="button"
-              pButton
-              icon="pi pi-globe"
-              class="lang-btn"
-              (click)="toggleLanguage()"
-              label="{{ currentLanguage }}">
-            </button>
-
-            <!-- Aide -->
-            <button
-              type="button"
-              pButton
-              icon="pi pi-question-circle"
-              class="help-btn"
-              (click)="openHelp()">
-            </button>
           </div>
-        </ng-template>
-      </p-menubar>
 
-      <div class="layout-main-container">
-        <div class="layout-main">
-          <router-outlet></router-outlet>
+          <app-footer></app-footer>
         </div>
-        <app-footer></app-footer>
       </div>
-
-      <div class="layout-mask animate-fadein"></div>
     </div>
   `,
   styles: [`
- 
-    .menubar-logo .app-name {
-      color: white;
-      font-size: 1.25rem;
-      font-weight: bold;
-      font-weight: 800;
+    /**
+     * Sans cette règle, l'hôte reste en display: inline. Le blanc du gabarit y
+     * ouvre une boîte de ligne qui décale la coquille vers le bas : le document
+     * dépasse alors 100vh, la page défile, et il reste de l'air en haut qu'on ne
+     * retrouve pas en bas.
+     */
+    :host {
+      display: block;
+      height: 100%;
+      overflow: hidden;
     }
 
-    .menubar-actions {
+    .layout-shell {
       display: flex;
-      align-items: center;
-      gap: 0.75rem;
+      flex-direction: column;
+      /* 100% de l'hôte, et non 100vh : la coquille ne peut plus dépasser. */
+      height: 100%;
+      overflow: hidden;
+      background: #fdf6f1;
     }
 
-    .user-name {
-      color: white;
-      font-weight: 800;
-      margin-right: 0.75rem;
+    /**
+     * Rangée menu + contenu.
+     *
+     * C'est elle qui porte le retrait vertical, une seule fois pour ses deux
+     * colonnes : le menu et le contenu commencent et finissent donc exactement
+     * à la même hauteur, avec autant d'air en haut qu'en bas.
+     */
+    .layout-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 1rem 0;
+      display: flex;
+      align-items: stretch;
     }
 
-    .search-container {
-  position: relative;
-  width: 300px;
-}
-
-.search-icon {
-  position: absolute;
-  top: 50%;
-  left: 10px;
-  transform: translateY(-50%);
-  color: #999;
-  font-size: 1rem;
-  font-weight: 800;
-}
-
-.search-input {
-  width: 100%;
-  padding-left: 2.2rem;
-  height: 2.5rem;
-  font-size: 1rem;
-  font-weight: 800;
-}
-
-
-    .lang-btn, .help-btn {
-      background-color: #0059b3;
-      border: none;
-      color: white;
-      font-weight: 800;
+    .layout-content {
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
     }
-   
-  
-    .lang-btn:hover,
-    .help-btn:hover {
-      background-color: #0066cc;
-      font-weight: 800;
+
+    /* Le seul conteneur qui défile. */
+    .layout-main-container {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* Les pages apportent déjà leur propre marge (.list-page). */
+    .layout-main {
+      padding: 0;
+    }
+
+    .layout-scrim {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(16, 28, 48, 0.5);
     }
   `]
 })
 export class AppLayout {
-  items: MenuItem[] = [];
-  userName = 'Jean Dupont';
-  currentLanguage = 'FR';
-
-  ngOnInit() {
-    this.items = [
-      {
-        label: 'Tableau de bord',
-        icon: 'pi pi-fw pi-home',
-        routerLink: ['/app/dashboard']
-      },
-      {
-        label: 'Membres',
-        icon: 'pi pi-fw pi-users',
-        routerLink: ['/app/members']
-      },
-      {
-        label: 'Événements',
-        icon: 'pi pi-fw pi-calendar',
-        routerLink: ['/app/events']
-      }
-    ];
-  }
-
-  toggleLanguage() {
-    this.currentLanguage = this.currentLanguage === 'FR' ? 'EN' : 'FR';
-    console.log('Langue changée vers :', this.currentLanguage);
-    // Implémente ici ngx-translate si nécessaire
-  }
-
-  openHelp() {
-    console.log('Aide cliquée');
-    // Ouvre un modal ou redirige vers une page d'aide
-  }
+  /** Tiroir de navigation ouvert (petit écran uniquement). */
+  menuOpen = false;
 }

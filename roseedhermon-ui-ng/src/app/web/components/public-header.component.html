@@ -1,0 +1,59 @@
+<span class="scroll-sentinel" #sentinel aria-hidden="true"></span>
+
+<header class="topbar" [class.is-scrolled]="scrolled">
+  <div class="shell topbar-inner">
+    <a class="brand" routerLink="/web">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M21 4c-4.2.5-7.4 2.2-9.6 5.1C9.6 11.6 8.6 14.6 8.3 18l-2.6 3h3.5c.4-2.9 1.2-5.3 2.6-7.2 1.9-2.6 4.7-4.1 8.2-4.6L21 4z"
+            fill="currentColor" />
+        </svg>
+      </span>
+      <span class="brand-text">Hirondelle</span>
+    </a>
+
+    <nav class="topbar-nav" [class.is-open]="menuOpen">
+      <button type="button" (click)="goTo('evenements')">Événements</button>
+      <button type="button" (click)="goTo('categories')">Catégories</button>
+      <button type="button" (click)="goTo('organiser')">Organiser</button>
+      <button type="button" (click)="goTo('apropos')">À propos</button>
+      <!-- Agenda personnel : dès qu'une session est ouverte, quel que soit le rôle. -->
+      <a class="nav-link" *ngIf="auth.isAuthenticated()" routerLink="/web/mes-evenements">Mes événements</a>
+      <!-- L'annuaire n'existe que pour les groupes auxquels le module est attribué. -->
+      <a class="nav-link" *ngIf="auth.canSeeMembers()" routerLink="/web/membres">Membres</a>
+      <a class="nav-link" *ngIf="auth.canAdminister()" [routerLink]="workspaceLink">Mon espace</a>
+
+      <div class="topbar-actions-mobile">
+        <a class="ghost" *ngIf="!auth.isAuthenticated()" routerLink="/login">Se connecter</a>
+        <button type="button" class="ghost" *ngIf="auth.isAuthenticated()" (click)="signOut()">
+          Se déconnecter
+        </button>
+        <a class="cta" routerLink="/web/creer-un-evenement">Créer un événement</a>
+      </div>
+    </nav>
+
+    <div class="topbar-actions">
+      <a class="ghost" *ngIf="!auth.isAuthenticated()" routerLink="/login">Se connecter</a>
+
+      <!-- Session ouverte : le nom, le rôle, et la déconnexion -->
+      <button type="button" class="account" *ngIf="auth.isAuthenticated()" (click)="signOut()" title="Se déconnecter">
+        <span class="account-avatar">{{ initials }}</span>
+        <span class="account-text">
+          <strong>{{ userName }}</strong>
+          <small>{{ roleLabel }}</small>
+        </span>
+        <i class="pi pi-sign-out"></i>
+      </button>
+
+      <a class="cta" routerLink="/web/creer-un-evenement">
+        Créer un événement
+        <i class="pi pi-arrow-up-right"></i>
+      </a>
+    </div>
+
+    <button class="burger" type="button" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen" aria-label="Menu">
+      <i class="pi" [class.pi-bars]="!menuOpen" [class.pi-times]="menuOpen"></i>
+    </button>
+  </div>
+</header>

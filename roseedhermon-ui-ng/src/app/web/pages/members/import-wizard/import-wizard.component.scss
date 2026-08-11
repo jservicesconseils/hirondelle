@@ -1,0 +1,501 @@
+/* Même système que la page Membres : dégradé indigo -> cyan dominant,
+   fond lavande, cartes blanches arrondies. */
+$indigo: #f4551d;
+$blue: #ff8748;
+$gradient: linear-gradient(135deg, #f4551d 0%, #ff8748 100%);
+$gradient-bar: linear-gradient(90deg, #d3410d 0%, #f4551d 55%, #ff8748 100%);
+/* Bandeau de titre : bleu, comme les autres modales de création. L'orange reste
+   la couleur d'avancement (étapes franchies, barre de progression). */
+$band: #2b5fb8;
+$ink: #14243c;
+$muted: #667a92;
+$border: #e7eaf0;
+$blue-soft: #fff0ea;
+
+.wizard-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 19, 64, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3vh 1rem;
+  overflow-y: auto;
+  z-index: 1300;
+}
+
+.wizard {
+  width: min(940px, 100%);
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 30px 70px rgba(16, 19, 64, 0.35);
+  overflow: hidden;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  color: $ink;
+}
+
+/* ---------- Entête ---------- */
+
+.wizard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 1.75rem;
+  background: $band;
+  color: #fff;
+
+  h2 { margin: 0; font-size: 1.7rem; font-weight: 800; }
+  p { margin: 0.2rem 0 0; font-size: 0.95rem; color: rgba(255, 255, 255, 0.85); }
+}
+
+.wizard-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.close-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+
+  &:hover { background: rgba(255, 255, 255, 0.32); }
+}
+
+/* ---------- Fil des étapes ---------- */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+  padding: 1.25rem 1.75rem;
+  list-style: none;
+  background: #fdf8f4;
+  border-bottom: 1px solid $border;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex: 1;
+    position: relative;
+
+    /* Trait de liaison entre les pastilles. */
+    &:not(:last-child)::after {
+      content: '';
+      flex: 1;
+      height: 3px;
+      border-radius: 3px;
+      background: #dfe4f6;
+      margin-left: 0.5rem;
+    }
+
+    &.done::after { background: $gradient-bar; }
+  }
+
+  .bullet {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 50%;
+    background: #dfe4f6;
+    color: #667a92;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .labels {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+
+    strong { font-size: 0.98rem; }
+    small { color: $muted; font-size: 0.8rem; }
+  }
+
+  li.current .bullet,
+  li.done .bullet {
+    background: $gradient;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(244, 85, 29, 0.3);
+  }
+
+  li.current strong { color: $indigo; }
+}
+
+/* ---------- Corps ---------- */
+
+.wizard-body {
+  padding: 1.75rem;
+}
+
+.step-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-align: center;
+
+  i { color: $blue; }
+}
+
+.step-sub {
+  margin: 0 0 1.25rem;
+  text-align: center;
+  color: $muted;
+}
+
+/* ---------- Étape 1 ---------- */
+
+.dropzone {
+  position: relative;
+  margin-top: 1rem;
+  border: 2px dashed #f7b9a2;
+  border-radius: 18px;
+  background: $blue-soft;
+  padding: 2.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &:hover,
+  &.dragging {
+    border-color: $indigo;
+    background: #dfe8ff;
+  }
+
+  strong { font-size: 1.5rem; font-weight: 800; }
+
+  .dropzone-icon {
+    font-size: 2.6rem;
+    color: $indigo;
+  }
+
+  .dropzone-hint { color: $muted; }
+
+  .select-btn {
+    margin-top: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: $gradient;
+    color: #fff;
+    font-weight: 700;
+    padding: 0.8rem 1.6rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 22px rgba(244, 85, 29, 0.28);
+  }
+
+  /* L'input couvre toute la zone : le clic ouvre le sélecteur partout, sans
+     dépendre de la propagation depuis le <label>. */
+  .file-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    font-size: 0;
+  }
+}
+
+.support-note {
+  margin: 1rem 0 0;
+  text-align: center;
+  color: $muted;
+  font-size: 0.9rem;
+}
+
+.error {
+  margin: 0.75rem 0 0;
+  text-align: center;
+  color: #b00020;
+  font-weight: 600;
+}
+
+/* ---------- Étape 2 ---------- */
+
+.mapping-card {
+  border: 1px solid $border;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.mapping-head {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+  background: #dfe8ff;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.mapping-row {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid #f1ece7;
+
+  .source {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .index { color: $muted; font-weight: 700; }
+
+  .source-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    strong { font-size: 0.98rem; }
+    small { color: $muted; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+
+  .pi-arrow-right { margin-left: auto; color: $muted; }
+
+  select {
+    width: 100%;
+    border: 1.5px solid #f7b9a2;
+    background: $blue-soft;
+    color: $indigo;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    cursor: pointer;
+    outline: none;
+
+    &:focus { border-color: $indigo; }
+
+    &.ignored {
+      background: #f4f5fa;
+      border-color: #dfe4f6;
+      color: $muted;
+    }
+  }
+}
+
+.mapping-summary {
+  margin: 1rem 0 0;
+  text-align: center;
+  color: $ink;
+  font-weight: 600;
+
+  i { color: $blue; margin-right: 0.35rem; }
+}
+
+/* ---------- Étape 3 ---------- */
+
+.result {
+  align-items: center;
+  text-align: center;
+}
+
+.result-icon {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f4551d, #ff8748);
+  color: #fff;
+  font-size: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 16px 34px rgba(244, 85, 29, 0.3);
+
+  &.warn { background: linear-gradient(135deg, #8a8fb5, #b6bccf); box-shadow: none; }
+}
+
+.result-title {
+  margin: 1rem 0 0.25rem;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.result-sub {
+  margin: 0 0 1.25rem;
+  color: $muted;
+}
+
+.result-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  width: 100%;
+  background: $blue-soft;
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.result-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  .label { color: #667a92; font-size: 0.9rem; }
+  .value { font-size: 2.1rem; font-weight: 800; color: $indigo; }
+  .value.error-value { color: #b00020; }
+}
+
+.result-note {
+  margin-top: 1rem;
+  width: 100%;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  color: #667a92;
+  text-align: left;
+
+  i { color: #16a35a; margin-right: 0.35rem; }
+}
+
+.rejected {
+  margin-top: 1rem;
+  width: 100%;
+  text-align: left;
+  background: #fff5f5;
+  border: 1px solid #f3d2d2;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  max-height: 180px;
+  overflow-y: auto;
+
+  ul { margin: 0.5rem 0 0; padding-left: 1.1rem; }
+  li { color: #7a2020; font-size: 0.9rem; margin-bottom: 0.2rem; }
+}
+
+.progress-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem 0;
+
+  strong { font-size: 1.1rem; }
+}
+
+.progress-track {
+  width: min(420px, 100%);
+  height: 10px;
+  border-radius: 999px;
+  background: #e4e8fa;
+  overflow: hidden;
+}
+
+.progress-value {
+  height: 100%;
+  background: $gradient-bar;
+  transition: width 0.2s ease;
+}
+
+.progress-label { color: $muted; font-weight: 600; }
+
+.spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 4px solid #e4e8fa;
+  border-top-color: $indigo;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Actions ---------- */
+
+.step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.btn-outline,
+.btn-gradient {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  padding: 0.85rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-outline {
+  background: #fff;
+  color: $indigo;
+  border: 1.5px solid #e0e4ec;
+
+  &:hover { border-color: $indigo; }
+}
+
+.btn-gradient {
+  background: $gradient;
+  color: #fff;
+  border: none;
+  box-shadow: 0 10px 22px rgba(244, 85, 29, 0.28);
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+  &:not(:disabled):hover { filter: brightness(1.06); }
+}
+
+/* ---------- Pied ---------- */
+
+.wizard-footer {
+  padding: 1rem 1.75rem 1.5rem;
+  text-align: center;
+  color: $muted;
+  font-size: 0.88rem;
+  border-top: 1px solid $border;
+}
+
+@media (max-width: 720px) {
+  .stepper { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .stepper li:not(:last-child)::after { display: none; }
+  .mapping-head { display: none; }
+  .mapping-row { grid-template-columns: 1fr; }
+  .result-stats { grid-template-columns: 1fr; }
+  .step-actions { flex-direction: column-reverse; }
+  .btn-outline, .btn-gradient { justify-content: center; }
+}

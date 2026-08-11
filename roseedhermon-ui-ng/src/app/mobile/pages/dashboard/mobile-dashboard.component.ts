@@ -1,1333 +1,595 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
 import { Router } from '@angular/router';
+
 import { EventService } from '../../../shared/services/events/events.service';
 import { EventImageService } from '../../../shared/services/events/event-image.service';
-import { EventImageComponent } from '../../../shared/components/event-image/event-image.component';
 import { EventDTO } from '../../../shared/services/api/model/eventDTO';
-import { EVENT_CATEGORIES, EventCategoryEnum } from '../../../shared/models/model';
-import { MobileFooterComponent } from '../../components/mobile-footer.component';
-// import { LucideAngularModule, Search, Bell, Heart, Home, Calendar, Users, Settings, Camera, Plane, MapPin, Music, Gamepad2, Utensils, Palette, Laptop, Briefcase, GraduationCap, Activity, Ticket, Wrench, BookOpen, Mountain, Sparkles } from 'lucide-angular';
+import {
+  CategoryStyle,
+  EventCard,
+  byDate,
+  startOfToday,
+  styleOf,
+  toEventCard
+} from '../../../shared/utils/event-presentation';
+import { AuthService } from '../../../core/auth/auth.service';
+import { MemberService } from '../../../shared/services/members/members.service';
+import { Member } from '../../../shared/services/api/model/member';
+import { TicketStoreService } from '../../services/ticket-store.service';
+import { RegistrationService } from '../../../shared/services/events/registrations.service';
+import { EventInterestService } from '../../../shared/services/events/event-interest.service';
+import { InterestButtonComponent } from '../../../web/components/interest-button.component';
+
+/** Une case de la bande d'agenda : un jour, et ce qui s'y passe. */
+interface DayCell {
+  key: string;
+  date: Date;
+  weekday: string;
+  day: string;
+  count: number;
+  /** Points d'occupation, au plus trois. Précalculés : un tableau construit dans
+      le gabarit serait neuf à chaque cycle, et `*ngFor` recréerait les points. */
+  dots: number[];
+  isToday: boolean;
+}
+
+/** Une catégorie réellement présente, avec son compte et sa couleur. */
+interface CategoryChip {
+  name: string;
+  count: number;
+  style: CategoryStyle;
+}
+
+/** Les événements d'un même mois, regroupés sous son nom. */
+interface MonthGroup {
+  key: string;
+  label: string;
+  cards: EventCard[];
+}
+
+/** Une pastille de la pile d'avatars : une photo réelle, ou des initiales. */
+interface Face {
+  id: string;
+  initials: string;
+  color: string;
+}
+
+/** Un événement du classement, avec son engouement. */
+interface Wanted {
+  card: EventCard;
+  rank: number;
+  interested: number;
+  /** Part du plus demandé, pour la largeur de la barre. */
+  share: number;
+}
+
+/** Une place réservée depuis cet appareil, rapprochée de son événement. */
+interface MyTicket {
+  registrationId: string;
+  card: EventCard;
+  /** Six derniers caractères de l'identifiant : le numéro imprimé sur le billet. */
+  code: string;
+  /** Places retenues, connues seulement une fois l'inscription relue. */
+  seats: number | null;
+  /** Largeurs des barres du motif, tirées de l'identifiant réel. */
+  bars: number[];
+}
+
+/** Nombre d'événements mis en avant dans le carrousel. */
+const FEATURED = 5;
+/** Longueur de la bande d'agenda, en jours. */
+const STRIP_DAYS = 14;
+/** Événements retenus dans le classement des plus demandés. */
+const WANTED_SHOWN = 5;
+
+const WEEKDAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+const MONTH_NAMES = [
+  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+];
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Visages montrés dans la pile ; au-delà, c'est le compte qui parle. */
+const FACES = 4;
+
+/** Teintes des initiales, reprises du référentiel des catégories. */
+const FACE_COLORS = ['#dc4a22', '#6d3be4', '#0e8f72', '#2360d4', '#c07a06', '#c42e6b'];
 
 @Component({
   selector: 'app-mobile-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule, EventImageComponent, MobileFooterComponent],
-  template: `
-    <div class="mobile-dashboard">
-      <!-- Header Section with Illustrations -->
-      <div class="mobile-header">
-        <div class="header-background">
-          <div class="travel-illustrations">
-            <div class="illustration camera"><i class="pi pi-camera" style="font-size: 24px;"></i></div>
-            <div class="illustration airplane"><i class="pi pi-send" style="font-size: 24px;"></i></div>
-            <div class="illustration suitcase"><i class="pi pi-briefcase" style="font-size: 24px;"></i></div>
-            <div class="illustration road"><i class="pi pi-map-marker" style="font-size: 24px;"></i></div>
-            <div class="travel-text">TRAVEL ADVENTURE</div>
-          </div>
-            </div>
-        
-        <div class="header-content">
-          <div class="header-top">
-            <div class="welcome-section">
-              <h2 class="welcome-text">Welcome back 👋</h2>
-              <h1 class="user-name">{{ userInfo.name }}</h1>
-          </div>
-            <div class="notification-btn" [class.has-notification]="hasNotifications">
-              <i class="pi pi-bell" style="font-size: 20px;"></i>
-              <div class="notification-dot" *ngIf="hasNotifications"></div>
-            </div>
-        </div>
-        
-          <!-- Search Bar -->
-          <div class="search-section">
-            <div class="search-bar" [class.search-active]="searchTerm">
-              <i class="pi pi-search" style="font-size: 16px;"></i>
-              <input 
-                type="text" 
-                placeholder="Rechercher par nom d'événement..." 
-                [(ngModel)]="searchTerm"
-                (input)="onSearchChange($event)"
-                (focus)="onSearchFocus()"
-                (blur)="onSearchBlur()"
-              />
-              <button 
-                class="clear-search-btn" 
-                *ngIf="searchTerm"
-                (click)="clearSearch()"
-                type="button">
-                <i class="pi pi-times" style="font-size: 14px;"></i>
-              </button>
-            </div>
-        </div>
-        </div>
-      </div>
-
-      <!-- Content -->
-      <div class="mobile-content">
-        <!-- Categories Section -->
-        <div class="categories-section">
-          <h3 class="section-title">Category</h3>
-          <div class="categories-horizontal">
-            <div 
-                   class="category-card"
-              *ngFor="let category of categories"
-              [class.selected]="selectedCategory === category.name"
-                   (click)="selectCategory(category)">
-                 <div class="category-content">
-                   <div class="category-icon" [ngClass]="getCategoryIconClass(category.name)">
-                     <div class="icon-shape" [ngSwitch]="category.name">
-                       <!-- Conférence - Microphone -->
-                       <svg *ngSwitchCase="EventCategoryEnum.CONFERENCE" width="20" height="20" viewBox="0 0 24 24" fill="#1e40af">
-                         <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                         <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                       </svg>
-                       
-                       <!-- Atelier - Outils -->
-                       <svg *ngSwitchCase="EventCategoryEnum.ATELIER" width="20" height="20" viewBox="0 0 24 24" fill="#ea580c">
-                         <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
-                       </svg>
-                       
-                       <!-- Séminaire - Graphique -->
-                       <svg *ngSwitchCase="EventCategoryEnum.SEMINAIRE" width="20" height="20" viewBox="0 0 24 24" fill="#7c3aed">
-                         <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
-                       </svg>
-                       
-                       <!-- Formation - Diplôme -->
-                       <svg *ngSwitchCase="EventCategoryEnum.FORMATION" width="20" height="20" viewBox="0 0 24 24" fill="#059669">
-                         <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
-                       </svg>
-                       
-                       <!-- Retraite - Maison -->
-                       <svg *ngSwitchCase="EventCategoryEnum.RETRAITE" width="20" height="20" viewBox="0 0 24 24" fill="#dc2626">
-                         <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                       </svg>
-                       
-                       <!-- Autre - Étoile -->
-                       <svg *ngSwitchCase="EventCategoryEnum.AUTRE" width="20" height="20" viewBox="0 0 24 24" fill="#7c2d12">
-                         <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                       </svg>
-                       
-                       <!-- Default - Calendrier -->
-                       <svg *ngSwitchDefault width="20" height="20" viewBox="0 0 24 24" fill="#2e31a4">
-                         <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                       </svg>
-                     </div>
-                   </div>
-                   <span class="category-label">{{ category.label }}</span>
-                 </div>
-              </div>
-            </div>
-            </div>
-
-        <!-- Popular Events Section -->
-        <div class="events-section">
-          <div class="section-header">
-            <h3 class="section-title">Popular Event</h3>
-            <div class="section-info">
-              <span class="results-count" *ngIf="searchTerm || selectedCategory">
-                {{ popularEvents.length }} résultat(s)
-              </span>
-              <button class="see-more-btn" *ngIf="!searchTerm && !selectedCategory">See More</button>
-            </div>
-          </div>
-          <div class="events-horizontal">
-            <div 
-              class="event-card popular-event" 
-              *ngFor="let event of popularEvents; let i = index"
-              [class.jazz-theme]="i === 0"
-              [class.sport-theme]="i === 1"
-                 (click)="viewEventDetails(event)">
-              <div class="event-image-container">
-                <app-event-image 
-                  [event]="event"
-                  [altText]="event.name || 'Événement'"
-                  shape="square"
-                  placeholderText="Événement populaire"
-                  containerClass="event-image-bg"
-                  imageClass="event-image-bg">
-                </app-event-image>
-                </div>
-                <div class="event-header">
-                  <div class="event-icon">
-                    <div [ngSwitch]="event.category">
-                      <!-- Conférence - Microphone -->
-                      <svg *ngSwitchCase="EventCategoryEnum.CONFERENCE" width="20" height="20" viewBox="0 0 24 24" fill="#1e40af">
-                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                      </svg>
-                      
-                      <!-- Atelier - Outils -->
-                      <svg *ngSwitchCase="EventCategoryEnum.ATELIER" width="20" height="20" viewBox="0 0 24 24" fill="#ea580c">
-                        <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
-                      </svg>
-                      
-                      <!-- Séminaire - Graphique -->
-                      <svg *ngSwitchCase="EventCategoryEnum.SEMINAIRE" width="20" height="20" viewBox="0 0 24 24" fill="#7c3aed">
-                        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
-                      </svg>
-                      
-                      <!-- Formation - Diplôme -->
-                      <svg *ngSwitchCase="EventCategoryEnum.FORMATION" width="20" height="20" viewBox="0 0 24 24" fill="#059669">
-                        <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
-                      </svg>
-                      
-                      <!-- Retraite - Maison -->
-                      <svg *ngSwitchCase="EventCategoryEnum.RETRAITE" width="20" height="20" viewBox="0 0 24 24" fill="#dc2626">
-                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                      </svg>
-                      
-                      <!-- Autre - Étoile -->
-                      <svg *ngSwitchCase="EventCategoryEnum.AUTRE" width="20" height="20" viewBox="0 0 24 24" fill="#7c2d12">
-                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                      </svg>
-                      
-                      <!-- Default - Calendrier -->
-                      <svg *ngSwitchDefault width="20" height="20" viewBox="0 0 24 24" fill="#2e31a4">
-                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                      </svg>
-                  </div>
-                  </div>
-                  <button class="detail-btn" (click)="viewEventDetails(event)">
-                    <i class="pi pi-eye" style="font-size: 16px;"></i>
-                  </button>
-                </div>
-              <div class="event-content">
-                <div class="event-title-container">
-                  <div class="event-title">{{ event.name || 'Nom non disponible' }}</div>
-                </div>
-                <div class="event-info">
-                  <div class="event-details">
-                    <div class="event-date">
-                      <svg class="date-icon" width="12" height="12" viewBox="0 0 24 24" fill="#6b7280">
-                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                      </svg>
-                      <span class="date-text">{{ event.date | date:'dd MMMM yyyy' }}</span>
-                    </div>
-                    <div class="event-location">
-                      <svg class="location-icon" width="12" height="12" viewBox="0 0 24 24" fill="#6b7280">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                      </svg>
-                      <span class="location-text">{{ event.location?.city }}</span>
-                </div>
-              </div>
-                <div class="event-price">{{ event.free ? 'Free' : (event.amount ? '$' + event.amount : 'N/A') }}</div>
-                </div>
-            </div>
-          </div>
-          </div>
-        </div>
-
-        <!-- Event for You Section -->
-        <div class="events-section">
-          <div class="section-header">
-            <h3 class="section-title">Event for you</h3>
-            <div class="section-info">
-              <span class="results-count" *ngIf="searchTerm || selectedCategory">
-                {{ filteredEvents.length }} résultat(s)
-              </span>
-              <button class="see-more-btn" *ngIf="!searchTerm && !selectedCategory">See More</button>
-            </div>
-          </div>
-          <div class="events-horizontal">
-            <div 
-              class="event-card event-for-you" 
-              *ngFor="let event of filteredEvents; let i = index"
-              [class.food-theme]="i === 0"
-              [class.concert-theme]="i === 1"
-                 (click)="viewEventDetails(event)">
-              <div class="event-image-container">
-                <app-event-image 
-                  [event]="event"
-                  [altText]="event.name || 'Événement'"
-                  shape="square"
-                  placeholderText="Événement pour vous"
-                  containerClass="event-image-bg"
-                  imageClass="event-image-bg">
-                </app-event-image>
-                </div>
-                <div class="event-header">
-                  <div class="event-icon">
-                    <div [ngSwitch]="event.category">
-                      <!-- Conférence - Microphone -->
-                      <svg *ngSwitchCase="EventCategoryEnum.CONFERENCE" width="20" height="20" viewBox="0 0 24 24" fill="#1e40af">
-                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                      </svg>
-                      
-                      <!-- Atelier - Outils -->
-                      <svg *ngSwitchCase="EventCategoryEnum.ATELIER" width="20" height="20" viewBox="0 0 24 24" fill="#ea580c">
-                        <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
-                      </svg>
-                      
-                      <!-- Séminaire - Graphique -->
-                      <svg *ngSwitchCase="EventCategoryEnum.SEMINAIRE" width="20" height="20" viewBox="0 0 24 24" fill="#7c3aed">
-                        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
-                      </svg>
-                      
-                      <!-- Formation - Diplôme -->
-                      <svg *ngSwitchCase="EventCategoryEnum.FORMATION" width="20" height="20" viewBox="0 0 24 24" fill="#059669">
-                        <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
-                      </svg>
-                      
-                      <!-- Retraite - Maison -->
-                      <svg *ngSwitchCase="EventCategoryEnum.RETRAITE" width="20" height="20" viewBox="0 0 24 24" fill="#dc2626">
-                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                      </svg>
-                      
-                      <!-- Autre - Étoile -->
-                      <svg *ngSwitchCase="EventCategoryEnum.AUTRE" width="20" height="20" viewBox="0 0 24 24" fill="#7c2d12">
-                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                      </svg>
-                      
-                      <!-- Default - Calendrier -->
-                      <svg *ngSwitchDefault width="20" height="20" viewBox="0 0 24 24" fill="#2e31a4">
-                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                      </svg>
-                  </div>
-                  </div>
-                  <button class="detail-btn" (click)="viewEventDetails(event)">
-                    <i class="pi pi-eye" style="font-size: 16px;"></i>
-                  </button>
-                </div>
-              <div class="event-content">
-                <div class="event-title-container">
-                  <div class="event-title">{{ event.name || 'Nom non disponible' }}</div>
-                </div>
-                <div class="event-info">
-                  <div class="event-details">
-                    <div class="event-date">
-                      <svg class="date-icon" width="12" height="12" viewBox="0 0 24 24" fill="#6b7280">
-                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                      </svg>
-                      <span class="date-text">{{ event.date | date:'dd MMMM yyyy' }}</span>
-                    </div>
-                    <div class="event-location">
-                      <svg class="location-icon" width="12" height="12" viewBox="0 0 24 24" fill="#6b7280">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                      </svg>
-                      <span class="location-text">{{ event.location?.city }}</span>
-                </div>
-              </div>
-                <div class="event-price">{{ event.free ? 'Free' : (event.amount ? '$' + event.amount : 'N/A') }}</div>
-                </div>
-            </div>
-          </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer global -->
-      <app-mobile-footer></app-mobile-footer>
-    </div>
-  `,
-  styles: [`
-    /* Global styles for proper scrolling */
-    :host {
-      display: block;
-      height: 100%;
-      overflow: hidden;
-    }
-    
-    /* Nouveau Design Mobile Dashboard - Style Figma */
-    .mobile-dashboard {
-      min-height: calc(100vh - 70px);
-      background: #f8f9fa;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      position: relative;
-      overflow-x: hidden;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    /* Header Section with Travel Illustrations */
-    .mobile-header {
-      background: linear-gradient(135deg, #4CAF50 0%, #2e31a4 100%);
-      color: white;
-      padding: 0;
-      position: relative;
-      overflow: hidden;
-      min-height: 200px;
-    }
-    
-    .header-background {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, #4CAF50 0%, #2e31a4 100%);
-    }
-    
-    .travel-illustrations {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      opacity: 0.3;
-    }
-    
-    .illustration {
-      position: absolute;
-      font-size: 24px;
-      animation: float 6s ease-in-out infinite;
-    }
-    
-    .camera {
-      top: 20px;
-      right: 30px;
-      animation-delay: 0s;
-    }
-    
-    .airplane {
-      top: 40px;
-      right: 60px;
-      animation-delay: 1s;
-    }
-    
-    .suitcase {
-      top: 60px;
-      right: 20px;
-      animation-delay: 2s;
-    }
-    
-    .road {
-      top: 80px;
-      right: 50px;
-      animation-delay: 3s;
-    }
-    
-    .travel-text {
-      position: absolute;
-      top: 100px;
-      right: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      opacity: 0.7;
-    }
-    
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-    
-    .header-content {
-      position: relative;
-      z-index: 10;
-      padding: 20px 16px;
-    }
-    
-    /* Header Top Section */
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
-    }
-    
-    .welcome-section {
-      flex: 1;
-    }
-    
-    .welcome-text {
-      font-size: 16px;
-      font-weight: 400;
-      margin: 0 0 4px 0;
-      opacity: 0.9;
-    }
-    
-    .user-name {
-      font-size: 24px;
-      font-weight: 700;
-      margin: 0;
-      color: white;
-    }
-    
-    .notification-btn {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-    }
-    
-    .notification-btn i {
-      font-size: 20px;
-      color: white;
-    }
-    
-    .notification-dot {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 8px;
-      height: 8px;
-      background: #ff4757;
-      border-radius: 50%;
-      border: 2px solid white;
-    }
-    
-    /* Search Section */
-    .search-section {
-      margin-top: 20px;
-      margin-bottom: -60px;
-      position: relative;
-      z-index: 100;
-      transform: translateY(40px);
-    }
-    
-    .search-bar {
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 12px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border: 2px solid rgba(0,0,0,0.1);
-      backdrop-filter: blur(10px);
-      transition: all 0.3s ease;
-      position: relative;
-    }
-
-    .search-bar.search-active {
-      border-color: #4CAF50;
-      background: rgba(255, 255, 255, 0.95);
-      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
-    }
-    
-    .search-bar i {
-      color: #666;
-      font-size: 16px;
-      transition: color 0.3s ease;
-    }
-
-    .search-bar.search-active i {
-      color: #4CAF50;
-    }
-    
-    .search-bar input {
-      flex: 1;
-      border: none;
-      outline: none;
-      font-size: 14px;
-      color: #333;
-      background: transparent;
-      font-weight: 500;
-    }
-    
-    .search-bar input::placeholder {
-      color: #999;
-      font-size: 14px;
-      font-weight: 400;
-    }
-
-    .clear-search-btn {
-      background: none;
-      border: none;
-      color: #999;
-      cursor: pointer;
-      padding: 4px;
-      border-radius: 50%;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-    }
-
-    .clear-search-btn:hover {
-      background: rgba(0, 0, 0, 0.1);
-      color: #666;
-    }
-    
-    /* Mobile Content */
-    .mobile-content {
-      padding: 60px 16px 20px 16px;
-      background: #f8f9fa;
-      margin-top: -40px;
-      position: relative;
-      z-index: 1;
-    }
-    
-    /* Categories Section */
-    .categories-section {
-      margin-bottom: 20px;
-    }
-    
-    .section-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #333;
-      margin: 0 0 16px 0;
-    }
-    
-    .categories-horizontal {
-      display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      padding: 4px 0;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    .categories-horizontal::-webkit-scrollbar {
-      display: none;
-    }
-    
-    .category-card {
-      background: white;
-      border-radius: 12px;
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 10px;
-      min-width: 140px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      flex-shrink: 0;
-      border: 2px solid transparent;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .category-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #c2410c;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 1;
-    }
-    
-    .category-card.selected::before {
-      opacity: 1;
-    }
-    
-    .category-card.selected {
-      border-color: #c2410c;
-    }
-    
-    .category-content {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 12px;
-      color: #333;
-      transition: color 0.3s ease;
-    }
-    
-    .category-card.selected .category-content {
-      color: white;
-    }
-    
-    .category-icon {
-      font-size: 20px;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-      flex-shrink: 0;
-      color: #2e31a4;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-    }
-    
-    .category-card.selected .category-icon svg {
-      fill: white !important;
-    }
-    
-    .icon-shape {
-      width: 20px;
-      height: 20px;
-      display: block;
-    }
-    
-    /* Icônes spécifiques pour chaque catégorie */
-    .conference-icon {
-      width: 20px;
-      height: 20px;
-      background-color: #FF6B6B;
-      border-radius: 50%;
-    }
-    
-    .atelier-icon {
-      width: 20px;
-      height: 20px;
-      background-color: #4ECDC4;
-      border-radius: 0;
-      transform: rotate(45deg);
-    }
-    
-    .seminaire-icon {
-      width: 20px;
-      height: 20px;
-      background-color: #45B7D1;
-      border-radius: 0;
-    }
-    
-    .formation-icon {
-      width: 20px;
-      height: 20px;
-      background-color: #96CEB4;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-    }
-    
-    .retraite-icon {
-      width: 20px;
-      height: 20px;
-      background-color: #FFEAA7;
-      border-radius: 50% 0 50% 0;
-    }
-    
-    .autre-icon {
-      width: 20px;
-      height: 20px;
-      background-color: #DDA0DD;
-      border-radius: 0 50% 0 50%;
-    }
-    
-    .default-icon {
-      width: 20px;
-      height: 20px;
-      background-color: #2e31a4;
-      border-radius: 50%;
-    }
-    
-    /* Styles pour les états hover et selected */
-    .category-card:hover .conference-icon,
-    .category-card.selected .conference-icon { background-color: white !important; }
-    .category-card:hover .atelier-icon,
-    .category-card.selected .atelier-icon { background-color: white !important; }
-    .category-card:hover .seminaire-icon,
-    .category-card.selected .seminaire-icon { background-color: white !important; }
-    .category-card:hover .formation-icon,
-    .category-card.selected .formation-icon { background-color: white !important; }
-    .category-card:hover .retraite-icon,
-    .category-card.selected .retraite-icon { background-color: white !important; }
-    .category-card:hover .autre-icon,
-    .category-card.selected .autre-icon { background-color: white !important; }
-    
-    .category-label {
-      font-size: 13px;
-      font-weight: 600;
-      text-align: left;
-      line-height: 1.1;
-      flex: 1;
-    }
-    
-    /* Events Section */
-    .events-section {
-      margin-bottom: 16px;
-    }
-    
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .section-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .see-more-btn {
-      background: none;
-      border: none;
-      color: #2196F3;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    .results-count {
-      font-size: 12px;
-      color: #4CAF50;
-      font-weight: 600;
-      background: rgba(76, 175, 80, 0.1);
-      padding: 4px 8px;
-      border-radius: 12px;
-      border: 1px solid rgba(76, 175, 80, 0.2);
-    }
-    
-    .events-horizontal {
-      display: flex;
-      gap: 16px;
-      overflow-x: auto;
-      padding: 4px 0;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    .events-horizontal::-webkit-scrollbar {
-      display: none;
-    }
-    
-    /* Event Cards */
-    .event-card {
-      border-radius: 16px;
-      min-width: 240px;
-      max-width: 240px;
-      height: 200px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      flex-shrink: 0;
-      border: 1px solid rgba(0,0,0,0.05);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      position: relative;
-      overflow: hidden;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-color: white; /* Background blanc pour toute la carte */
-    }
-    
-    .event-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    }
-
-    .event-image-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 133px; /* 2/3 de 200px pour la zone image */
-      z-index: 1;
-    }
-
-    .event-image-bg {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .image-loading {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 3;
-      color: white;
-      font-size: 24px;
-      background: rgba(0,0,0,0.5);
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    /* Event Header */
-    .event-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      padding: 16px 16px 0 16px;
-      position: relative;
-      z-index: 2;
-    }
-    
-    .event-icon {
-      font-size: 24px;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 10px;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    
-    .event-title {
-      font-size: 15px;
-      font-weight: 800;
-      color: #000000;
-      line-height: 1.3;
-      margin: 0 0 6px 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      position: relative;
-      z-index: 3;
-      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-    }
-    
-    .detail-btn {
-      background: rgba(255, 255, 255, 0.9);
-      border: none;
-      color: #666;
-      font-size: 16px;
-      cursor: pointer;
-      padding: 8px;
-      border-radius: 50%;
-      transition: all 0.3s ease;
-      flex-shrink: 0;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    
-    .detail-btn:hover {
-      color: #2196F3;
-      background: rgba(33, 150, 243, 0.9);
-    }
-    
-    /* Event Content */
-    .event-content {
-      display: flex;
-      flex-direction: column;
-      padding: 8px;
-      position: absolute;
-      bottom: 5px;
-      left: 5px;
-      right: 5px;
-      height: 65px; /* Ajusté pour contenir tous les éléments */
-      z-index: 2;
-      background: white;
-      border-radius: 12px;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      overflow: hidden; /* Empêche le débordement */
-    }
-    
-    .event-title-container {
-      width: 100%;
-      margin-bottom: 1px;
-    }
-    
-    .event-info {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: flex-end;
-      flex: 1;
-      min-width: 0; /* Pour permettre le truncate */
-      position: relative;
-      z-index: 3;
-      overflow: hidden; /* Empêche le débordement */
-    }
-    
-    .event-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: #000000;
-      line-height: 1.0;
-      margin: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      position: relative;
-      z-index: 3;
-      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-    }
-    
-    .event-details {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    
-    .event-date,
-    .event-location {
-      font-size: 11px;
-      color: #666;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin: -2px 0 0 0; /* Remonte de 2px vers le haut */
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    
-    .date-icon,
-    .location-icon {
-      flex-shrink: 0;
-      margin-right: 2px;
-    }
-    
-    .date-text {
-      color: #6b7280; /* Gris pour la date */
-      font-weight: 500;
-    }
-    
-    .location-text {
-      color: #6b7280; /* Gris pour le lieu */
-      font-weight: 500;
-    }
-    
-    .event-price {
-      font-size: 12px;
-      font-weight: 600;
-      color: white;
-      background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
-      padding: 4px 8px;
-      border-radius: 6px;
-      align-self: flex-end;
-      margin-left: 8px;
-      margin-bottom: 4px;
-      box-shadow: 0 2px 4px rgba(234, 88, 12, 0.3);
-      flex-shrink: 0;
-    }
-    
-    
-    /* Responsive Design */
-    @media (max-width: 480px) {
-      .mobile-dashboard {
-        padding: 16px;
-        min-height: calc(100vh - 65px);
-      }
-      
-      .mobile-header {
-        height: 200px;
-      }
-      
-      .header-content {
-        padding: 20px 16px;
-      }
-      
-      .search-bar {
-        margin: 0 16px;
-      }
-      
-      .mobile-content {
-        padding: 0 16px;
-      }
-      
-      .event-card {
-        min-width: 280px;
-        max-width: 280px;
-      }
-      
-      .category-card {
-        min-width: 80px;
-        padding: 16px 12px;
-      }
-      
-      .category-icon {
-        font-size: 28px;
-      }
-      
-      .category-label {
-        font-size: 12px;
-      }
-    }
-    
-    /* Animation for illustrations */
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-  `]
+  imports: [CommonModule, FormsModule, InterestButtonComponent],
+  templateUrl: './mobile-dashboard.component.html',
+  styleUrls: ['./mobile-dashboard.component.scss']
 })
 export class MobileDashboardComponent implements OnInit {
-  events: EventDTO[] = [];
-  popularEvents: EventDTO[] = [];
-  filteredEvents: EventDTO[] = [];
-  searchTerm: string = '';
-  selectedCategory: string = '';
-  favorites: Set<string> = new Set();
-  hasNotifications: boolean = true;
-  
-  // Exposer l'enum pour le template
-  EventCategoryEnum = EventCategoryEnum;
+  cards: EventCard[] = [];
+  loading = true;
+  loadError = '';
 
-  // Informations de l'utilisateur connecté
-  userInfo = {
-    name: 'Utilisateur',
-    status: 'Prêt pour de nouveaux événements',
-    avatar: 'assets/images/user-avatar.svg'
-  };
+  // --- Filtres ---
+  query = '';
+  category = '';
+  /** Jour retenu dans la bande d'agenda, au format `AAAA-M-J`. */
+  day = '';
 
-  categories = [
-    { name: EventCategoryEnum.CONFERENCE, icon: 'pi pi-users', label: 'Conférence' },
-    { name: EventCategoryEnum.ATELIER, icon: 'pi pi-wrench', label: 'Atelier' },
-    { name: EventCategoryEnum.SEMINAIRE, icon: 'pi pi-chart-line', label: 'Séminaire' },
-    { name: EventCategoryEnum.FORMATION, icon: 'pi pi-graduation-cap', label: 'Formation' },
-    { name: EventCategoryEnum.RETRAITE, icon: 'pi pi-home', label: 'Retraite' },
-    { name: EventCategoryEnum.AUTRE, icon: 'pi pi-star', label: 'Autre' }
-  ];
+  /**
+   * Listes dérivées, recalculées à la demande et non à chaque cycle de détection.
+   *
+   * Un accesseur qui reconstruirait ces objets à chaque lecture ferait recréer
+   * toutes les vues de `*ngFor`, qui suivent l'identité des objets : la page se
+   * détruirait et se reconstruirait en boucle.
+   */
+  featured: EventCard[] = [];
+  /** Ceux qu'organise la communauté de la personne connectée. */
+  forYou: EventCard[] = [];
+  monthGroups: MonthGroup[] = [];
+  categories: CategoryChip[] = [];
+  dayStrip: DayCell[] = [];
+  /**
+   * Vrai si au moins un jour de la bande porte un événement.
+   *
+   * Quand tout se joue dans plusieurs mois, une quinzaine entièrement vide
+   * n'apprend rien et ressemble à une panne : la bande disparaît alors.
+   */
+  stripHasEvents = false;
+  myTickets: MyTicket[] = [];
+  /** Classement par nombre de personnes intéressées. */
+  wanted: Wanted[] = [];
+
+  // --- Communauté ---
+  faces: Face[] = [];
+  memberCount = 0;
+  memberCityCount = 0;
+
+  /** Le tout prochain événement, celui du compte à rebours. */
+  next: EventCard | null = null;
+  countdownLabel = '';
+  countdownDays = 0;
 
   constructor(
     private eventService: EventService,
-    private eventImageService: EventImageService,
+    private images: EventImageService,
+    private auth: AuthService,
+    private memberService: MemberService,
+    private tickets: TicketStoreService,
+    private registrations: RegistrationService,
+    private interest: EventInterestService,
     private router: Router
-  ) { }
+  ) {}
 
   ngOnInit(): void {
-    // Sélectionner la première catégorie par défaut
-    if (this.categories.length > 0) {
-      this.selectedCategory = this.categories[0].name;
-    }
-    this.loadEvents();
-  }
-
-  loadEvents(): void {
+    // `getEventsWithFiles` fournit les visuels ; on retombe sur la liste simple si elle échoue.
     this.eventService.getEventsWithFiles().subscribe({
-      next: (events) => {
-        this.events = events;
-        this.popularEvents = events.slice(0, 5); // Top 5 events
-        this.filteredEvents = events;
-        console.log('Dashboard - Événements chargés:', this.events.length);
-        console.log('Premier événement:', events[0]);
-      },
-      error: (error) => {
-        console.error('Erreur lors du chargement des événements:', error);
-        // Fallback vers getEvents() si getEventsWithFiles() échoue
+      next: (events) => this.receive(events),
+      error: () => {
         this.eventService.getEvents().subscribe({
-          next: (fallbackEvents) => {
-            this.events = fallbackEvents;
-            this.popularEvents = fallbackEvents.slice(0, 5);
-            this.filteredEvents = fallbackEvents;
-            console.log('Dashboard - Événements chargés (fallback):', this.events.length);
-          },
-          error: (fallbackError) => {
-            console.error('Erreur lors du chargement des événements (fallback):', fallbackError);
+          next: (events) => this.receive(events),
+          error: (error) => {
+            console.error('Erreur lors du chargement des événements', error);
+            this.loadError = `Impossible de charger les événements (${error?.status || 'réseau'}).`;
+            this.loading = false;
           }
         });
       }
     });
   }
 
-  onSearchChange(event: any): void {
-    this.searchTerm = event.target.value.toLowerCase();
-    this.filterEvents();
+  /**
+   * Effectif de la communauté, pour la bande de présentation.
+   *
+   * Demandé seulement si le module Membres est ouvert au groupe : sans lui, le
+   * serveur refuserait, et il n'y a de toute façon pas d'annuaire à résumer. Un
+   * échec reste sans conséquence — la bande ne s'affiche simplement pas.
+   */
+  private loadCommunity(): void {
+    if (!this.auth.canSeeMembers()) return;
+
+    this.memberService.getMembers().subscribe({
+      next: (members: Member[]) => this.buildCommunity(members || []),
+      error: () => undefined
+    });
   }
 
-  onSearchFocus(): void {
-    console.log('Focus sur le champ de recherche');
+  private buildCommunity(members: Member[]): void {
+    this.memberCount = members.length;
+    this.memberCityCount = new Set(
+      members.map((member) => (member.city || '').trim()).filter(Boolean)
+    ).size;
+
+    // Initiales seulement : les photos des fiches ne sont pas affichées ici.
+    this.faces = members
+      .slice(0, FACES)
+      .map((member, index) => ({
+        id: member.id ?? `face-${index}`,
+        initials:
+          `${member.firstName?.charAt(0) ?? ''}${member.lastName?.charAt(0) ?? ''}`.toUpperCase() || '?',
+        color: FACE_COLORS[index % FACE_COLORS.length]
+      }));
   }
 
-  onSearchBlur(): void {
-    console.log('Perte de focus sur le champ de recherche');
+  /** Nombre restant après les visages montrés, ou zéro. */
+  get facesOverflow(): number {
+    return Math.max(0, this.memberCount - this.faces.length);
   }
 
-  clearSearch(): void {
-    this.searchTerm = '';
-    this.filterEvents();
+  get communityLabel(): string {
+    const group = this.auth.user().group?.name?.trim();
+    return group ? `${this.memberCount} membres · ${group}` : `${this.memberCount} membres`;
   }
 
-  selectCategory(category: any): void {
-    this.selectedCategory = this.selectedCategory === category.name ? '' : category.name;
-    this.filterEvents();
+  private receive(events: EventDTO[]): void {
+    this.cards = (events || [])
+      .map((event) => toEventCard(event, event.files?.length ? this.images.getEventImageUrl(event) : null))
+      .sort(byDate);
+
+    this.buildFigures();
+    this.buildCategories();
+    this.buildDayStrip();
+    this.buildMyTickets();
+    this.rebuild();
+    this.loadCommunity();
+    this.loadWanted();
+    this.loading = false;
   }
 
-  filterEvents(): void {
-    let filtered = this.events;
+  // --- Identité ---------------------------------------------------------------------
 
-    if (this.searchTerm) {
-      filtered = filtered.filter(event =>
-        event.name?.toLowerCase().includes(this.searchTerm)
-      );
+  /**
+   * Prénom de la personne connectée, s'il est connu.
+   *
+   * Rien n'est inventé : sans session, l'accueil salue sans nommer plutôt que
+   * d'afficher un prénom d'emprunt.
+   */
+  get greeting(): string {
+    const firstName = this.auth.user().member?.firstName?.trim();
+    return firstName ? `Bonjour ${firstName},` : 'Bonjour,';
+  }
+
+  /**
+   * Nom affiché en gros sous le salut.
+   *
+   * La fiche membre d'abord, le courriel ensuite, et à défaut le nom de la
+   * plateforme — jamais un nom inventé.
+   */
+  get displayName(): string {
+    const member = this.auth.user().member;
+    const full = `${member?.firstName ?? ''} ${member?.lastName ?? ''}`.trim();
+    if (full) return full;
+    return this.auth.user().email?.split('@')[0] || 'Bienvenue';
+  }
+
+  /** Initiales réelles ; vide quand on ne sait pas qui utilise l'appareil. */
+  get initials(): string {
+    const member = this.auth.user().member;
+    const letters = `${member?.firstName?.charAt(0) ?? ''}${member?.lastName?.charAt(0) ?? ''}`.trim();
+    if (letters) return letters.toUpperCase();
+    return (this.auth.user().email?.charAt(0) ?? '').toUpperCase();
+  }
+
+  // --- Construction -----------------------------------------------------------------
+
+  private get upcoming(): EventCard[] {
+    return this.cards.filter((card) => card.upcoming);
+  }
+
+  /** Le tout prochain événement daté : c'est lui que porte le compte à rebours. */
+  private buildFigures(): void {
+    this.next = this.upcoming.find((card) => !!card.date) ?? null;
+    this.buildCountdown();
+  }
+
+  private buildCountdown(): void {
+    if (!this.next?.date) {
+      this.countdownLabel = '';
+      this.countdownDays = 0;
+      return;
     }
 
-    if (this.selectedCategory) {
-      filtered = filtered.filter(event =>
-        event.category === this.selectedCategory
-      );
-    }
+    const days = Math.round((this.next.date.getTime() - startOfToday()) / DAY_MS);
+    this.countdownDays = Math.max(0, days);
 
-    this.filteredEvents = filtered;
-    
-    // Mettre à jour aussi les événements populaires si une recherche est active
-    if (this.searchTerm || this.selectedCategory) {
-      this.popularEvents = filtered.slice(0, 5);
+    if (days <= 0) this.countdownLabel = "C'est aujourd'hui";
+    else if (days === 1) this.countdownLabel = "C'est demain";
+    else if (days < 7) this.countdownLabel = `Dans ${days} jours`;
+    else if (days < 31) {
+      const weeks = Math.round(days / 7);
+      this.countdownLabel = `Dans ${weeks} semaine${weeks > 1 ? 's' : ''}`;
     } else {
-      // Si pas de recherche, garder les 5 premiers événements originaux
-      this.popularEvents = this.events.slice(0, 5);
+      const months = Math.round(days / 30);
+      this.countdownLabel = `Dans ${months} mois`;
     }
   }
 
-  getEventImage(event: EventDTO): string {
-    return this.eventImageService.getEventImageUrl(event);
+  private buildCategories(): void {
+    const counts = new Map<string, number>();
+    this.upcoming.forEach((card) => {
+      if (card.category) counts.set(card.category, (counts.get(card.category) ?? 0) + 1);
+    });
+
+    this.categories = [...counts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'fr'))
+      .map(([name, count]) => ({ name, count, style: styleOf(name) }));
   }
 
-  onImageError(event: any, eventData: EventDTO): void {
-    this.eventImageService.onImageError(eventData, event.target);
+  /** Quinze jours à partir d'aujourd'hui, avec ce qui s'y passe. */
+  private buildDayStrip(): void {
+    const counts = new Map<string, number>();
+    this.upcoming.forEach((card) => {
+      if (card.date) {
+        const key = dayKey(card.date);
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+    });
+
+    const today = new Date(startOfToday());
+    this.dayStrip = Array.from({ length: STRIP_DAYS }, (_, offset) => {
+      const date = new Date(today.getTime() + offset * DAY_MS);
+      const key = dayKey(date);
+      const count = counts.get(key) ?? 0;
+      return {
+        key,
+        date,
+        weekday: WEEKDAY_LETTERS[date.getDay()],
+        day: String(date.getDate()),
+        count,
+        dots: Array.from({ length: Math.min(count, 3) }, (_, index) => index),
+        isToday: offset === 0
+      };
+    });
+
+    this.stripHasEvents = this.dayStrip.some((cell) => cell.count > 0);
   }
 
-  onImageLoad(event: any, eventData: EventDTO): void {
-    this.eventImageService.onImageLoad(eventData, event.target);
+  /**
+   * Places réservées depuis cet appareil, limitées à ce qui reste à venir.
+   *
+   * L'API n'expose pas de liste par personne : c'est l'appareil qui garde la
+   * trace de ses billets.
+   */
+  private buildMyTickets(): void {
+    const byId = new Map(this.cards.map((card) => [card.id, card]));
+
+    this.myTickets = this.tickets
+      .all()
+      .map((ticket) => {
+        const card = byId.get(ticket.eventId);
+        if (!card) return null;
+        return {
+          registrationId: ticket.registrationId,
+          card,
+          code: ticket.registrationId.slice(-6).toUpperCase(),
+          seats: null,
+          bars: barsOf(ticket.registrationId)
+        } as MyTicket;
+      })
+      .filter((entry): entry is MyTicket => entry !== null && entry.card.upcoming)
+      .slice(0, 1);
+
+    // Le nombre de places n'est pas gardé sur l'appareil : on relit l'inscription.
+    // Bornée à quelques billets, cette série d'appels reste modeste.
+    this.myTickets.forEach((ticket) => {
+      this.registrations.get(ticket.registrationId).subscribe({
+        next: (registration) => {
+          ticket.seats = typeof registration?.seats === 'number' ? registration.seats : 1;
+        },
+        // Billet illisible : la carte s'affiche sans le nombre de places.
+        error: () => undefined
+      });
+    });
   }
 
-  viewEventDetails(event: EventDTO): void {
-    console.log('Voir détails de l\'événement:', event);
-    if (event.id) {
-      this.router.navigate(['/mobile/events', event.id]);
+  /**
+   * Classement des événements par engouement.
+   *
+   * Un seul appel rapporte tous les compteurs : demander l'intérêt événement par
+   * événement serait tenable à quatre, pas à deux cents. Un échec laisse
+   * simplement la section absente.
+   */
+  private loadWanted(): void {
+    this.interest.counts().subscribe({
+      next: (counts) => this.buildWanted(counts),
+      error: () => undefined
+    });
+  }
+
+  private buildWanted(counts: Record<string, number>): void {
+    const ranked = this.upcoming
+      .map((card) => ({ card, interested: counts[card.id] ?? 0 }))
+      .filter((entry) => entry.interested > 0)
+      .sort((a, b) => b.interested - a.interested)
+      .slice(0, WANTED_SHOWN);
+
+    const top = ranked.length ? ranked[0].interested : 0;
+
+    this.wanted = ranked.map((entry, index) => ({
+      card: entry.card,
+      rank: index + 1,
+      interested: entry.interested,
+      share: top ? Math.round((entry.interested / top) * 100) : 0
+    }));
+  }
+
+  /** Prochaine place réservée depuis cet appareil, s'il y en a une. */
+  get nextTicket(): MyTicket | null {
+    return this.myTickets[0] ?? null;
+  }
+
+  goToTickets(): void {
+    this.router.navigate(['/mobile/tickets']);
+  }
+
+  trackByWanted(_index: number, item: Wanted): string {
+    return item.card.id;
+  }
+
+  /** Recalcule ce qui dépend des filtres. Appelé à chaque changement, pas plus. */
+  rebuild(): void {
+    const needle = this.query.trim().toLowerCase();
+
+    const matching = this.upcoming.filter((card) => {
+      if (this.category && card.category !== this.category) return false;
+      if (this.day && (!card.date || dayKey(card.date) !== this.day)) return false;
+      if (!needle) return true;
+      return [card.name, card.description, card.category, card.place, card.city]
+        .filter((value): value is string => !!value)
+        .some((value) => value.toLowerCase().includes(needle));
+    });
+
+    this.featured = matching.slice(0, FEATURED);
+
+    /**
+     * « Pour vous » n'est pas une recommandation devinée : ce sont les
+     * événements organisés par le groupe de la personne connectée. Sans groupe,
+     * la section n'a rien à montrer et disparaît.
+     */
+    const groupId = this.auth.user().groupId;
+    this.forYou = groupId
+      ? matching.filter((card) => card.event.groupId === groupId).slice(0, FEATURED)
+      : [];
+
+    this.monthGroups = groupByMonth(matching);
+  }
+
+  // --- État -------------------------------------------------------------------------
+
+  get filtering(): boolean {
+    return !!this.query.trim() || !!this.category || !!this.day;
+  }
+
+  get matchCount(): number {
+    return this.monthGroups.reduce((total, group) => total + group.cards.length, 0);
+  }
+
+  get selectedDayLabel(): string {
+    const cell = this.dayStrip.find((item) => item.key === this.day);
+    if (!cell) return '';
+    return cell.date.toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  get emptyMessage(): string {
+    if (this.filtering) return 'Aucun événement ne correspond à cette recherche.';
+    if (!this.cards.length) return 'Aucun événement enregistré pour le moment.';
+    return "Aucun événement à venir. Les éditions passées restent consultables dans l'onglet Événements.";
+  }
+
+  // --- Actions ----------------------------------------------------------------------
+
+  pickCategory(name: string): void {
+    // Un second appui retire le filtre : pas de bouton « tout » à aller chercher.
+    this.category = this.category === name ? '' : name;
+    this.rebuild();
+  }
+
+  pickDay(cell: DayCell): void {
+    if (!cell.count) return;
+    this.day = this.day === cell.key ? '' : cell.key;
+    this.rebuild();
+  }
+
+  reset(): void {
+    this.query = '';
+    this.category = '';
+    this.day = '';
+    this.rebuild();
+  }
+
+  open(card: EventCard): void {
+    if (card.id) this.router.navigate(['/mobile/events', card.id]);
+  }
+
+  openTicket(ticket: MyTicket): void {
+    this.router.navigate(['/mobile/ticket', ticket.card.id]);
+  }
+
+  reserve(card: EventCard): void {
+    if (card.id) this.router.navigate(['/mobile/reservation', card.id]);
+  }
+
+  goToEvents(): void {
+    this.router.navigate(['/mobile/events']);
+  }
+
+  goToProfile(): void {
+    this.router.navigate(['/mobile/profile']);
+  }
+
+  /** Une illustration manquante ne doit pas laisser une case vide : on retombe sur le dégradé. */
+  onVisualError(card: EventCard): void {
+    card.visual = card.visual === card.style.illustration ? null : card.style.illustration;
+  }
+
+  trackByCard(_index: number, card: EventCard): string {
+    return card.id;
+  }
+
+  trackByGroup(_index: number, group: MonthGroup): string {
+    return group.key;
+  }
+
+  trackByDay(_index: number, cell: DayCell): string {
+    return cell.key;
+  }
+
+  trackByCategory(_index: number, chip: CategoryChip): string {
+    return chip.name;
+  }
+
+  trackByTicket(_index: number, ticket: MyTicket): string {
+    return ticket.registrationId;
+  }
+
+  trackByFace(_index: number, face: Face): string {
+    return face.id;
+  }
+}
+
+/* ---------- Utilitaires ---------- */
+
+/**
+ * Motif de barres d'un billet, tiré de son identifiant réel.
+ *
+ * Purement décoratif : c'est le code à scanner de l'écran du billet qui fait
+ * foi. Le motif est stable pour un même billet, ce qui évite qu'il change à
+ * chaque affichage.
+ */
+function barsOf(id: string): number[] {
+  return Array.from({ length: 26 }, (_, index) => {
+    const code = id.charCodeAt(index % id.length) + index;
+    return 1 + (code % 3);
+  });
+}
+
+function dayKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+/** Regroupe par mois, en conservant l'ordre chronologique déjà établi. */
+function groupByMonth(cards: EventCard[]): MonthGroup[] {
+  const groups: MonthGroup[] = [];
+  const index = new Map<string, MonthGroup>();
+
+  cards.forEach((card) => {
+    const key = card.date ? `${card.date.getFullYear()}-${card.date.getMonth()}` : 'sans-date';
+    let group = index.get(key);
+
+    if (!group) {
+      group = {
+        key,
+        label: card.date
+          ? `${MONTH_NAMES[card.date.getMonth()]} ${card.date.getFullYear()}`
+          : 'Date à préciser',
+        cards: []
+      };
+      index.set(key, group);
+      groups.push(group);
     }
-  }
 
-  toggleFavorite(event: EventDTO, eventClick: Event): void {
-    eventClick.stopPropagation();
-    const eventId = event.id?.toString() || '';
-    
-    if (this.favorites.has(eventId)) {
-      this.favorites.delete(eventId);
-    } else {
-      this.favorites.add(eventId);
-    }
-  }
+    group.cards.push(card);
+  });
 
-  isFavorite(event: EventDTO): boolean {
-    return this.favorites.has(event.id?.toString() || '');
-  }
-
-  onAvatarError(event: any): void {
-    // Fallback vers une icône si l'image ne charge pas
-    event.target.style.display = 'none';
-    event.target.parentElement.innerHTML = '<i class="icon-user"></i>';
-  }
-
-  toggleNotifications(): void {
-    console.log('Ouvrir les notifications');
-    // TODO: Implémenter l'ouverture des notifications
-  }
-
-  getEventIcon(category?: string): string {
-    switch (category) {
-      case 'CONFERENCE':
-        return 'pi pi-users';
-      case 'ATELIER':
-        return 'pi pi-wrench';
-      case 'SEMINAIRE':
-        return 'pi pi-book';
-      case 'FORMATION':
-        return 'pi pi-graduation-cap';
-      case 'RETRAITE':
-        return 'pi pi-home';
-      case 'AUTRE':
-        return 'pi pi-star';
-      default:
-        return 'pi pi-calendar';
-    }
-  }
-
-  getCategoryIcon(categoryName?: string): string {
-    switch (categoryName) {
-      case 'CONFERENCE':
-        return '●';
-      case 'ATELIER':
-        return '▲';
-      case 'SEMINAIRE':
-        return '■';
-      case 'FORMATION':
-        return '◆';
-      case 'RETRAITE':
-        return '★';
-      case 'AUTRE':
-        return '♦';
-      default:
-        return '○';
-    }
-  }
-
-  getCategoryIconClass(categoryName?: string): string {
-    switch (categoryName) {
-      case 'CONFERENCE':
-        return 'conference';
-      case 'ATELIER':
-        return 'atelier';
-      case 'SEMINAIRE':
-        return 'seminaire';
-      case 'FORMATION':
-        return 'formation';
-      case 'RETRAITE':
-        return 'retraite';
-      case 'AUTRE':
-        return 'autre';
-      default:
-        return '';
-    }
-  }
-
-  getCategoryColor(categoryName?: string): string {
-    switch (categoryName) {
-      case 'CONFERENCE':
-        return '#FF6B6B';
-      case 'ATELIER':
-        return '#4ECDC4';
-      case 'SEMINAIRE':
-        return '#45B7D1';
-      case 'FORMATION':
-        return '#96CEB4';
-      case 'RETRAITE':
-        return '#FFEAA7';
-      case 'AUTRE':
-        return '#DDA0DD';
-      default:
-        return '#2e31a4';
-    }
-  }
-
-  getCategoryBorderRadius(categoryName?: string): string {
-    switch (categoryName) {
-      case 'CONFERENCE':
-        return '50%';
-      case 'ATELIER':
-        return '0';
-      case 'SEMINAIRE':
-        return '0';
-      case 'FORMATION':
-        return '50% 50% 50% 0';
-      case 'RETRAITE':
-        return '50% 0 50% 0';
-      case 'AUTRE':
-        return '0 50% 0 50%';
-      default:
-        return '50%';
-    }
-  }
-
-  getCategoryIconStyle(categoryName?: string): string {
-    const color = this.getCategoryColor(categoryName);
-    const borderRadius = this.getCategoryBorderRadius(categoryName);
-    
-    switch (categoryName) {
-      case 'CONFERENCE':
-        return `background-color: ${color}; border-radius: ${borderRadius}; width: 20px; height: 20px; display: block;`;
-      case 'ATELIER':
-        return `background-color: ${color}; border-radius: ${borderRadius}; width: 20px; height: 20px; display: block; transform: rotate(45deg);`;
-      case 'SEMINAIRE':
-        return `background-color: ${color}; border-radius: ${borderRadius}; width: 20px; height: 20px; display: block;`;
-      case 'FORMATION':
-        return `background-color: ${color}; border-radius: ${borderRadius}; width: 20px; height: 20px; display: block; transform: rotate(-45deg);`;
-      case 'RETRAITE':
-        return `background-color: ${color}; border-radius: ${borderRadius}; width: 20px; height: 20px; display: block;`;
-      case 'AUTRE':
-        return `background-color: ${color}; border-radius: ${borderRadius}; width: 20px; height: 20px; display: block;`;
-      default:
-        return `background-color: ${color}; border-radius: ${borderRadius}; width: 20px; height: 20px; display: block;`;
-    }
-  }
-
-} 
+  return groups;
+}

@@ -1,1175 +1,552 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EventService } from '../../../shared/services/events/events.service';
-import { EventImageService } from '../../../shared/services/events/event-image.service';
-import { EventImageComponent } from '../../../shared/components/event-image/event-image.component';
 import { EventDTO } from '../../../shared/services/api/model/eventDTO';
-import { EventCategoryEnum } from '../../../shared/models/model';
 import { EventFileControllerService } from '../../../shared/services/api/api/eventFileController.service';
 import { EventFileDTO } from '../../../shared/services/api/model/eventFileDTO';
-import { MobileFooterComponent } from '../../components/mobile-footer.component';
+import { environment } from '../../../../environments/environment';
+
+/** Un présentateur prêt à afficher (aucune photo n'est stockée : on met les initiales). */
+interface PresenterView {
+  initials: string;
+  name: string;
+  title: string;
+}
+
+/** Un document téléchargeable de l'événement. */
+interface DocumentView {
+  name: string;
+  meta: string;
+  url: string;
+}
+
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
 
 @Component({
   selector: 'app-mobile-event-detail',
   standalone: true,
-  imports: [CommonModule, IonicModule, EventImageComponent, MobileFooterComponent],
+  imports: [CommonModule],
   template: `
-    <div class="mobile-event-detail">
-      <!-- Header Section -->
-      <div class="event-header">
-        <div class="header-background">
-          <div class="event-illustration">
-            <!-- Flèches de navigation pour les images -->
-            <button *ngIf="hasMultipleImages()" class="nav-arrow nav-arrow-left" (click)="previousImage()">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-            </button>
-            
-            <button *ngIf="hasMultipleImages()" class="nav-arrow nav-arrow-right" (click)="nextImage()">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-              </svg>
-            </button>
-            
-            <!-- Indicateur d'images -->
-            <div *ngIf="hasMultipleImages()" class="image-indicator">
-              <span class="current-image">{{ currentImageIndex + 1 }}</span>
-              <span class="total-images">/ {{ eventImages.length }}</span>
-            </div>
-            
-            <!-- Éléments décoratifs avec image de fond -->
-            <div class="illustration-elements" [style.background-image]="getIllustrationBackgroundImage()">
-              <div class="decorative-element" *ngFor="let element of getDecorativeElements()">
-                {{ element }}
-              </div>
-            </div>
-            
-            <div class="main-title-overlay">
-              <h1 class="event-main-title">{{ getEventMainTitle() }}</h1>
-              <h2 class="event-subtitle">{{ getEventSubtitle() }}</h2>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Boutons de navigation -->
-        <button class="nav-btn back-btn" (click)="goBack()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-          </svg>
-        </button>
-        
-        <button class="nav-btn favorite-btn" (click)="toggleFavorite()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
-        </button>
-      </div>
+    <div class="detail-screen">
+      <p class="state" *ngIf="loading">Chargement de l'événement…</p>
+      <p class="state error" *ngIf="loadError">{{ loadError }}</p>
 
-      <!-- Contenu principal -->
-      <div class="event-content">
-        <!-- Titre de l'evenement -->
-        <div class="event-title-section">
-          <h1 class="event-name">{{ getEventName() }}</h1>
-        </div>
+      <ng-container *ngIf="event && !loading">
 
-        <!-- Informations de l'evenement -->
-        <div class="event-metadata">
-          <div class="metadata-item">
-            <svg class="metadata-icon" width="16" height="16" viewBox="0 0 24 24" fill="#666">
-              <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-            </svg>
-            <span class="metadata-text">{{ getEventDateTime() }}</span>
-          </div>
-          
-          <div class="metadata-item location-item">
-            <svg class="metadata-icon" width="16" height="16" viewBox="0 0 24 24" fill="#666">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-            </svg>
-            <span class="metadata-text">{{ getEventLocation() }}</span>
-            <button class="directions-btn" (click)="openGoogleMaps()" *ngIf="hasLocation()" title="Ouvrir dans Google Maps">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <!-- Fond Google Maps style -->
-                <rect x="2" y="2" width="20" height="20" rx="4" fill="#4285F4"/>
-                <!-- Icône de localisation Google style -->
-                <path d="M12 6C9.79 6 8 7.79 8 10c0 3 4 8 4 8s4-5 4-8c0-2.21-1.79-4-4-4zm0 5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" fill="white"/>
-                <!-- Flèche de navigation Google style -->
-                <path d="M12 4l2 2-2 2V4z" fill="white"/>
-                <path d="M10 6h4" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-                <!-- Point central -->
-                <circle cx="12" cy="10" r="1.5" fill="#EA4335"/>
-              </svg>
-            </button>
-          </div>
+        <!-- Visuel principal, titre et informations clés en surimpression -->
+        <header class="hero" [style.background-image]="heroImage ? 'url(' + heroImage + ')' : null">
+          <div class="hero-shade"></div>
 
-          <div class="metadata-item" *ngIf="hasMultipleDays()">
-            <svg class="metadata-icon" width="16" height="16" viewBox="0 0 24 24" fill="#666">
-              <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-            </svg>
-            <span class="metadata-text">{{ event?.numberOfDays }} jour(s)</span>
-          </div>
-
-          <div class="metadata-item" *ngIf="event?.availableSeats">
-            <svg class="metadata-icon" width="16" height="16" viewBox="0 0 24 24" fill="#666">
-              <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H17c-.8 0-1.54.37-2.01.99L12 12v8h2v6h6zM12.5 11.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S11 9.17 11 10s.67 1.5 1.5 1.5zM5.5 6c1.11 0 2-.89 2-2s-.89-2-2-2-2 .89-2 2 .89 2 2 2zm2 16v-7H9V9.5c0-.83-.67-1.5-1.5-1.5S6 8.67 6 9.5V15H4.5v7h3z"/>
-            </svg>
-            <span class="metadata-text">{{ event?.availableSeats }} places disponibles</span>
-          </div>
-
-          <div class="metadata-item" *ngIf="event?.lastRegistrationDate">
-            <svg class="metadata-icon" width="16" height="16" viewBox="0 0 24 24" fill="#666">
-              <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
-              <path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-            </svg>
-            <span class="metadata-text">Limite: {{ getLastRegistrationDate() }}</span>
-          </div>
-
-          <div class="metadata-item" *ngIf="event?.eventType">
-            <svg class="metadata-icon" width="16" height="16" viewBox="0 0 24 24" fill="#666">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-            <span class="metadata-text">{{ getEventTypeLabel() }}</span>
-          </div>
-
-          <div class="metadata-item" *ngIf="event?.eventStatus">
-            <svg class="metadata-icon" width="16" height="16" viewBox="0 0 24 24" fill="#666">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-            <span class="metadata-text">{{ getEventStatusLabel() }}</span>
-          </div>
-        </div>
-
-        <!-- Description -->
-        <div class="description-section">
-          <h3 class="section-title">Description</h3>
-          <p class="description-text">{{ event?.description || 'Aucune description disponible pour cet evenement.' }}</p>
-        </div>
-
-        <!-- Presentateurs -->
-        <div class="presenters-section" *ngIf="hasPresenters()">
-          <h3 class="section-title">Presentateurs</h3>
-          <div class="presenters-scroll-container">
-          <div class="presenters-list">
-            <div class="presenter-card" *ngFor="let presenter of event?.presenters">
-              <div class="presenter-info">
-                <h4 class="presenter-name">{{ presenter.firstName }} {{ presenter.lastName }}</h4>
-                <p class="presenter-title" *ngIf="presenter.title">{{ presenter.title }}</p>
-                <p class="presenter-resume" *ngIf="presenter.resume">{{ presenter.resume }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Images de l'evenement -->
-        <div class="images-section" *ngIf="hasEventImages()">
-          <h3 class="section-title">Images</h3>
-          <div class="images-grid">
-            <div class="image-item">
-              <app-event-image 
-                [event]="event"
-                [altText]="event?.name || 'Image de l evenement'"
-                shape="square"
-                placeholderText="Image"
-                containerClass="event-image-container"
-                imageClass="event-image">
-              </app-event-image>
-            </div>
-          </div>
-        </div>
-
-
-        <!-- Packages/Tarifs -->
-        <div class="packages-section">
-          <h3 class="section-title">Tarifs</h3>
-          <div class="packages-list">
-            <div class="package-card" [class.selected]="selectedPackage === 'standard'">
-              <div class="package-left">
-              <div class="package-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                </svg>
-              </div>
-              <div class="package-info">
-                <div class="package-name">Tarif Standard</div>
-                <div class="package-duration">Accès complet</div>
-              </div>
-            </div>
-              <div class="package-price">{{ getStandardPrice() }}</div>
-              </div>
-              </div>
-            </div>
-
-        </div>
-
-      <!-- Footer avec bouton de réservation -->
-      <footer class="event-footer">
-          <button class="book-now-btn" (click)="bookEvent()">
-            Réserver maintenant
+          <button type="button" class="round-btn back" (click)="goBack()" aria-label="Retour">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" /></svg>
           </button>
-      </footer>
-      
-      <!-- Footer global -->
-      <app-mobile-footer></app-mobile-footer>
+
+          <button type="button" class="round-btn fav" [class.on]="favorite" (click)="favorite = !favorite" aria-label="Favori">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+          </button>
+
+          <div class="hero-text">
+            <h1>{{ event.name || 'Sans titre' }}</h1>
+            <div class="hero-meta">
+              <span>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V8h14v11z" /></svg>
+                {{ dateLabel }}
+              </span>
+              <span *ngIf="placeLabel">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" /></svg>
+                {{ placeLabel }}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <!-- Feuille blanche remontant sur le visuel -->
+        <div class="sheet">
+
+          <section class="section" *ngIf="presenters.length">
+            <h2>Présentateurs</h2>
+            <div class="presenter-row">
+              <figure class="presenter" *ngFor="let presenter of presenters">
+                <span class="presenter-avatar">{{ presenter.initials }}</span>
+                <figcaption>
+                  <strong>{{ presenter.name }}</strong>
+                  <small *ngIf="presenter.title">{{ presenter.title }}</small>
+                </figcaption>
+              </figure>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2>Description</h2>
+            <p class="description">{{ event.description || 'Aucune description n’a été renseignée pour cet événement.' }}</p>
+          </section>
+
+          <!-- Informations complémentaires réellement présentes en base -->
+          <section class="section" *ngIf="facts.length">
+            <h2>Informations</h2>
+            <ul class="fact-list">
+              <li *ngFor="let fact of facts">
+                <span>{{ fact.label }}</span>
+                <strong>{{ fact.value }}</strong>
+              </li>
+            </ul>
+          </section>
+
+          <section class="section" *ngIf="documents.length">
+            <h2>Documents</h2>
+            <a class="document" *ngFor="let document of documents" [href]="document.url" target="_blank" rel="noopener">
+              <span class="doc-icon">{{ extensionOf(document.name) }}</span>
+              <span class="doc-body">
+                <strong>{{ document.name }}</strong>
+                <small>{{ document.meta }}</small>
+              </span>
+              <svg class="doc-download" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+              </svg>
+            </a>
+          </section>
+
+          <section class="section" *ngIf="gallery.length">
+            <h2>Galerie photos</h2>
+            <div class="gallery">
+              <a class="gallery-item" *ngFor="let photo of gallery" [href]="photo" target="_blank" rel="noopener">
+                <img [src]="photo" alt="Photo de l'événement" loading="lazy" />
+              </a>
+            </div>
+          </section>
+        </div>
+
+        <!-- Action principale, ancrée en bas -->
+        <div class="action-bar">
+          <button type="button" class="reserve" (click)="reserve()">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2a2 2 0 0 1 0 4v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2a2 2 0 0 1 0-4z" />
+            </svg>
+            Réserver ma place
+          </button>
+        </div>
+      </ng-container>
     </div>
   `,
   styles: [`
-    .mobile-event-detail {
+    :host { display: block; }
+
+    .detail-screen {
       min-height: 100vh;
-      background: #f8f9fa;
+      background: #fdf6f1;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #16202f;
+      padding-bottom: 0;
     }
 
-    /* Header Section */
-    .event-header {
+    .state {
+      text-align: center;
+      color: #667a92;
+      font-size: 15px;
+      padding: 60px 24px;
+      margin: 0;
+    }
+
+    .state.error { color: #b00020; font-weight: 600; }
+
+    /* ---------- Visuel ---------- */
+
+    .hero {
       position: relative;
-      height: 35vh;
-      min-height: 250px;
-      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      overflow: hidden;
-    }
-
-    .header-background {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-    }
-
-    .header-background.has-image {
-      background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5));
-    }
-
-    .event-illustration {
-      position: relative;
-      height: 100%;
+      min-height: 300px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .illustration-elements {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-around;
-      align-items: center;
-      opacity: 0.7;
+      justify-content: flex-end;
+      padding: 18px 20px 46px;
+      /* Faute de photo : le dégradé bleu des bandeaux, comme partout ailleurs. */
+      background: linear-gradient(135deg, #16346b 0%, #2b5fb8 62%, #3d78d6 100%);
       background-size: cover;
       background-position: center;
-      background-repeat: no-repeat;
     }
 
-    /* Éléments décoratifs */
-    .decorative-elements {
+    .hero-shade {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-around;
-      align-items: center;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0) 38%, rgba(0, 0, 0, 0.62) 100%);
     }
 
-    .decorative-element {
-      font-size: 24px;
-      margin: 10px;
-      animation: float 3s ease-in-out infinite;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .main-title-overlay {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-      color: white;
-    }
-
-    .event-main-title {
-      font-size: 32px;
-      font-weight: 800;
-      margin: 0 0 8px 0;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .event-subtitle {
-      font-size: 18px;
-      font-weight: 600;
-      margin: 0;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    /* Navigation Buttons */
-    .nav-btn {
+    .round-btn {
       position: absolute;
-      top: 20px;
+      top: 18px;
       width: 40px;
       height: 40px;
-      border-radius: 50%;
       border: none;
-      background: rgba(255, 255, 255, 0.9);
-      display: flex;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(6px);
+      color: #fff;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.3s ease;
-      z-index: 3;
-    }
-
-    .back-btn {
-      left: 20px;
-    }
-
-    .favorite-btn {
-      right: 20px;
-      color: #ff4757;
-    }
-
-    .favorite-btn:hover {
-      background: #ff4757;
-      color: white;
-    }
-
-    /* Navigation Arrows */
-    .nav-arrow {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(255, 255, 255, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      z-index: 4;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-
-    .nav-arrow:hover {
-      background: rgba(255, 255, 255, 1);
-      transform: translateY(-50%) scale(1.1);
-    }
-
-    .nav-arrow-left {
-      left: 20px;
-    }
-
-    .nav-arrow-right {
-      right: 20px;
-    }
-
-    /* Image Indicator */
-    .image-indicator {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
-      z-index: 4;
-    }
-
-    .current-image {
-      color: #ffd700;
-    }
-
-    .total-images {
-      color: rgba(255, 255, 255, 0.8);
-    }
-
-    /* Content Section */
-    .event-content {
-      background: white;
-      border-radius: 20px 20px 0 0;
-      margin-top: -20px;
-      position: relative;
       z-index: 2;
-      padding: 24px;
-      min-height: 65vh;
     }
 
-    .event-title-section {
-      margin-bottom: 20px;
+    .round-btn svg { width: 22px; height: 22px; }
+    .round-btn.back { left: 18px; }
+    .round-btn.fav { right: 18px; }
+    .round-btn.fav.on { color: #ff6b6b; }
+
+    .hero-text { position: relative; z-index: 1; color: #fff; }
+
+    .hero-text h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
     }
 
-    .event-name {
-      font-size: 24px;
-      font-weight: 700;
-      color: #333;
-      margin: 0;
-      line-height: 1.3;
-    }
-
-    /* Metadata */
-    .event-metadata {
-      margin-bottom: 24px;
-    }
-
-    .metadata-item {
+    .hero-meta {
       display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.95);
     }
 
-    .metadata-icon {
-      flex-shrink: 0;
-    }
+    .hero-meta span { display: inline-flex; align-items: center; gap: 6px; }
+    .hero-meta svg { width: 16px; height: 16px; flex-shrink: 0; }
 
-    .metadata-text {
-      font-size: 16px;
-      color: #666;
-      font-weight: 500;
-    }
+    /* ---------- Feuille de contenu ---------- */
 
-    .location-item {
+    .sheet {
       position: relative;
+      margin-top: -28px;
+      padding: 24px 20px 8px;
+      background: #fff;
+      border-radius: 28px 28px 0 0;
     }
 
-    .directions-btn {
-      background: rgba(66, 133, 244, 0.08);
-      border: 1px solid rgba(66, 133, 244, 0.3);
-      padding: 6px;
-      margin-left: auto;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: all 0.3s ease;
+    .section { margin-bottom: 26px; }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 19px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .description {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #667a92;
+      text-align: center;
+    }
+
+    /* ---------- Présentateurs ---------- */
+
+    .presenter-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .presenter {
+      margin: 0;
+      width: 96px;
+      text-align: center;
+    }
+
+    .presenter-avatar {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #d3410d 0%, #f4551d 100%);
+      color: #fff;
+      font-size: 24px;
+      font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 1px 3px rgba(66, 133, 244, 0.2);
-      position: relative;
-      overflow: hidden;
     }
 
-    .directions-btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      border-radius: 8px;
-    }
-
-    .directions-btn:hover {
-      background: rgba(66, 133, 244, 0.15);
-      transform: scale(1.1);
-      box-shadow: 0 3px 12px rgba(66, 133, 244, 0.3);
-      border-color: #4285F4;
-    }
-
-    .directions-btn:hover::before {
-      opacity: 0.05;
-    }
-
-    .directions-btn:active {
-      transform: scale(1.05);
-      box-shadow: 0 1px 3px rgba(66, 133, 244, 0.2);
-    }
-
-    .directions-btn svg {
-      transition: all 0.3s ease;
-      position: relative;
-      z-index: 1;
-    }
-
-    .directions-btn:hover svg {
-      transform: scale(1.05);
-    }
-
-    /* Sections */
-    .section-title {
-      font-size: 18px;
+    .presenter figcaption strong {
+      display: block;
+      font-size: 14px;
       font-weight: 700;
-      color: #333;
-      margin: 0 0 12px 0;
     }
 
-    .description-section {
-      margin-bottom: 24px;
+    .presenter figcaption small {
+      display: block;
+      font-size: 12px;
+      color: #667a92;
+      margin-top: 2px;
     }
 
-    .description-text {
-      font-size: 16px;
-      line-height: 1.6;
-      color: #666;
-      margin: 0;
-    }
+    /* ---------- Informations ---------- */
 
-    /* Presentateurs Section */
-    .presenters-section {
-      margin-bottom: 24px;
-    }
+    .fact-list { list-style: none; margin: 0; padding: 0; }
 
-    .presenters-scroll-container {
-      overflow-x: auto;
-      overflow-y: hidden;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: #4CAF50 #f1f1f1;
-    }
-
-    .presenters-scroll-container::-webkit-scrollbar {
-      height: 6px;
-    }
-
-    .presenters-scroll-container::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 3px;
-    }
-
-    .presenters-scroll-container::-webkit-scrollbar-thumb {
-      background: #4CAF50;
-      border-radius: 3px;
-    }
-
-    .presenters-scroll-container::-webkit-scrollbar-thumb:hover {
-      background: #2E7D32;
-    }
-
-    .presenters-list {
-      display: flex;
-      flex-direction: row;
-      gap: 12px;
-      padding-bottom: 8px;
-      width: 100%;
-    }
-
-    .presenter-card {
-      background: #f8f9fa;
-      border-radius: 12px;
-      padding: 16px;
-      border-left: 4px solid #4CAF50;
-      flex: 1;
-      min-width: 0;
-    }
-
-    .presenter-name {
-      font-size: 16px;
-      font-weight: 600;
-      color: #333;
-      margin: 0 0 8px 0;
-    }
-
-    .presenter-title {
-      font-size: 14px;
-      font-weight: 500;
-      color: #4CAF50;
-      margin: 0 0 8px 0;
-    }
-
-    .presenter-resume {
-      font-size: 14px;
-      color: #666;
-      line-height: 1.5;
-      margin: 0;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-
-    /* Images Section */
-    .images-section {
-      margin-bottom: 24px;
-    }
-
-    .images-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-      gap: 12px;
-    }
-
-    .image-item {
-      aspect-ratio: 1;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .event-image-container {
-      width: 100%;
-      height: 100%;
-    }
-
-    .event-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    /* Packages Section */
-    .packages-section {
-      margin-bottom: 24px;
-    }
-
-    .packages-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .package-card {
+    .fact-list li {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px;
-      border-radius: 12px;
-      background: #f8f9fa;
-      border: 2px solid transparent;
-      transition: all 0.3s ease;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid #eef1f7;
+      font-size: 15px;
     }
 
-    .package-card.selected {
-      border-color: #4CAF50;
-      background: #e8f5e8;
-    }
+    .fact-list li:last-child { border-bottom: none; }
+    .fact-list span { color: #667a92; }
+    .fact-list strong { font-weight: 700; text-align: right; }
 
-    .package-left {
+    /* ---------- Documents ---------- */
+
+    .document {
       display: flex;
       align-items: center;
-      gap: 16px;
-      flex: 1;
+      gap: 12px;
+      padding: 10px 0;
+      text-decoration: none;
+      color: inherit;
     }
 
-    .package-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background: #ffd700;
-      display: flex;
+    .doc-icon {
+      flex: 0 0 42px;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ff8a5c 0%, #f4551d 100%);
+      color: #fff;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
     }
 
-    .package-info {
-      flex: 1;
-    }
+    .doc-body { flex: 1 1 auto; min-width: 0; }
 
-    .package-name {
-      font-size: 16px;
+    .doc-body strong {
+      display: block;
+      font-size: 15px;
       font-weight: 600;
-      color: #333;
-      margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .package-duration {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 4px;
+    .doc-body small { font-size: 13px; color: #667a92; }
+
+    .doc-download { width: 22px; height: 22px; color: #2b5fb8; flex-shrink: 0; }
+
+    /* ---------- Galerie ---------- */
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
     }
 
-    .package-price {
-      font-size: 20px;
-      font-weight: 700;
-      color: #4CAF50;
-      text-align: right;
-      flex-shrink: 0;
-    }
-
-    /* Footer */
-    .event-footer {
-      background: white;
-      padding: 20px 24px;
-      border-top: 1px solid #e0e0e0;
-      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-    }
-
-    .book-now-btn {
-      width: 100%;
-      padding: 16px;
-      background: #4CAF50;
-      color: white;
-      border: none;
+    .gallery-item {
+      display: block;
       border-radius: 12px;
-      font-size: 18px;
-      font-weight: 700;
+      overflow: hidden;
+      background: #f2f6fd;
+      aspect-ratio: 1;
+    }
+
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* ---------- Action ---------- */
+
+    .action-bar {
+      position: sticky;
+      bottom: 0;
+      z-index: 950;
+      padding: 12px 18px 14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #fff 42%);
+    }
+
+    .reserve {
+      width: 100%;
+      height: 60px;
+      border: none;
+      border-radius: 30px;
+      background: #f4551d;
+      color: #fff;
+      font: inherit;
+      font-size: 19px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      box-shadow: 0 12px 26px rgba(244, 85, 46, 0.36);
     }
 
-    .book-now-btn:hover {
-      background: #45a049;
-      transform: translateY(-2px);
-    }
-
-    /* Responsive */
-    @media (max-width: 480px) {
-      .event-content {
-        padding: 20px;
-      }
-      
-      .event-main-title {
-        font-size: 28px;
-      }
-      
-      .event-subtitle {
-        font-size: 16px;
-      }
-    }
+    .reserve svg { width: 24px; height: 24px; }
+    .reserve:active { transform: scale(0.99); }
   `]
 })
 export class MobileEventDetailComponent implements OnInit {
   event: EventDTO | null = null;
-  isFavorite: boolean = false;
-  selectedPackage: string = 'standard';
-  
-  // Gestion des images
-  eventImages: EventFileDTO[] = [];
-  currentImageIndex: number = 0;
-  showDecorativeElements: boolean = false;
-  
-  // Exposer l'enum pour le template
-  EventCategoryEnum = EventCategoryEnum;
+  loading = true;
+  loadError = '';
+  favorite = false;
+
+  heroImage = '';
+  gallery: string[] = [];
+  documents: DocumentView[] = [];
+  presenters: PresenterView[] = [];
+  facts: { label: string; value: string }[] = [];
+
+  dateLabel = '';
+  placeLabel = '';
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private eventService: EventService,
-    private eventImageService: EventImageService,
-    private eventFileControllerService: EventFileControllerService
-  ) { }
+    private eventFiles: EventFileControllerService
+  ) {}
 
   ngOnInit(): void {
-    this.loadEvent();
-  }
-
-  loadEvent(): void {
     const eventId = this.route.snapshot.paramMap.get('id');
-    if (eventId) {
-      this.eventService.getEvent(eventId).subscribe({
-        next: (event: EventDTO) => {
-          this.event = event;
-          console.log('Événement chargé:', event);
-          this.loadEventImages();
-        },
-        error: (error: any) => {
-          console.error('Erreur lors du chargement de l\'événement:', error);
-        }
-      });
+    if (!eventId) {
+      this.loadError = 'Événement introuvable.';
+      this.loading = false;
+      return;
     }
-  }
 
-  loadEventImages(): void {
-    if (!this.event?.id) return;
-    
-    this.eventFileControllerService.getEventFiles(this.event.id).subscribe({
-      next: (files: EventFileDTO[]) => {
-        this.eventImages = files.filter((file: EventFileDTO) => 
-          file.fileName && this.isImageFile(file.fileName)
-        );
-        console.log('Images chargées:', this.eventImages.length);
+    this.eventService.getEvent(eventId).subscribe({
+      next: (event: EventDTO) => {
+        this.event = event;
+        this.buildView(event);
+        this.loading = false;
+        this.loadFiles(eventId);
       },
       error: (error: any) => {
-        console.error('Erreur lors du chargement des images:', error);
-        this.eventImages = [];
+        console.error("Erreur lors du chargement de l'événement", error);
+        this.loadError = `Impossible de charger l'événement (${error?.status || 'réseau'}).`;
+        this.loading = false;
       }
     });
   }
 
-  private isImageFile(fileName: string): boolean {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-    return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
-  }
-
-  getDecorativeElements(): string[] {
-    if (!this.event) return ['🎉', '🎊', '🎈', '🎁', '🎪', '🎭'];
-    
-    switch (this.event.category) {
-      case EventCategoryEnum.CONFERENCE:
-        return ['🎤', '📊', '💼', '🎯', '📈', '💡'];
-      case EventCategoryEnum.ATELIER:
-        return ['🔧', '⚙️', '🛠️', '📐', '🔨', '⚡'];
-      case EventCategoryEnum.SEMINAIRE:
-        return ['📋', '📝', '📊', '📈', '💼', '🎯'];
-      case EventCategoryEnum.FORMATION:
-        return ['🎓', '📚', '✏️', '📖', '🎯', '💡'];
-      case EventCategoryEnum.RETRAITE:
-        return ['🏠', '🌿', '🧘', '🌸', '🕯️', '☮️'];
-      default:
-        return ['🎉', '🎊', '🎈', '🎁', '🎪', '🎭'];
-    }
-  }
-
-  getEventMainTitle(): string {
-    if (!this.event) return 'EVENEMENT';
-    
-    switch (this.event.category) {
-      case EventCategoryEnum.CONFERENCE:
-        return 'CONFERENCE';
-      case EventCategoryEnum.ATELIER:
-        return 'ATELIER';
-      case EventCategoryEnum.SEMINAIRE:
-        return 'SEMINAIRE';
-      case EventCategoryEnum.FORMATION:
-        return 'FORMATION';
-      case EventCategoryEnum.RETRAITE:
-        return 'RETRAITE';
-      default:
-        return 'EVENEMENT';
-    }
-  }
-
-  getEventSubtitle(): string {
-    if (!this.event) return 'DECOUVREZ';
-    
-    switch (this.event.category) {
-      case EventCategoryEnum.CONFERENCE:
-        return 'DECOUVREZ';
-      case EventCategoryEnum.ATELIER:
-        return 'APPRENEZ';
-      case EventCategoryEnum.SEMINAIRE:
-        return 'EXPLOREZ';
-      case EventCategoryEnum.FORMATION:
-        return 'DEVELOPPEZ';
-      case EventCategoryEnum.RETRAITE:
-        return 'DETENDEZ-VOUS';
-      default:
-        return 'DECOUVREZ';
-    }
-  }
-
-  getEventDateTime(): string {
-    if (!this.event?.date) return 'Date et heure non specifiees';
-    
-    const date = new Date(this.event.date);
-    const formattedDate = date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-    
-    // Simuler des heures basees sur la categorie
-    let timeRange = '';
-    switch (this.event.category) {
-      case EventCategoryEnum.CONFERENCE:
-        timeRange = '9h00 - 17h00';
-        break;
-      case EventCategoryEnum.ATELIER:
-        timeRange = '14h00 - 18h00';
-        break;
-      case EventCategoryEnum.SEMINAIRE:
-        timeRange = '10h00 - 16h00';
-        break;
-      case EventCategoryEnum.FORMATION:
-        timeRange = '9h00 - 12h00';
-        break;
-      case EventCategoryEnum.RETRAITE:
-        timeRange = '8h00 - 20h00';
-        break;
-      default:
-        timeRange = '10h00 - 18h00';
-    }
-    
-    return `${formattedDate} • ${timeRange}`;
-  }
-
-  getEventTimeRange(): string {
-    if (!this.event?.date) return 'Heure non specifiee';
-    
-    // Simuler des heures basees sur la categorie
-    switch (this.event.category) {
-      case EventCategoryEnum.CONFERENCE:
-        return '9h00 - 17h00';
-      case EventCategoryEnum.ATELIER:
-        return '14h00 - 18h00';
-      case EventCategoryEnum.SEMINAIRE:
-        return '10h00 - 16h00';
-      case EventCategoryEnum.FORMATION:
-        return '9h00 - 12h00';
-      case EventCategoryEnum.RETRAITE:
-        return '8h00 - 20h00';
-      default:
-        return '10h00 - 18h00';
-    }
-  }
-
-  getEventLocation(): string {
-    if (!this.event?.location) return 'Lieu non specifie';
-    
-    // Utiliser l'adresse complète
-    const fullAddress = this.getFullAddress();
-    if (fullAddress) {
-      return fullAddress;
-    }
-    
-    // Fallback si pas d'adresse complète
-    if (this.event.location.city) {
-      return this.event.location.city;
-    }
-    if (this.event.location.address) {
-      return this.event.location.address;
-    }
-    
-    return 'Lieu non specifie';
-  }
-
-  getLastRegistrationDate(): string {
-    if (!this.event?.lastRegistrationDate) return 'Non specifiee';
-    
-    const date = new Date(this.event.lastRegistrationDate);
-    return date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-  }
-
-  hasMultipleDays(): boolean {
-    return !!(this.event?.numberOfDays && this.event.numberOfDays > 1);
-  }
-
-  hasLocation(): boolean {
-    return !!(this.event?.location && (this.event.location.address || this.event.location.city));
-  }
-
-  openGoogleMaps(): void {
-    if (!this.event?.location) return;
-    
-    const fullAddress = this.getFullAddress();
-    if (!fullAddress) return;
-    
-    // Encoder l'adresse pour l'URL
-    const encodedAddress = encodeURIComponent(fullAddress);
-    
-    // Créer l'URL Google Maps
-    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
-    
-    // Ouvrir dans un nouvel onglet
-    window.open(googleMapsUrl, '_blank');
-  }
-
-  hasPresenters(): boolean {
-    return !!(this.event?.presenters && this.event.presenters.length > 0);
-  }
-
-  getFullCityInfo(): string {
-    if (!this.event?.location) return '';
-    
-    const parts = [];
-    if (this.event.location.postalCode) {
-      parts.push(this.event.location.postalCode);
-    }
-    if (this.event.location.city) {
-      parts.push(this.event.location.city);
-    }
-    
-    return parts.join(' ');
-  }
-
-  getFullAddress(): string {
-    if (!this.event?.location) return '';
-    
-    const parts = [];
-    if (this.event.location.address) parts.push(this.event.location.address);
-    if (this.event.location.city) parts.push(this.event.location.city);
-    if (this.event.location.country) parts.push(this.event.location.country);
-    
-    return parts.join(', ');
-  }
-
-  getEventTypeLabel(): string {
-    if (!this.event?.eventType) return '';
-    
-    switch (this.event.eventType) {
-      case 'PUBLIC':
-        return 'Événement public';
-      case 'PRIVATE':
-        return 'Événement privé';
-      default:
-        return this.event.eventType;
-    }
-  }
-
-  getEventStatusLabel(): string {
-    if (!this.event?.eventStatus) return '';
-    
-    switch (this.event.eventStatus) {
-      case 'DRAFT':
-        return 'Brouillon';
-      case 'PUBLISHED':
-        return 'Publié';
-      case 'CANCELLED':
-        return 'Annulé';
-      case 'COMPLETED':
-        return 'Terminé';
-      default:
-        return this.event.eventStatus;
-    }
-  }
-
-  getStandardPrice(): string {
-    if (!this.event) return 'N/A';
-    if (this.event.free) return 'Gratuit';
-    if (this.event.amount) return '$' + this.event.amount;
-    return 'N/A';
-  }
-
-  getPremiumPrice(): string {
-    if (!this.event?.amount) return 'N/A';
-    return '$' + (this.event.amount * 1.5).toFixed(0);
-  }
-
-  hasEventImages(): boolean {
-    return this.eventImages.length > 0;
-  }
-
-  hasMultipleImages(): boolean {
-    return this.eventImages.length > 1;
-  }
-
-  hasAnyImage(): boolean {
-    return this.hasEventImages() || this.eventImageService.getEventImageUrl(this.event, true) !== '';
-  }
-
-  getCurrentImage(): EventFileDTO | null {
-    if (this.eventImages.length === 0) return null;
-    return this.eventImages[this.currentImageIndex];
-  }
-
-  getCurrentImageUrl(): string {
-    const currentImage = this.getCurrentImage();
-    if (!currentImage) {
-      // Si pas d'image de la base de données, utiliser l'image de la carte
-      return this.eventImageService.getEventImageUrl(this.event, true);
-    }
-    
-    // Construire l'URL de l'image de la base de données
-    const baseUrl = 'http://localhost:8081';
-    if (currentImage.accessUrl) {
-      return `${baseUrl}${currentImage.accessUrl}`;
-    }
-    
-    // Fallback si pas d'accessUrl
-    if (currentImage.fileName && this.event?.id) {
-      return `${baseUrl}/api/v1/files/events/${this.event.id}/${currentImage.fileName}`;
-    }
-    
-    return '';
-  }
-
-  nextImage(): void {
-    if (this.eventImages.length > 1) {
-      this.currentImageIndex = (this.currentImageIndex + 1) % this.eventImages.length;
-    }
-  }
-
-  previousImage(): void {
-    if (this.eventImages.length > 1) {
-      this.currentImageIndex = this.currentImageIndex === 0 
-        ? this.eventImages.length - 1 
-        : this.currentImageIndex - 1;
-    }
-  }
-
-  onImageError(event: any): void {
-    console.log('Erreur de chargement de l\'image:', event);
-    // Si l'image ne se charge pas, on peut essayer l'image suivante ou utiliser une image par défaut
-    if (this.eventImages.length > 1) {
-      this.nextImage();
-    }
-  }
-
-  getDefaultBackgroundImage(): string {
-    if (!this.event?.category) return '';
-    
-    // Images de fond par défaut basées sur la catégorie
-    const defaultImages: { [key: string]: string } = {
-      [EventCategoryEnum.CONFERENCE]: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop',
-      [EventCategoryEnum.ATELIER]: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=600&fit=crop',
-      [EventCategoryEnum.SEMINAIRE]: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=600&fit=crop',
-      [EventCategoryEnum.FORMATION]: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop',
-      [EventCategoryEnum.RETRAITE]: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
-    };
-    
-    return defaultImages[this.event.category] || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop';
-  }
-
-  getIllustrationBackgroundImage(): string {
-    // Priorité 1: Images enregistrées de l'événement dans la base de données
-    if (this.hasEventImages()) {
-      return `url(${this.getCurrentImageUrl()})`;
-    }
-    
-    // Priorité 2: Image de la carte de l'événement (via EventImageService)
-    const cardImageUrl = this.eventImageService.getEventImageUrl(this.event, true);
-    if (cardImageUrl) {
-      return `url(${cardImageUrl})`;
-    }
-    
-    // Priorité 3: Image par défaut basée sur la catégorie
-    const defaultImage = this.getDefaultBackgroundImage();
-    if (defaultImage) {
-      return `url(${defaultImage})`;
-    }
-    
-    // Priorité 4: Pas d'image de fond
-    return 'none';
-  }
-
-  getEventName(): string {
-    console.log('getEventName - event:', this.event);
-    console.log('getEventName - event?.name:', this.event?.name);
-    
-    if (!this.event) {
-      console.log('getEventName - Pas d\'événement chargé');
-      return 'Chargement...';
-    }
-    
-    if (!this.event.name) {
-      console.log('getEventName - Pas de nom dans l\'événement');
-      return 'Nom non disponible';
-    }
-    
-    console.log('getEventName - Nom trouvé:', this.event.name);
-    return this.event.name;
-  }
-
   goBack(): void {
-    this.router.navigate(['/mobile/dashboard']);
+    this.router.navigate(['/mobile/events']);
   }
 
-  toggleFavorite(): void {
-    this.isFavorite = !this.isFavorite;
+  /**
+   * Seul un événement explicitement gratuit saute le paiement. Un tarif absent ne
+   * vaut pas gratuité : l'écran de paiement le signale et laisse confirmer la place.
+   */
+  /**
+   * La réservation demande d'abord qui vient : sans nom ni courriel, le serveur
+   * refuse l'inscription, et un billet anonyme ne se contrôle pas à l'entrée.
+   */
+  reserve(): void {
+    if (!this.event?.id) return;
+    this.router.navigate(['/mobile/reservation', this.event.id]);
   }
 
-  bookEvent(): void {
-    // Logique de reservation
-    console.log('Reservation de l\'evenement:', this.event);
-    // Ici vous pouvez ajouter la logique de reservation
+  extensionOf(fileName: string): string {
+    const dot = fileName.lastIndexOf('.');
+    return dot > -1 ? fileName.slice(dot + 1).toUpperCase().slice(0, 4) : 'DOC';
   }
+
+  // --- Construction ---------------------------------------------------------------
+
+  private buildView(event: EventDTO): void {
+    const date = parseFrDate(event.date);
+    const dayLabel = date
+      ? capitalize(date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long' }))
+      : event.date || 'Date à définir';
+    this.dateLabel = event.time ? `${dayLabel} · ${event.time}` : dayLabel;
+
+    this.placeLabel = [event.location?.placeName, event.location?.city].filter(Boolean).join(', ');
+
+    this.presenters = (event.presenters || []).map((presenter) => ({
+      initials: `${(presenter.firstName || '').charAt(0)}${(presenter.lastName || '').charAt(0)}`.toUpperCase() || '?',
+      name: `${presenter.firstName || ''} ${presenter.lastName || ''}`.trim() || 'Présentateur',
+      title: presenter.title || ''
+    }));
+
+    // Uniquement les champs réellement renseignés : rien n'est inventé.
+    const facts: { label: string; value: string }[] = [];
+    if (event.category) facts.push({ label: 'Catégorie', value: event.category });
+    if (event.eventType) facts.push({ label: 'Type', value: event.eventType });
+    if (event.numberOfDays) facts.push({ label: 'Durée', value: `${event.numberOfDays} jour(s)` });
+    if (event.availableSeats) facts.push({ label: 'Places disponibles', value: `${event.availableSeats}` });
+    if (event.lastRegistrationDate) facts.push({ label: 'Clôture des inscriptions', value: event.lastRegistrationDate });
+    facts.push({
+      label: 'Tarif',
+      value: event.free ? 'Gratuit' : (event.amount ? `${event.amount} $` : 'Non renseigné')
+    });
+    this.facts = facts;
+  }
+
+  private loadFiles(eventId: string): void {
+    this.eventFiles.getEventFiles(eventId).subscribe({
+      next: (files: EventFileDTO[]) => {
+        const list = files || [];
+
+        const images = list.filter((file) => isImage(file.fileName));
+        this.gallery = images.map((file) => this.fileUrl(eventId, file));
+        // La photo principale sert de visuel ; sinon la première image disponible.
+        const main = images.find((file) => file.isMainPhoto) || images[0];
+        this.heroImage = main ? this.fileUrl(eventId, main) : '';
+
+        this.documents = list
+          .filter((file) => !isImage(file.fileName))
+          .map((file) => ({
+            name: file.fileName || 'Document',
+            meta: [formatSize(file.fileSize), this.extensionOf(file.fileName || '')].filter(Boolean).join(' · '),
+            url: this.fileUrl(eventId, file)
+          }));
+      },
+      error: (error: any) => {
+        // Un événement sans fichiers reste parfaitement consultable.
+        console.warn('Fichiers de l\'événement indisponibles', error);
+      }
+    });
+  }
+
+  /** Route de service des fichiers : `/api/v1/files/events/:eventId/:filename`. */
+  private fileUrl(eventId: string, file: EventFileDTO): string {
+    if (file.accessUrl) return file.accessUrl;
+    return `${environment.host}/api/v1/files/events/${eventId}/${encodeURIComponent(file.fileName || '')}`;
+  }
+}
+
+// --- Utilitaires ------------------------------------------------------------------
+
+function isImage(fileName?: string): boolean {
+  const name = (fileName || '').toLowerCase();
+  return IMAGE_EXTENSIONS.some((extension) => name.endsWith(extension));
+}
+
+function formatSize(bytes?: number): string {
+  if (!bytes || bytes <= 0) return '';
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+}
+
+function parseFrDate(value?: string): Date | null {
+  if (!value) return null;
+  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value.trim());
+  if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+  const parsed = new Date(value);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }

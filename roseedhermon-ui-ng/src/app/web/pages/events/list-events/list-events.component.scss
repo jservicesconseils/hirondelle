@@ -1,323 +1,135 @@
-.container {
-    position: relative;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-  }
-  
-  .grid-section {
-    position: relative;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    transition: width 0.3s ease;
-    padding: 0;
-    margin: 0;
-    padding-top: 0px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .grid-section.reduced {
-    width: 70%;
-  }
-  
-  .detail-panel {
-    position: absolute;
-    top: 60px;
-    right: 0;
-    width: 30%;
-    height: calc(100% - 60px);
-    background-color: #fff;
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-    z-index: 1;
+// Le bandeau, les onglets et la recherche viennent de `admin-head`, communs aux
+// pages d'administration. `list-page` fournit le reste : cartes, tableau,
+// pagination, tiroir de détail et boîtes de dialogue.
+@use '../../list-page' as *;
+@use '../../admin-head' as *;
+@use '../../../styles/public-theme' as theme;
+
+.events-page {
+  background: theme.$paper;
+  color: theme.$text;
+  font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+}
+
+/** Un libellé d'événement se lit en toutes lettres : pas la taille d'un compteur. */
+.head-stats .stat-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* ---------- Tri, filtre et bascule d'affichage ---------- */
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.1rem;
+
+  // Le partiel pose une marge basse sur les onglets : ici c'est la rangée qui
+  // l'apporte, sinon la ligne serait décentrée.
+  .tabs { margin-bottom: 0; }
+}
+
+.controls-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/** Filtre par groupe organisateur. */
+.group-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.9rem;
+  border: 1px solid theme.$line;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+
+  i {
+    color: theme.$accent;
+    font-size: 0.85rem;
   }
 
-  .toolbar {
-    position: relative;
-    height: 60px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 0px 20px 0;
-    gap: 1rem;
-    z-index: 1000;
-  }
-
-  .navigation-section {
-    margin-right: 20px;
-  }
-
-  .toolbar ::ng-deep .p-button {
-    background: #43a047 !important;
-    border: none;
-    height: 50px !important;
-    min-width: 110px !important;
-    padding: 0.5rem 2rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    margin-right: 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .toolbar ::ng-deep .p-button:hover {
-    background: #388e3c !important;
-  }
-
-  .filter-section {
-    display: flex;
-    justify-content: flex-start;
-    flex: 0 1 auto;
-    margin-bottom: 10px;
-  }
-
-  .filter-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    
-    label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #2e31a4;
-      margin-bottom: 0.25rem;
-    }
-  }
-
-  .filter-autocomplete {
-    width: 350px;
-  }
-
-  ::ng-deep {
-    .filter-autocomplete .p-autocomplete {
-      .p-autocomplete-input {
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        padding: 0.5rem;
-        font-size: 0.9rem;
-        height: 40px !important;
-        width: 300px !important;
-        transition: border-color 0.2s ease;
-        
-        &:focus {
-          outline: none;
-          border-color: #2e31a4;
-          box-shadow: 0 0 0 2px rgba(46, 49, 164, 0.1);
-        }
-      }
-      
-      .p-autocomplete-dropdown {
-        background-color: #2e31a4 !important;
-        border-color: #2e31a4 !important;
-        color: white !important;
-        
-        &:hover {
-          background-color: #1e1f7a !important;
-          border-color: #1e1f7a !important;
-        }
-      }
-      
-      .p-autocomplete-clear-icon {
-        color: #2e31a4;
-        
-        &:hover {
-          color: #1e1f7a;
-        }
-      }
-    }
-  }
-
-  .wide-btn {
-    min-width: 140px;
-    font-size: 1.1rem;
-    padding: 0.75rem 2rem;
-    font-weight: bold;
-  }
-
-  .ag-theme-alpine {
-    --ag-header-background-color: #2e31a4 !important;
-    --ag-header-foreground-color: white !important;
-    --ag-font-size: 14px;
-    --ag-row-hover-color: #f2f8ff;
-    --ag-border-color: #dce4ec;
-    --ag-background-color: white;
-    --ag-foreground-color: #333;
-    --ag-row-border-color: #e0e0e0;
-    --ag-odd-row-background-color: #fafafa;
-    --ag-even-row-background-color: white;
-    --ag-selected-row-background-color: #e3f2fd;
-    --ag-row-hover-background-color: #f5f5f5;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    height: 600px;
-    font-family: 'Segoe UI', sans-serif;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  .ag-header-cell {
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: white !important;
-  }
-  
-  .ag-row {
-    transition: background-color 0.2s ease;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  
-  .ag-row:hover {
-    background-color: #f5f5f5 !important;
+  select {
+    padding: 0.62rem 0.2rem 0.62rem 0;
+    border: 0;
+    background: none;
+    color: theme.$ink;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    outline: none;
     cursor: pointer;
   }
-  
-  .ag-cell {
-    padding: 12px;
-    border-right: 1px solid #e0e0e0;
-  }
-  
-  .ag-center-cols-container .ag-row:nth-child(even) {
-    background-color: #fafafa;
-  }
-  
-  .ag-center-cols-container .ag-row:nth-child(odd) {
-    background-color: #fff;
-  }
-  
-  .text-center {
-    text-align: center;
-  }
-  
-  .text-capitalize {
-    text-transform: capitalize;
+
+  &:hover {
+    border-color: rgba(244, 85, 29, 0.45);
   }
 
-  .icon-cell {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
+  &:focus-within {
+    border-color: theme.$accent;
+    box-shadow: 0 0 0 3px rgba(244, 85, 29, 0.14);
   }
+}
 
-  ::ng-deep .ag-header-cell-label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    justify-content: flex-start;
-  }
-  
-  .icon-cell {
-    display: flex;
-    align-items: center;
-  }
+/** Deux icônes dans une même pilule : cartes ou tableau. */
+.view-switch {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border: 1px solid theme.$line;
+  border-radius: 999px;
+  background: #fff;
 
-  ::ng-deep {
-    .ag-root-wrapper {
-      border: none;
-      width: 100% !important;
-      max-width: 100% !important;
-    }
-    
-    .ag-header-viewport {
-      border-bottom: 1px solid var(--ag-border-color);
+  button {
+    display: grid;
+    place-items: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: theme.$muted;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+
+    &:hover { color: theme.$ink; }
+
+    &.is-active {
+      background: theme.$accent;
+      color: #fff;
     }
 
-    .ag-body-viewport {
-      border: none;
-    }
+    i { font-size: 0.88rem; }
+  }
+}
 
-    .ag-body-horizontal-scroll {
-      display: none;
-    }
+/* ---------- Groupe organisateur ---------- */
 
-    .ag-grid-angular {
-      width: 100% !important;
-      max-width: 100% !important;
-      min-width: 0 !important;
-    }
+/**
+ * Étiquette du groupe, en bleu plutôt qu'en orange : elle ne doit pas se
+ * confondre avec la catégorie, qui occupe la colonne voisine.
+ */
+.group-tag {
+  display: inline-block;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  background: theme.$sky;
+  color: theme.$blue-deep;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
 
-    .ag-root {
-      width: 100% !important;
-      max-width: 100% !important;
-    }
-
-    .ag-body-viewport-wrapper {
-      width: 100% !important;
-    }
-
-    .ag-center-cols-clipper {
-      width: 100% !important;
-    }
-
-    .ag-center-cols-container {
-      width: 100% !important;
-    }
+  /* Un événement public sans groupe : dit, mais sans le souligner. */
+  &.is-none {
+    background: #f4f6f9;
+    color: theme.$muted;
+    font-style: italic;
   }
-
-@media (max-width: 700px) {
-  .container {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    padding: 0 4px;
-  }
-  .grid-section {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-  }
-  .toolbar {
-    flex-direction: column;
-    gap: 0.5rem;
-    height: auto;
-    padding: 0 0 10px 0;
-  }
-  .filter-section {
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-  }
-  .filter-item label {
-    font-size: 0.95rem;
-  }
-  .filter-autocomplete {
-    width: 100% !important;
-  }
-  .ag-theme-alpine {
-    width: 100% !important;
-    min-width: 350px;
-    max-width: 100% !important;
-    box-sizing: border-box;
-    overflow-x: auto;
-  }
-  .wide-btn {
-    width: 100%;
-    min-width: unset;
-    font-size: 1rem;
-    padding: 0.5rem 0;
-  }
-  .p-button {
-    width: 100%;
-    min-width: unset;
-    font-size: 1rem;
-    padding: 0.5rem 0;
-  }
-  .p-field, .p-input-icon-right {
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-  .p-input-icon-right input, .p-input-icon-right textarea {
-    width: 100%;
-    font-size: 1rem;
-    padding: 0.5rem 1rem;
-  }
-} 
+}

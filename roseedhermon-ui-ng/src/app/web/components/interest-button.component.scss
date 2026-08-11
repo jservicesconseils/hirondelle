@@ -1,0 +1,299 @@
+// Bouton « Je suis intéressé », dans les deux tailles.
+@use '../styles/public-theme' as theme;
+
+:host {
+  display: contents;
+}
+
+/* ---------- Pastille, sur les cartes ---------- */
+
+/**
+ * Posée en haut à droite du visuel, donc sur une photo : le fond blanc plein et
+ * l'ombre portée la détachent quelle que soit l'image dessous.
+ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 4px 14px rgba(16, 28, 48, 0.22);
+  color: theme.$muted;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+
+  i {
+    font-size: 0.85rem;
+    color: theme.$accent;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: theme.$accent;
+    background: theme.$accent-soft;
+    color: theme.$ink;
+  }
+
+  /**
+   * Signalé : la pastille grise et ne réagit plus. Le libellé, lui, ne change
+   * pas — c'est la couleur qui dit que c'est fait, pas un autre texte.
+   */
+  &.is-done {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(240, 243, 248, 0.96);
+    color: #8794a5;
+    box-shadow: 0 2px 8px rgba(16, 28, 48, 0.14);
+    cursor: default;
+
+    i { color: #8794a5; }
+  }
+
+  // Le gris de l'état « fait » se suffit : pas d'estompe supplémentaire.
+  &:disabled:not(.is-done) {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.chip-text {
+  white-space: nowrap;
+}
+
+/** Compteur détaché du libellé : un nombre, pas un mot de plus. */
+.chip-count {
+  padding: 0.06rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(16, 28, 48, 0.09);
+  color: theme.$ink;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.76rem;
+}
+
+.chip.is-done .chip-count {
+  background: rgba(16, 28, 48, 0.07);
+  color: #8794a5;
+}
+
+/* ---------- Bouton rond, sur un visuel ---------- */
+
+/**
+ * Posé dans le coin d'une vignette : fond blanc plein et ombre portée pour se
+ * détacher de n'importe quelle image.
+ */
+.round {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 4px 14px rgba(16, 28, 48, 0.24);
+  color: theme.$accent;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease;
+
+  i { font-size: 0.95rem; }
+
+  &:hover:not(:disabled) { background: #fff; }
+
+  /* Signalé : le cœur est plein et coloré, le bouton ne réagit plus. */
+  &.is-done {
+    background: theme.$accent;
+    color: #fff;
+    cursor: default;
+  }
+
+  &:disabled:not(.is-done) { opacity: 0.6; cursor: default; }
+}
+
+/* ---------- Bouton large, sur la fiche ---------- */
+
+.full {
+  text-align: center;
+}
+
+.wide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem 1.2rem;
+  border: 1.5px solid theme.$line;
+  border-radius: 999px;
+  background: #fff;
+  color: theme.$ink;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+
+  i { font-size: 0.9rem; color: theme.$accent; }
+
+  &:hover:not(:disabled) {
+    border-color: theme.$accent;
+    background: theme.$accent-soft;
+  }
+
+  /* Signalé : grisé, immobile, et le libellé reste le même. */
+  &.is-done {
+    border-color: #e3e8ef;
+    background: #f0f3f8;
+    color: #8794a5;
+    cursor: default;
+
+    i { color: #8794a5; }
+  }
+
+  &:disabled:not(.is-done) {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+/** Confirmation écrite : le gris seul ne dirait pas que c'est enregistré. */
+.done-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.55rem 0 0;
+  color: theme.$green;
+  font-size: 0.84rem;
+  font-weight: 700;
+
+  i { font-size: 0.85rem; }
+}
+
+.count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+  color: theme.$muted;
+  font-size: 0.85rem;
+
+  i { font-size: 0.8rem; color: theme.$accent; }
+
+  &.muted { font-style: italic; }
+}
+
+/* ---------- Champ de courriel ---------- */
+
+.email-inline {
+  margin-top: 0.7rem;
+  text-align: left;
+
+  label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: theme.$muted;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+}
+
+.email-row {
+  display: flex;
+  gap: 0.4rem;
+
+  input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid theme.$line;
+    border-radius: 12px;
+    background: #fff;
+    color: theme.$text;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+
+    &:focus {
+      border-color: theme.$accent;
+      box-shadow: 0 0 0 3px rgba(244, 85, 29, 0.14);
+    }
+  }
+}
+
+.send {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  border: 0;
+  border-radius: 12px;
+  background: theme.$accent;
+  color: #fff;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: theme.$accent-dark; }
+  &:disabled { opacity: 0.6; cursor: default; }
+}
+
+.cancel {
+  margin-top: 0.45rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: theme.$muted;
+  font-family: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.error {
+  margin: 0.5rem 0 0;
+  color: #b00020;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* ---------- Demande de courriel depuis une carte ---------- */
+
+/**
+ * En position fixe, et non dans la carte : les cartes d'une grille gardent la
+ * même hauteur, et leur `overflow: hidden` rognerait un panneau posé dedans.
+ */
+.ask-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(16, 28, 48, 0.5);
+}
+
+.ask-box {
+  width: min(380px, 100%);
+  padding: 1.5rem;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 26px 60px rgba(16, 28, 48, 0.3);
+  text-align: left;
+
+  strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: theme.$ink;
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0 0 0.9rem;
+    color: theme.$muted;
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+}

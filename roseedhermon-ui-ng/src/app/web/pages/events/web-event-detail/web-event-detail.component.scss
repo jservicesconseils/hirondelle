@@ -1,0 +1,362 @@
+@use '../../../styles/public-theme' as *;
+
+:host {
+  display: block;
+  background: $paper;
+  color: $text;
+  font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+}
+
+.shell {
+  @include shell;
+}
+
+.cta {
+  @include cta;
+}
+
+.tag {
+  @include tag;
+}
+
+.state,
+.state-block {
+  padding: 4rem 1.5rem;
+  text-align: center;
+  color: $muted;
+}
+
+.state-block {
+  h1 {
+    margin: 0 0 0.75rem;
+    color: $ink;
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0 0 1.75rem;
+  }
+}
+
+// ---------------------------------------------------------------- bandeau
+
+.detail-hero {
+  position: relative;
+  min-height: 340px;
+  display: flex;
+  align-items: flex-end;
+  padding: clamp(3rem, 6vw, 4.5rem) 0 clamp(2rem, 4vw, 3rem);
+  color: #fff;
+  overflow: hidden;
+}
+
+.detail-hero-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+// Voile sombre : sans lui, un titre blanc sur une photo claire devient illisible.
+.detail-hero-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 20, 36, 0.28) 0%, rgba(10, 20, 36, 0.82) 100%);
+}
+
+.detail-hero-inner {
+  position: relative;
+  z-index: 1;
+
+  h1 {
+    margin: 0.9rem 0 1.1rem;
+    max-width: 22ch;
+    font-size: clamp(1.9rem, 4.4vw, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.6rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: #fff;
+  }
+
+  i {
+    font-size: 0.78rem;
+  }
+}
+
+.hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.95rem;
+  }
+
+  i {
+    color: $accent;
+    font-size: 0.9rem;
+  }
+}
+
+.past-flag {
+  display: inline-block;
+  margin-top: 1.2rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+// ---------------------------------------------------------------- contenu
+
+.detail-body {
+  padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(3.5rem, 7vw, 5.5rem);
+  background: $cream;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.detail-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.panel {
+  padding: 1.9rem 1.8rem;
+  border: 1px solid $line;
+  border-radius: 20px;
+  background: #fff;
+
+  h2 {
+    margin: 0 0 1.1rem;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: $ink;
+  }
+}
+
+.prose {
+  margin: 0;
+  color: $muted;
+  font-size: 1rem;
+  line-height: 1.7;
+  // Les descriptions saisies avec des retours à la ligne les conservent.
+  white-space: pre-line;
+}
+
+.presenters {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    gap: 1rem;
+  }
+
+  strong {
+    display: block;
+    font-size: 1rem;
+    font-weight: 800;
+    color: $ink;
+  }
+
+  small {
+    display: block;
+    margin-top: 0.1rem;
+    color: $accent;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.45rem 0 0;
+    color: $muted;
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.2rem;
+  margin: 0;
+
+  dt {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.3rem;
+    color: $muted;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  dd {
+    margin: 0;
+    color: $ink;
+    font-size: 0.98rem;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  i {
+    color: $accent;
+    font-size: 0.85rem;
+  }
+}
+
+// ---------------------------------------------------------------- réservation
+
+.booking {
+  position: sticky;
+  top: 96px;
+}
+
+.booking-card {
+  position: relative;
+  padding: 1.9rem 1.7rem 1.7rem;
+  border: 1px solid $line;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(16, 28, 48, 0.08);
+}
+
+.booking-date {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  margin-bottom: 1.1rem;
+  border-radius: 18px;
+  background: $accent-soft;
+
+  strong {
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1;
+    color: $ink;
+  }
+
+  small {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: $accent;
+  }
+}
+
+.booking-price {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: $ink;
+
+  &.muted {
+    font-size: 1.1rem;
+    color: $muted;
+  }
+}
+
+.booking-seats {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 1.4rem;
+  color: $muted;
+  font-size: 0.9rem;
+
+  i {
+    color: $accent;
+    font-size: 0.85rem;
+  }
+}
+
+.cta-block {
+  width: 100%;
+  padding: 0.95rem 1.5rem;
+  font-size: 1rem;
+}
+
+.booking-note {
+  margin: 0.9rem 0 0;
+  color: $muted;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ---------- Je suis intéressé ---------- */
+
+/**
+ * Le geste précède la réservation, et s'en distingue par un filet : se signaler
+ * n'est pas réserver. Le bouton lui-même vit dans `app-interest-button`, partagé
+ * avec les cartes de la liste.
+ */
+.interest-slot {
+  margin-bottom: 1.1rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid $line;
+}
+
+@media (max-width: 900px) {
+  .detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .booking {
+    position: static;
+    order: -1;
+  }
+}

@@ -1,0 +1,58 @@
+# --- Dépendances ---
+node_modules/
+.pnp
+.pnp.js
+
+# --- Sorties de compilation ---
+dist/
+build/
+out-tsc/
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# --- Caches d'outils ---
+.angular/
+.nx/
+.gradle/
+*.tsbuildinfo
+
+# --- Natif : Capacitor régénère ces dossiers à chaque « cap sync » ---
+roseedhermon-ui-ng/android/app/src/main/assets/public/
+roseedhermon-ui-ng/android/app/src/main/assets/capacitor.config.json
+roseedhermon-ui-ng/android/app/src/main/assets/capacitor.plugins.json
+roseedhermon-ui-ng/ios/App/App/public/
+roseedhermon-ui-ng/ios/App/App/capacitor.config.json
+roseedhermon-ui-ng/ios/App/App/capacitor.plugins.json
+roseedhermon-ui-ng/ios/App/Pods/
+roseedhermon-ui-ng/ios/App/Podfile.lock
+roseedhermon-ui-ng/android/local.properties
+roseedhermon-ui-ng/android/.gradle/
+roseedhermon-ui-ng/android/app/build/
+roseedhermon-ui-ng/android/build/
+
+# --- Secrets et configuration locale ---
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist
+
+# --- Environnements de développement ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+*.swp
+
+# --- Système ---
+.DS_Store
+Thumbs.db
+
+# --- Journaux ---
+*.log
+npm-debug.log*
+yarn-error.log*

@@ -1,0 +1,348 @@
+@use '../../../styles/public-theme' as *;
+
+:host {
+  display: block;
+  background: $cream;
+  color: $text;
+  font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+}
+
+.shell {
+  @include shell;
+}
+
+.cta {
+  @include cta;
+}
+
+.tag {
+  @include tag;
+}
+
+.state,
+.state-block {
+  padding: 4rem 1.5rem;
+  text-align: center;
+  color: $muted;
+
+  h1 {
+    margin: 0 0 0.75rem;
+    color: $ink;
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0 0 1.75rem;
+  }
+}
+
+.ticket-page {
+  padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(3.5rem, 7vw, 5rem);
+}
+
+// ---------------------------------------------------------------- confirmation
+
+.confirm {
+  margin-bottom: 2.25rem;
+  text-align: center;
+
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: $ink;
+  }
+
+  p {
+    margin: 0;
+    color: $muted;
+    font-size: 1rem;
+  }
+}
+
+.confirm-mark {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1.1rem;
+  border-radius: 50%;
+  background: rgba(31, 157, 118, 0.14);
+  color: $green;
+  font-size: 1.5rem;
+}
+
+// ---------------------------------------------------------------- billet
+
+.ticket {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  max-width: 900px;
+  margin: 0 auto;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 22px 50px rgba(16, 28, 48, 0.12);
+  overflow: hidden;
+}
+
+.ticket-main {
+  padding: 2.2rem 2.1rem;
+
+  h2 {
+    margin: 0.7rem 0 0.9rem;
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: $ink;
+  }
+}
+
+.ticket-kind {
+  display: inline-block;
+  color: $accent;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.ticket-facts {
+  margin: 1.6rem 0 0;
+
+  div {
+    padding: 0.75rem 0;
+    border-top: 1px solid $line;
+  }
+
+  dt {
+    margin-bottom: 0.2rem;
+    color: $muted;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  dd {
+    margin: 0;
+    color: $ink;
+    font-size: 0.98rem;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+}
+
+// Souche : séparée par une ligne perforée, comme un vrai billet.
+.ticket-stub {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 2.2rem 1.5rem;
+  background: $sky;
+  border-left: 2px dashed rgba(16, 28, 48, 0.18);
+  text-align: center;
+
+  // Les deux encoches qui donnent la silhouette du billet.
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: -13px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: $cream;
+  }
+
+  &::before {
+    top: -12px;
+  }
+
+  &::after {
+    bottom: -12px;
+  }
+}
+
+.stub-label {
+  color: $muted;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stub-number {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: $ink;
+}
+
+.qr {
+  width: 168px;
+  height: 168px;
+  margin: 0.4rem 0;
+  padding: 10px;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.stub-note {
+  color: $muted;
+  font-size: 0.8rem;
+}
+
+// ---------------------------------------------------------------- actions
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 2.25rem 0 0;
+}
+
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.4rem;
+  border: 1px solid $line;
+  border-radius: 999px;
+  background: #fff;
+  color: $ink;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease;
+
+  &:hover:not(:disabled) {
+    border-color: $accent;
+    color: $accent;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.footnote {
+  max-width: 52ch;
+  margin: 1.75rem auto 0;
+  color: $muted;
+  font-size: 0.87rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.cancel-row {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+// Volontairement discret : l'annulation ne doit pas concurrencer l'impression.
+.link-danger {
+  padding: 0.4rem 0.8rem;
+  border: 0;
+  background: none;
+  color: $muted;
+  font-family: inherit;
+  font-size: 0.87rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: #c62828;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-width: 780px) {
+  .ticket {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ticket-stub {
+    border-left: 0;
+    border-top: 2px dashed rgba(16, 28, 48, 0.18);
+
+    &::before,
+    &::after {
+      top: -13px;
+      bottom: auto;
+    }
+
+    &::before {
+      left: -12px;
+    }
+
+    &::after {
+      left: auto;
+      right: -12px;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- impression
+
+@media print {
+  :host {
+    background: #fff;
+  }
+
+  .ticket-page {
+    padding: 0;
+  }
+
+  .shell {
+    width: 100%;
+  }
+
+  // Tout ce qui n'est pas le billet disparaît de la feuille.
+  .confirm,
+  .actions,
+  .footnote,
+  .cancel-row {
+    display: none;
+  }
+
+  .ticket {
+    max-width: 100%;
+    margin: 0;
+    border: 1px solid #333;
+    border-radius: 0;
+    box-shadow: none;
+    // Sans cela, les navigateurs suppriment les aplats de couleur à l'impression.
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    // Le billet ne doit jamais être coupé entre deux pages.
+    break-inside: avoid;
+  }
+
+  .ticket-stub {
+    background: #fff;
+    border-left: 2px dashed #333;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+
+  .qr {
+    padding: 0;
+  }
+}

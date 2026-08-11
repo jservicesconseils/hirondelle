@@ -1,0 +1,413 @@
+<app-public-header></app-public-header>
+
+<!-- ============================ Bannière ============================ -->
+<section class="hero" (mouseenter)="pauseShowcase()" (mouseleave)="resumeShowcase()">
+  <!-- Les photos, superposées et fondues l'une dans l'autre. Le dégradé bleu de
+       la section reste visible dessous : c'est lui qui prend le relais si aucune
+       photo n'est disponible. -->
+  <div class="hero-frames">
+    <figure
+      class="hero-frame"
+      *ngFor="let photo of showcases; let i = index"
+      [class.is-active]="i === showcaseIndex"
+      [attr.aria-hidden]="i !== showcaseIndex">
+      <img [src]="photo.image" [alt]="photo.kicker" (error)="onShowcaseMissing(photo)" />
+    </figure>
+  </div>
+
+  <div class="hero-scrim"></div>
+
+  <div class="shell hero-inner">
+    <div class="hero-text">
+      <!-- Surtitre et phrase changent avec la photo ; le titre, lui, ne bouge pas.
+           Rendus par vue : c'est la création du nœud qui rejoue leur apparition. -->
+      <ng-container *ngFor="let photo of showcases; let i = index">
+        <span class="eyebrow" *ngIf="i === showcaseIndex" [style.color]="photo.color">
+          <span class="eyebrow-bar" [style.background]="photo.color"></span>
+          {{ photo.kicker }}
+        </span>
+      </ng-container>
+
+      <span class="eyebrow" *ngIf="!showcases.length">
+        <span class="eyebrow-bar"></span>
+        Plateforme d'événements et de communautés
+      </span>
+
+      <h1>Trouvez votre prochain événement près de chez vous.</h1>
+
+      <ng-container *ngFor="let photo of showcases; let i = index">
+        <p class="lead" *ngIf="i === showcaseIndex">{{ photo.title }}</p>
+      </ng-container>
+
+      <p class="lead" *ngIf="!showcases.length">
+        Parcourez les événements ouverts au public, réservez votre place en quelques
+        secondes, et retrouvez vos billets dans l'application mobile.
+      </p>
+
+      <!-- Recherche : nom, ville, puis validation -->
+      <form class="searchbar" (ngSubmit)="search()">
+        <label class="field">
+          <i class="pi pi-search"></i>
+          <input type="text" name="query" [(ngModel)]="query" placeholder="Nom, thème, mot-clé…" />
+        </label>
+
+        <span class="divider"></span>
+
+        <label class="field field-city">
+          <i class="pi pi-map-marker"></i>
+          <select name="city" [(ngModel)]="selectedCity">
+            <option value="">Partout</option>
+            <option *ngFor="let city of cities" [value]="city">{{ city }}</option>
+          </select>
+        </label>
+
+        <button type="submit" class="search-submit" aria-label="Rechercher">
+          <i class="pi pi-search"></i>
+          <span>Rechercher</span>
+        </button>
+      </form>
+
+      <div class="chips" *ngIf="categories.length">
+        <button
+          type="button"
+          *ngFor="let entry of categories"
+          class="chip"
+          [class.is-active]="selectedCategory === entry.label"
+          [style.background]="entry.count ? entry.gradient : null"
+          [style.boxShadow]="entry.count ? '0 8px 20px ' + entry.border : null"
+          [disabled]="!entry.count"
+          (click)="pickCategory(entry.label)">
+          <i class="pi" [ngClass]="entry.icon"></i>
+          {{ entry.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Carrousel des événements à venir. Aucune vignette n'est inventée : la
+         liste vient de l'API, et le bloc disparaît s'il n'y a rien à venir. -->
+    <aside
+      class="hero-slider"
+      *ngIf="featured.length"
+      (mouseenter)="pauseFeatured()"
+      (mouseleave)="resumeFeatured()"
+      (focusin)="pauseFeatured()"
+      (focusout)="resumeFeatured()">
+      <div class="slider-window">
+        <div class="slider-track" [style.transform]="'translateX(' + -featuredIndex * 100 + '%)'">
+          <ng-container *ngFor="let item of featured; let i = index">
+            <!-- Vue vidéo : retirée d'elle-même si le fichier n'existe pas. -->
+            <article class="hero-card is-video" *ngIf="item.kind === 'video'" [attr.aria-hidden]="i !== featuredIndex">
+              <span class="hero-card-flag">Présentation</span>
+
+              <div class="hero-card-visual video-visual">
+                <video
+                  [src]="videoSource"
+                  [poster]="videoPoster"
+                  (error)="onVideoMissing()"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                  preload="metadata"></video>
+              </div>
+
+              <div class="hero-card-body">
+                <span class="tag tag-video">Vidéo</span>
+                <h3>Découvrez la plateforme en images</h3>
+                <p class="hero-card-meta">
+                  <i class="pi pi-play-circle"></i> Groupes, membres, billets : l'essentiel en une minute.
+                </p>
+
+                <div class="hero-card-foot">
+                  <a class="hero-card-link" (click)="goTo('organiser')" [attr.tabindex]="i === featuredIndex ? 0 : -1">
+                    En savoir plus <i class="pi pi-arrow-right"></i>
+                  </a>
+                </div>
+              </div>
+            </article>
+
+            <!-- Vue événement -->
+            <article class="hero-card" *ngIf="item.kind === 'event'" [attr.aria-hidden]="i !== featuredIndex">
+              <span class="hero-card-flag">Prochainement</span>
+
+              <!-- Photo de l'événement, sinon l'illustration de sa catégorie, sinon le dégradé. -->
+              <div class="hero-card-visual" [style.background]="item.card.style.gradient">
+                <img
+                  *ngIf="item.card.visual"
+                  [src]="item.card.visual"
+                  [alt]="item.card.name"
+                  (error)="onVisualError(item.card)" />
+                <i class="pi visual-mark" *ngIf="!item.card.visual" [ngClass]="item.card.style.icon"></i>
+                <span class="hero-card-date">
+                  <strong>{{ item.card.day }}</strong>
+                  <small>{{ item.card.month }}</small>
+                </span>
+              </div>
+
+              <div class="hero-card-body">
+                <span
+                  class="tag"
+                  *ngIf="item.card.category"
+                  [style.background]="item.card.style.tint"
+                  [style.color]="item.card.style.color">
+                  {{ item.card.category }}
+                </span>
+                <h3>{{ item.card.name }}</h3>
+
+                <p class="hero-card-meta" *ngIf="item.card.place">
+                  <i class="pi pi-map-marker"></i> {{ item.card.place }}
+                </p>
+                <p class="hero-card-meta" *ngIf="item.card.weekday">
+                  <i class="pi pi-calendar"></i> {{ item.card.weekday }} {{ item.card.day }} {{ item.card.month }}
+                  <span *ngIf="item.card.time"> · {{ item.card.time }}</span>
+                </p>
+
+                <div class="hero-card-foot">
+                  <span class="price" *ngIf="item.card.price">{{ item.card.price }}</span>
+                  <a
+                    class="hero-card-link"
+                    [routerLink]="['/web/evenements', item.card.id]"
+                    [attr.tabindex]="i === featuredIndex ? 0 : -1">
+                    Voir le détail <i class="pi pi-arrow-right"></i>
+                  </a>
+                </div>
+              </div>
+            </article>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- Pastilles seules : les flèches du bandeau du bas suffisent au reste. -->
+      <div class="slider-dots" *ngIf="featured.length > 1">
+        <button
+          type="button"
+          *ngFor="let item of featured; let i = index"
+          class="slider-dot"
+          [class.is-active]="i === featuredIndex"
+          (click)="goToFeatured(i)"
+          [attr.aria-label]="featuredLabel(item)"
+          [attr.aria-current]="i === featuredIndex"></button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Bandeau du bas : les chiffres réels à gauche, la commande des photos à droite -->
+  <div class="shell hero-rail">
+    <ul class="hero-stats" *ngIf="!loading && cards.length">
+      <li><strong>{{ cards.length }}</strong><span>événements en ligne</span></li>
+      <li><strong>{{ upcoming.length }}</strong><span>à venir</span></li>
+      <li><strong>{{ citiesCount }}</strong><span>{{ citiesCount > 1 ? 'villes' : 'ville' }}</span></li>
+    </ul>
+
+    <div class="rail-controls" *ngIf="showcases.length > 1">
+      <span class="counter"><strong>{{ showcaseCounter }}</strong><i>/</i>{{ showcaseTotal }}</span>
+
+      <div class="progress">
+        <span
+          class="progress-fill"
+          *ngFor="let key of [showcaseKey]; trackBy: trackByValue"
+          [style.background]="showcase?.color"></span>
+      </div>
+
+      <div class="thumbs">
+        <button
+          type="button"
+          class="thumb"
+          *ngFor="let photo of showcases; let i = index"
+          [class.is-active]="i === showcaseIndex"
+          [style.borderColor]="i === showcaseIndex ? photo.color : null"
+          (click)="goToShowcase(i)"
+          [attr.aria-label]="photo.kicker"
+          [attr.aria-current]="i === showcaseIndex">
+          <img [src]="photo.image" alt="" />
+        </button>
+      </div>
+
+      <div class="arrows">
+        <button type="button" (click)="previousShowcase()" aria-label="Photo précédente">
+          <i class="pi pi-chevron-left"></i>
+        </button>
+        <button type="button" (click)="nextShowcase()" aria-label="Photo suivante">
+          <i class="pi pi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ Événements ============================ -->
+<section class="events" id="evenements">
+  <div class="shell">
+    <header class="section-head">
+      <div>
+        <span class="kicker">À l'affiche</span>
+        <h2>Des événements <em>près de vous</em>.</h2>
+      </div>
+
+      <button type="button" class="link-reset" *ngIf="filtersActive" (click)="clearFilters()">
+        <i class="pi pi-times"></i> Réinitialiser les filtres
+      </button>
+    </header>
+
+    <p class="loading" *ngIf="loading">Chargement des événements…</p>
+
+    <p class="empty" *ngIf="failed">
+      Les événements n'ont pas pu être chargés. Vérifiez que la passerelle répond,
+      puis rechargez la page.
+    </p>
+
+    <p class="empty" *ngIf="!loading && !failed && !cards.length">
+      Aucun événement n'est publié pour le moment.
+    </p>
+
+    <p class="empty" *ngIf="!loading && cards.length && !filtered.length">
+      Aucun événement ne correspond à cette recherche.
+    </p>
+
+    <div class="event-grid" *ngIf="shown.length">
+      <article class="event-card" *ngFor="let card of shown">
+        <!-- Photo de l'événement, sinon l'illustration de sa catégorie, sinon le dégradé. -->
+        <div class="event-visual" [style.background]="card.style.gradient">
+          <img *ngIf="card.visual" [src]="card.visual" [alt]="card.name" (error)="onVisualError(card)" />
+          <i class="pi visual-mark" *ngIf="!card.visual" [ngClass]="card.style.icon"></i>
+
+          <span class="event-date" *ngIf="card.date">
+            <strong>{{ card.day }}</strong>
+            <small>{{ card.month }}</small>
+          </span>
+
+          <!-- Coin haut droit : se signaler sans même ouvrir la fiche -->
+          <div class="visual-corner">
+            <app-interest-button [eventId]="card.id!" variant="compact"></app-interest-button>
+            <span class="event-past" *ngIf="card.date && !card.upcoming">Passé</span>
+          </div>
+        </div>
+
+        <div class="event-body">
+          <span class="tag" *ngIf="card.category" [style.background]="card.style.tint" [style.color]="card.style.color">
+            {{ card.category }}
+          </span>
+          <h3>{{ card.name }}</h3>
+          <p class="event-desc" *ngIf="card.description">{{ card.description }}</p>
+
+          <ul class="event-meta">
+            <li *ngIf="card.place"><i class="pi pi-map-marker"></i> {{ card.place }}</li>
+            <li *ngIf="card.time"><i class="pi pi-clock"></i> {{ card.time }}</li>
+            <li *ngIf="card.seats"><i class="pi pi-users"></i> {{ card.seats }} places</li>
+          </ul>
+
+          <div class="event-foot">
+            <span class="price" *ngIf="card.price">{{ card.price }}</span>
+            <a class="event-action" [routerLink]="['/web/evenements', card.id]">
+              Détails <i class="pi pi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="more" *ngIf="remaining">
+      <button type="button" (click)="loadMore()">
+        Charger plus <small>({{ remaining }} restants)</small>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ Arguments ============================ -->
+<section class="why" id="apropos">
+  <div class="shell">
+    <header class="section-head">
+      <div>
+        <span class="kicker">Pourquoi Hirondelle</span>
+        <h2>Une plateforme <em>simple</em> pour vos communautés.</h2>
+      </div>
+      <p class="section-note">
+        Groupes, membres, événements publics ou réservés : tout se gère au même
+        endroit, du bureau comme du téléphone.
+      </p>
+    </header>
+
+    <div class="why-grid">
+      <article class="why-card accent">
+        <span class="why-icon"><i class="pi pi-sitemap"></i></span>
+        <h3>Des groupes cloisonnés</h3>
+        <p>
+          Chaque groupe voit ses membres et ses événements. Les événements privés
+          restent invisibles pour les autres groupes.
+        </p>
+      </article>
+
+      <article class="why-card gold">
+        <span class="why-icon"><i class="pi pi-send"></i></span>
+        <h3>Invitation par texto</h3>
+        <p>
+          À sa création, chaque membre reçoit un message avec le nom de son groupe
+          et le lien vers l'application mobile.
+        </p>
+      </article>
+
+      <article class="why-card green">
+        <span class="why-icon"><i class="pi pi-ticket"></i></span>
+        <h3>Billets et code QR</h3>
+        <p>
+          La réservation génère un billet avec code QR, consultable hors ligne dans
+          l'onglet Billets de l'application.
+        </p>
+      </article>
+
+      <article class="why-card navy">
+        <span class="why-icon"><i class="pi pi-shield"></i></span>
+        <h3>Accès par rôle</h3>
+        <p>
+          Super administrateur, administrateur de groupe ou membre : les droits sont
+          vérifiés côté serveur, pas seulement à l'écran.
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ Organiser ============================ -->
+<section class="organize" id="organiser">
+  <div class="shell organize-inner">
+    <div class="organize-text">
+      <span class="kicker">Organisateurs</span>
+      <h2>Vous souhaitez <em>créer un événement</em> ?</h2>
+      <p>
+        Créez votre groupe, ajoutez vos membres, publiez vos événements. Vous
+        choisissez pour chacun s'il est ouvert à tous ou réservé à votre groupe.
+      </p>
+      <a class="cta cta-lg" routerLink="/app/events">
+        Commencer maintenant <i class="pi pi-arrow-right"></i>
+      </a>
+    </div>
+
+    <ol class="steps">
+      <li>
+        <span class="step-no">01</span>
+        <div>
+          <strong>Créez votre groupe</strong>
+          <p>Un espace qui vous est propre, avec son annuaire de membres.</p>
+        </div>
+      </li>
+      <li>
+        <span class="step-no">02</span>
+        <div>
+          <strong>Ajoutez vos membres</strong>
+          <p>Chacun reçoit une invitation par texto avec le lien de l'application.</p>
+        </div>
+      </li>
+      <li>
+        <span class="step-no">03</span>
+        <div>
+          <strong>Publiez vos événements</strong>
+          <p>Public pour toucher largement, privé pour rester entre vous.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<app-public-footer></app-public-footer>
+

@@ -1,0 +1,412 @@
+@use '../../../styles/public-theme' as *;
+
+:host {
+  display: block;
+  background: $cream;
+  color: $text;
+  font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+}
+
+.shell {
+  @include shell;
+}
+
+.cta {
+  @include cta;
+}
+
+.tag {
+  @include tag;
+}
+
+.state,
+.state-block {
+  padding: 4rem 1.5rem;
+  text-align: center;
+  color: $muted;
+
+  h1 {
+    margin: 0 0 0.75rem;
+    color: $ink;
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0 0 1.75rem;
+  }
+}
+
+.reservation {
+  padding: clamp(2rem, 5vw, 3.5rem) 0 clamp(3.5rem, 7vw, 5rem);
+}
+
+// ---------------------------------------------------------------- en-tête
+
+.reservation-head {
+  margin-bottom: 2rem;
+
+  h1 {
+    margin: 0 0 1.4rem;
+    font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: $ink;
+  }
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: $muted;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    color: $accent;
+  }
+
+  i {
+    font-size: 0.78rem;
+  }
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: $muted;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  span {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid $line;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 0.8rem;
+  }
+
+  .is-done {
+    color: $green;
+
+    span {
+      border-color: $green;
+      background: $green;
+      color: #fff;
+    }
+  }
+
+  .is-current {
+    color: $ink;
+
+    span {
+      border-color: $accent;
+      background: $accent;
+      color: #fff;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- disposition
+
+.reservation-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.reservation-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.panel {
+  padding: 1.9rem 1.8rem;
+  border: 1px solid $line;
+  border-radius: 20px;
+  background: #fff;
+
+  h2 {
+    margin: 0 0 1.2rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: $ink;
+  }
+}
+
+.hint {
+  display: block;
+  margin-top: 0.35rem;
+  color: $muted;
+  font-size: 0.82rem;
+  font-style: normal;
+}
+
+// ---------------------------------------------------------------- carte
+
+.card-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  margin-bottom: 1.6rem;
+  padding: 1.5rem 1.4rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, $blue-deep 0%, #2b5fb8 100%);
+  color: #fff;
+}
+
+.card-brand {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.card-number {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  // Chiffres de largeur fixe : le numéro ne tressaute pas pendant la frappe.
+  font-variant-numeric: tabular-nums;
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+
+  small {
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+}
+
+.field {
+  display: block;
+  margin-bottom: 1.1rem;
+
+  > span {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: $muted;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+
+    small {
+      margin-left: 0.4rem;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      opacity: 0.75;
+    }
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid $line;
+    border-radius: 12px;
+    background: #fff;
+    color: $text;
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+
+    &:focus {
+      border-color: $accent;
+      box-shadow: 0 0 0 3px rgba(244, 85, 29, 0.14);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    line-height: 1.5;
+  }
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.error {
+  display: block;
+  margin-top: 0.35rem;
+  color: #c62828;
+  font-size: 0.83rem;
+  font-style: normal;
+  font-weight: 600;
+
+  &.block {
+    margin: 0 0 1rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    background: #fdecea;
+  }
+}
+
+.demo-notice {
+  display: flex;
+  gap: 0.7rem;
+  margin: 0.5rem 0 0;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: #fff8e6;
+  color: #8a6100;
+  font-size: 0.87rem;
+  line-height: 1.55;
+
+  i {
+    flex: 0 0 auto;
+    margin-top: 0.15rem;
+  }
+}
+
+// ---------------------------------------------------------------- récapitulatif
+
+.summary {
+  position: sticky;
+  top: 96px;
+}
+
+.summary-card {
+  border: 1px solid $line;
+  border-radius: 22px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(16, 28, 48, 0.08);
+}
+
+.summary-visual {
+  height: 120px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.summary-body {
+  padding: 1.5rem 1.5rem 1.6rem;
+
+  h3 {
+    margin: 0.7rem 0 0.9rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: $ink;
+  }
+}
+
+.summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.4rem;
+  color: $muted;
+  font-size: 0.88rem;
+
+  i {
+    color: $accent;
+    font-size: 0.85rem;
+  }
+}
+
+.summary-total {
+  margin: 1.3rem 0;
+  padding-top: 1.1rem;
+  border-top: 1px solid $line;
+
+  div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  dt {
+    color: $muted;
+    font-size: 0.9rem;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 700;
+    color: $ink;
+  }
+
+  .total {
+    margin: 0.9rem 0 0;
+    padding-top: 0.9rem;
+    border-top: 1px dashed $line;
+
+    dt {
+      color: $ink;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    dd {
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+  }
+}
+
+.cta-block {
+  width: 100%;
+  padding: 0.95rem 1.5rem;
+  font-size: 1rem;
+}
+
+.summary-note {
+  margin: 0.9rem 0 0;
+  color: $muted;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
+@media (max-width: 940px) {
+  .reservation-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .summary {
+    position: static;
+    order: -1;
+  }
+}

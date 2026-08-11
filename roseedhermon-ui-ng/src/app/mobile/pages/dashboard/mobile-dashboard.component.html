@@ -1,0 +1,281 @@
+<div class="home-screen">
+
+  <!-- ============================ Bandeau ============================ -->
+  <header class="hero">
+    <!-- Décor : trois halos flous, aucune image à charger -->
+    <span class="hero-glow one"></span>
+    <span class="hero-glow two"></span>
+    <span class="hero-glow three"></span>
+
+    <div class="hero-inner">
+      <div class="hero-text">
+        <span class="hello">Bon retour <span class="wave">👋</span></span>
+        <h1>{{ displayName }}</h1>
+      </div>
+
+      <!-- Initiales réelles ; un pictogramme neutre si l'on ne sait pas qui c'est -->
+      <button type="button" class="hero-avatar" (click)="goToProfile()" aria-label="Mon profil">
+        <ng-container *ngIf="initials">{{ initials }}</ng-container>
+        <svg *ngIf="!initials" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Recherche flottante, à cheval sur le bandeau -->
+  <div class="search">
+    <input type="search"
+           placeholder="Rechercher un événement"
+           [(ngModel)]="query"
+           (ngModelChange)="rebuild()"
+           name="query"
+           autocomplete="off" />
+    <button type="button" class="clear" *ngIf="filtering" (click)="reset()" aria-label="Réinitialiser">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+      </svg>
+    </button>
+    <span class="search-icon" *ngIf="!filtering">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z" />
+      </svg>
+    </span>
+  </div>
+
+  <main class="body">
+
+    <p class="state" *ngIf="loading">Chargement des événements…</p>
+    <p class="state is-error" *ngIf="loadError">{{ loadError }}</p>
+
+    <ng-container *ngIf="!loading && !loadError">
+
+      <!-- ---------- La communauté en un coup d'œil ----------
+           Visages, effectif et villes viennent de l'annuaire réel. La bande
+           disparaît si le module Membres n'est pas ouvert au groupe. -->
+      <div class="social" *ngIf="faces.length">
+        <div class="faces">
+          <!-- Initiales uniquement : les photos des fiches ne sont pas affichées ici. -->
+          <span class="face" *ngFor="let face of faces; trackBy: trackByFace"
+                [style.background]="face.color">{{ face.initials }}</span>
+          <span class="face more" *ngIf="facesOverflow">+{{ facesOverflow }}</span>
+        </div>
+
+        <div class="social-text">
+          <strong>{{ communityLabel }}</strong>
+          <span *ngIf="memberCityCount">
+            Présents dans {{ memberCityCount }} ville{{ memberCityCount > 1 ? 's' : '' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- ---------- Le prochain, avec son compte à rebours ---------- -->
+      <article class="next-card" *ngIf="next as event" (click)="open(event)">
+        <div class="next-visual" [style.background]="event.style.gradient">
+          <img *ngIf="event.visual" [src]="event.visual" [alt]="event.name" (error)="onVisualError(event)" />
+          <div class="next-veil"></div>
+
+          <span class="next-countdown">
+            <strong>{{ countdownDays }}</strong>
+            <small>{{ countdownDays === 1 ? 'jour' : 'jours' }}</small>
+          </span>
+        </div>
+
+        <div class="next-body">
+          <span class="next-flag">{{ countdownLabel }}</span>
+          <strong class="next-name">{{ event.name }}</strong>
+
+          <p class="next-meta" *ngIf="event.longDate">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V8h14v11z" />
+            </svg>
+            {{ event.longDate }}<span *ngIf="event.time"> · {{ event.time }}</span>
+          </p>
+          <p class="next-meta" *ngIf="event.place">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
+            </svg>
+            {{ event.place }}
+          </p>
+
+          <div class="next-actions" (click)="$event.stopPropagation()">
+            <button type="button" class="next-cta" (click)="reserve(event)">Réserver ma place</button>
+            <app-interest-button [eventId]="event.id" variant="icon"></app-interest-button>
+          </div>
+        </div>
+      </article>
+
+      <!-- ---------- Catégories, en cartes ---------- -->
+      <section class="block" *ngIf="categories.length > 1">
+        <div class="block-head">
+          <h2>Catégorie</h2>
+          <button type="button" class="link" *ngIf="category" (click)="pickCategory(category)">Tout voir</button>
+        </div>
+
+        <div class="cat-row">
+          <button type="button"
+                  class="cat"
+                  *ngFor="let chip of categories; trackBy: trackByCategory"
+                  [class.is-active]="category === chip.name"
+                  (click)="pickCategory(chip.name)">
+            <span class="cat-icon" [style.background]="chip.style.tint" [style.color]="chip.style.color">
+              <i class="pi" [ngClass]="chip.style.icon"></i>
+            </span>
+            <span class="cat-name">{{ chip.name }}</span>
+            <em>{{ chip.count }}</em>
+          </button>
+        </div>
+      </section>
+
+      <!-- ---------- Bande d'agenda : quinze jours d'un coup d'œil ---------- -->
+      <section class="block" *ngIf="stripHasEvents">
+        <div class="block-head">
+          <h2>Quinze prochains jours</h2>
+          <button type="button" class="link" *ngIf="day" (click)="day = ''; rebuild()">Tout voir</button>
+        </div>
+
+        <div class="strip">
+          <button type="button"
+                  class="day"
+                  *ngFor="let cell of dayStrip; trackBy: trackByDay"
+                  [class.has-events]="cell.count"
+                  [class.is-today]="cell.isToday"
+                  [class.is-active]="day === cell.key"
+                  [disabled]="!cell.count"
+                  (click)="pickDay(cell)">
+            <small>{{ cell.weekday }}</small>
+            <strong>{{ cell.day }}</strong>
+            <span class="dots" *ngIf="cell.count">
+              <i *ngFor="let dot of cell.dots"></i>
+            </span>
+          </button>
+        </div>
+
+        <p class="strip-note" *ngIf="day">{{ selectedDayLabel }} — {{ matchCount }} événement(s)</p>
+      </section>
+
+      <p class="state" *ngIf="!matchCount">{{ emptyMessage }}</p>
+
+      <!-- ---------- À l'affiche ---------- -->
+      <section class="block" *ngIf="featured.length">
+        <div class="block-head">
+          <h2>À l'affiche</h2>
+          <button type="button" class="link" (click)="goToEvents()">Voir plus</button>
+        </div>
+
+        <div class="carousel">
+          <ng-container *ngFor="let card of featured; trackBy: trackByCard">
+            <ng-container *ngTemplateOutlet="poster; context: { $implicit: card }"></ng-container>
+          </ng-container>
+        </div>
+      </section>
+
+      <!-- ---------- Pour vous : ce qu'organise votre communauté ---------- -->
+      <section class="block" *ngIf="forYou.length">
+        <div class="block-head">
+          <h2>Pour vous</h2>
+          <button type="button" class="link" (click)="goToEvents()">Voir plus</button>
+        </div>
+
+        <div class="carousel">
+          <ng-container *ngFor="let card of forYou; trackBy: trackByCard">
+            <ng-container *ngTemplateOutlet="poster; context: { $implicit: card }"></ng-container>
+          </ng-container>
+        </div>
+      </section>
+
+      <!-- ---------- Votre prochaine place, en une ligne ---------- -->
+      <button type="button" class="next-pass" *ngIf="nextTicket as ticket" (click)="openTicket(ticket)">
+        <span class="next-pass-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 12a2 2 0 0 1 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v4a2 2 0 1 1 0 4v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 1-2-2z" />
+          </svg>
+        </span>
+        <span class="next-pass-text">
+          <small>Votre prochaine place</small>
+          <strong>{{ ticket.card.name }}</strong>
+        </span>
+        <span class="next-pass-date">{{ ticket.card.day }} {{ ticket.card.month }}</span>
+      </button>
+
+      <!-- ---------- Les plus demandés ----------
+           Classés par nombre de personnes intéressées. La section disparaît tant
+           que personne ne s'est manifesté : un classement de zéros n'apprend rien. -->
+      <section class="block" *ngIf="wanted.length">
+        <div class="block-head">
+          <h2>Les plus demandés</h2>
+          <button type="button" class="link" (click)="goToEvents()">Voir plus</button>
+        </div>
+
+        <article class="wanted"
+                 *ngFor="let item of wanted; trackBy: trackByWanted"
+                 (click)="open(item.card)">
+          <span class="rank" [class.is-first]="item.rank === 1">{{ item.rank }}</span>
+
+          <span class="wanted-visual" [style.background]="item.card.style.gradient">
+            <img *ngIf="item.card.visual" [src]="item.card.visual" [alt]="item.card.name"
+                 (error)="onVisualError(item.card)" />
+          </span>
+
+          <div class="wanted-body">
+            <strong>{{ item.card.name }}</strong>
+            <span class="wanted-meta">
+              <ng-container *ngIf="item.card.longDate">{{ item.card.longDate }}</ng-container>
+              <ng-container *ngIf="item.card.longDate && item.card.price"> · </ng-container>
+              <ng-container *ngIf="item.card.price">{{ item.card.price }}</ng-container>
+            </span>
+
+            <!-- Barre proportionnelle au plus demandé du moment -->
+            <span class="wanted-bar">
+              <span class="wanted-fill" [style.width.%]="item.share"></span>
+            </span>
+
+            <span class="wanted-count">
+              {{ item.interested }} personne{{ item.interested > 1 ? 's' : '' }}
+              intéressée{{ item.interested > 1 ? 's' : '' }}
+            </span>
+          </div>
+        </article>
+      </section>
+    </ng-container>
+  </main>
+</div>
+
+<!--
+  Vignette des carrousels, commune à « À l'affiche » et « Pour vous » : grande
+  image, deux boutons ronds dans les coins, et la carte blanche des informations
+  qui remonte par-dessus le bas de l'image.
+-->
+<ng-template #poster let-card>
+  <article class="poster" (click)="open(card)">
+    <div class="poster-visual" [style.background]="card.style.gradient">
+      <img *ngIf="card.visual" [src]="card.visual" [alt]="card.name" (error)="onVisualError(card)" />
+
+      <span class="poster-badge" [style.background]="card.style.tint" [style.color]="card.style.color">
+        <i class="pi" [ngClass]="card.style.icon"></i>
+      </span>
+
+      <span class="poster-heart">
+        <app-interest-button [eventId]="card.id" variant="icon"></app-interest-button>
+      </span>
+
+      <span class="poster-past" *ngIf="!card.upcoming && card.date">Passé</span>
+    </div>
+
+    <div class="poster-info">
+      <strong>{{ card.name }}</strong>
+
+      <div class="poster-line">
+        <span class="poster-meta">
+          <ng-container *ngIf="card.longDate">{{ card.longDate }}</ng-container>
+          <ng-container *ngIf="card.longDate && card.place"> · </ng-container>
+          <ng-container *ngIf="card.place">{{ card.place }}</ng-container>
+          <ng-container *ngIf="!card.longDate && !card.place">Détails à préciser</ng-container>
+        </span>
+
+        <!-- Le tarif n'apparaît que s'il est fixé : pas de « N/A » à sa place -->
+        <span class="poster-price" *ngIf="card.price" [class.is-free]="card.free">{{ card.price }}</span>
+      </div>
+    </div>
+  </article>
+</ng-template>

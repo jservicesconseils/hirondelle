@@ -1,5 +1,5 @@
 import type { Express } from 'express';
-import { createBaseApp, errorHandler, notFoundHandler } from '../common';
+import { attachAuth, attachGroupFeatures, createBaseApp, errorHandler, notFoundHandler } from '../common';
 import { config } from './config';
 import { adminRouter } from './routes/admin.routes';
 import { eventFileRouter } from './routes/event-file.routes';
@@ -10,6 +10,11 @@ import { registrationRouter } from './routes/registration.routes';
 
 export function createApp(): Express {
   const app = createBaseApp();
+
+  // L'identité est attachée à toute requête ; ce sont les routes qui exigent un rôle.
+  app.use(attachAuth);
+  // Puis les modules ouverts à son groupe, que les règles de visibilité lisent.
+  app.use(attachGroupFeatures);
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'UP', service: config.serviceName });

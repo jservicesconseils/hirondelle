@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="Illustration : formation">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8fb8ff" />
+      <stop offset="0.55" stop-color="#2f6bdd" />
+      <stop offset="1" stop-color="#12409e" />
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="450" fill="url(#bg)" />
+
+  <!-- Chapeau de diplômé -->
+  <path d="M400 88 208 162l192 74 192-74z" fill="#fff" fill-opacity=".95" />
+  <path d="M292 206v58c0 30 48 52 108 52s108-22 108-52v-58l-108 42z" fill="#fff" fill-opacity=".72" />
+  <path d="M592 162v92" stroke="#fff" stroke-width="10" stroke-linecap="round" />
+  <circle cx="592" cy="266" r="16" fill="#ffc24b" />
+
+  <!-- Livre ouvert -->
+  <g fill="#fff" fill-opacity=".9">
+    <path d="M180 336c60-26 120-26 180 0v58c-60-26-120-26-180 0z" />
+    <path d="M440 336c60-26 120-26 180 0v58c-60-26-120-26-180 0z" />
+  </g>
+  <rect x="392" y="330" width="16" height="70" rx="8" fill="#fff" fill-opacity=".6" />
+</svg>

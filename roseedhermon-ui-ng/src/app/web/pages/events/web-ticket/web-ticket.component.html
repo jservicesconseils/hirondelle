@@ -1,0 +1,112 @@
+<app-public-header></app-public-header>
+
+<p class="state" *ngIf="loading">Chargement du billet…</p>
+
+<section class="state-block" *ngIf="loadError">
+  <h1>Billet indisponible</h1>
+  <p>{{ loadError }}</p>
+  <a class="cta" routerLink="/web">Retour à l'accueil</a>
+</section>
+
+<section class="state-block" *ngIf="cancelled">
+  <h1>Réservation annulée</h1>
+  <p>Votre place a été libérée. Ce billet n'est plus valable.</p>
+  <a class="cta" routerLink="/web">Voir d'autres événements</a>
+</section>
+
+<ng-container *ngIf="!cancelled">
+<section class="ticket-page" *ngIf="card as event">
+  <div class="shell">
+    <header class="confirm">
+      <span class="confirm-mark"><i class="pi pi-check"></i></span>
+      <h1>Réservation confirmée</h1>
+      <p>Votre billet est prêt. Présentez-le à l'entrée, imprimé ou sur votre écran.</p>
+    </header>
+
+    <!-- Le billet lui-même : c'est le seul bloc conservé à l'impression. -->
+    <article class="ticket">
+      <div class="ticket-main">
+        <span class="ticket-kind">Billet d'entrée</span>
+
+        <h2>{{ event.name }}</h2>
+
+        <span class="tag" *ngIf="event.category" [style.background]="event.style.tint" [style.color]="event.style.color">
+          {{ event.category }}
+        </span>
+
+        <dl class="ticket-facts">
+          <div *ngIf="holderName">
+            <dt>Au nom de</dt>
+            <dd>{{ holderName }}</dd>
+          </div>
+          <div *ngIf="registration?.email">
+            <dt>Courriel</dt>
+            <dd>{{ registration?.email }}</dd>
+          </div>
+          <div *ngIf="event.longDate">
+            <dt>Date</dt>
+            <dd>{{ event.longDate }}<span *ngIf="event.time"> · {{ event.time }}</span></dd>
+          </div>
+          <div *ngIf="event.event.location?.placeName">
+            <dt>Lieu</dt>
+            <dd>{{ event.event.location?.placeName }}</dd>
+          </div>
+          <div *ngIf="event.address">
+            <dt>Adresse</dt>
+            <dd>{{ event.address }}</dd>
+          </div>
+          <div>
+            <dt>Places</dt>
+            <dd>
+              {{ seats }} · {{ tariffLabel }}
+              <span *ngIf="totalLabel"> — total {{ totalLabel }}</span>
+            </dd>
+          </div>
+          <div *ngIf="bookedAt">
+            <dt>Réservé le</dt>
+            <dd>{{ bookedAt | date: 'd MMMM y, HH:mm' }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Souche détachable, avec le code de contrôle -->
+      <div class="ticket-stub">
+        <span class="stub-label">Numéro de billet</span>
+        <strong class="stub-number">{{ passNumber }}</strong>
+
+        <img class="qr" *ngIf="qrDataUrl" [src]="qrDataUrl" alt="Code QR du billet" />
+
+        <small class="stub-note">À présenter au contrôle</small>
+      </div>
+    </article>
+
+    <div class="actions">
+      <button type="button" class="cta" (click)="print()">
+        <i class="pi pi-print"></i> Imprimer le billet
+      </button>
+      <button type="button" class="ghost" (click)="download()" [disabled]="!qrDataUrl">
+        <i class="pi pi-download"></i> Télécharger le code QR
+      </button>
+      <button type="button" class="ghost" (click)="copyLink()" [disabled]="!shareUrl">
+        <i class="pi pi-link"></i> Copier le lien du billet
+      </button>
+      <a class="ghost" [routerLink]="['/web/evenements', event.id]">
+        <i class="pi pi-info-circle"></i> Revoir l'événement
+      </a>
+    </div>
+
+    <p class="footnote">
+      Le lien du billet suffit à le rouvrir depuis n'importe quel appareil : il porte
+      l'identifiant de votre inscription. Aucun envoi par courriel n'est configuré.
+    </p>
+
+    <div class="cancel-row">
+      <button type="button" class="link-danger" (click)="cancel()" [disabled]="cancelling">
+        {{ cancelling ? 'Annulation…' : 'Annuler ma réservation' }}
+      </button>
+    </div>
+  </div>
+</section>
+</ng-container>
+
+<app-public-footer></app-public-footer>

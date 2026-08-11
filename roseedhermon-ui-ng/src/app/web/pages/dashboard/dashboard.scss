@@ -1,0 +1,586 @@
+// Le tableau de bord partage le bandeau bleu des autres pages d'administration
+// (`admin-head`) et leurs pastilles, avatars et boutons (`list-page`).
+@use '../list-page' as *;
+@use '../admin-head' as *;
+@use '../../styles/public-theme' as theme;
+
+$panel-shadow: 0 10px 26px rgba(16, 28, 48, 0.06);
+$separator: #f1ece7;
+
+.dashboard-page {
+  background: theme.$paper;
+  color: theme.$text;
+  font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+}
+
+.state.error {
+  color: #b00020;
+  font-weight: 600;
+}
+
+/* ---------- Indicateurs ---------- */
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: #fff;
+  border: 1px solid theme.$line;
+  border-radius: 18px;
+  padding: 1.15rem;
+  box-shadow: $panel-shadow;
+
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    margin-bottom: 0.45rem;
+
+    // Une teinte par famille d'indicateur, reprise des parts des disques.
+    &.blue { background: linear-gradient(135deg, theme.$blue-deep, theme.$blue); }
+    &.orange { background: linear-gradient(135deg, theme.$accent-dark, theme.$accent); }
+    &.teal { background: linear-gradient(135deg, #0d7f66, theme.$green); }
+    &.violet { background: linear-gradient(135deg, #4a34ab, #6b4fd6); }
+  }
+
+  .kpi-label {
+    color: theme.$muted;
+    font-size: 0.88rem;
+  }
+
+  .kpi-value {
+    font-size: 1.95rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: theme.$ink;
+    letter-spacing: -0.02em;
+
+    // Un indicateur sans donnée reste discret : il n'est pas un résultat.
+    &.muted-value {
+      color: #b9c3cf;
+      font-weight: 700;
+    }
+
+    // Au-delà de cent pour cent : le chiffre est juste, mais il alerte.
+    &.over-value { color: theme.$accent-dark; }
+  }
+
+  .kpi-detail {
+    color: theme.$muted;
+    font-size: 0.83rem;
+    line-height: 1.4;
+
+    &.up { color: theme.$green; font-weight: 700; }
+    &.warn { color: theme.$accent-dark; font-weight: 700; }
+  }
+}
+
+/* ---------- Grille des panneaux ---------- */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+  align-items: stretch;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid theme.$line;
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: $panel-shadow;
+}
+
+/** Les graphiques larges tiennent sur deux colonnes. */
+.span-2 { grid-column: span 2; }
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: theme.$ink;
+    letter-spacing: -0.01em;
+  }
+}
+
+.panel-note {
+  color: theme.$muted;
+  font-size: 0.86rem;
+}
+
+.panel-link {
+  color: theme.$blue;
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover { text-decoration: underline; }
+}
+
+.panel-empty,
+.panel-note-inline {
+  margin: 0.5rem 0 0;
+  color: theme.$muted;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+/* ---------- Courbe ---------- */
+
+.growth-chart {
+  width: 100%;
+  height: 250px;
+  flex: 1 1 auto;
+
+  .grid line {
+    stroke: #eef1f7;
+    stroke-width: 1;
+  }
+
+  .grid text {
+    fill: theme.$muted;
+    font-size: 11px;
+    text-anchor: end;
+  }
+
+  .line {
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .points circle {
+    fill: #fff;
+    stroke: theme.$blue;
+    stroke-width: 3;
+  }
+
+  .labels text {
+    fill: theme.$muted;
+    font-size: 12px;
+    text-anchor: middle;
+  }
+}
+
+.chart-caption {
+  margin: 0.75rem 0 0;
+  color: theme.$muted;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* ---------- Histogrammes ---------- */
+
+.bar-chart {
+  width: 100%;
+  height: 240px;
+  flex: 1 1 auto;
+
+  &.small { height: 150px; }
+
+  .grid line {
+    stroke: #eef1f7;
+    stroke-width: 1;
+  }
+
+  .grid text {
+    fill: theme.$muted;
+    font-size: 11px;
+    text-anchor: end;
+  }
+
+  .bar {
+    fill: theme.$blue;
+
+    &.orange { fill: theme.$accent; }
+  }
+
+  .values text {
+    fill: theme.$ink;
+    font-size: 12px;
+    font-weight: 700;
+    text-anchor: middle;
+  }
+
+  .labels text {
+    fill: theme.$muted;
+    font-size: 12px;
+    text-anchor: middle;
+  }
+}
+
+/* ---------- Montants ---------- */
+
+.money-panel {
+  .money-total {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 1rem 1.1rem;
+    border-radius: 16px;
+    background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
+    color: #fff;
+  }
+
+  .money-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .money-value {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+
+    &.muted-value { color: rgba(255, 255, 255, 0.55); }
+  }
+
+  .money-breakdown {
+    margin: 0.9rem 0 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid $separator;
+
+      &:last-child { border-bottom: none; }
+    }
+
+    span {
+      color: theme.$muted;
+      font-size: 0.89rem;
+    }
+
+    strong {
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: theme.$ink;
+      white-space: nowrap;
+    }
+  }
+
+  .money-empty {
+    margin-top: 0.9rem;
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    background: theme.$sky;
+  }
+
+  .mini-chart-head {
+    margin: 1rem 0 0.4rem;
+    color: theme.$muted;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+}
+
+/* ---------- Graphes en disque ---------- */
+
+.donut-panel .donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex: 1 1 auto;
+}
+
+.donut {
+  width: 148px;
+  height: 148px;
+  flex: 0 0 148px;
+
+  .donut-track {
+    fill: none;
+    stroke: #f0f3f8;
+    stroke-width: 26;
+  }
+
+  .donut-slice {
+    fill: none;
+    stroke-width: 26;
+    // Les parts se touchent sans se chevaucher : l'extrémité reste franche.
+    stroke-linecap: butt;
+  }
+
+  .donut-total {
+    fill: theme.$ink;
+    font-size: 26px;
+    font-weight: 800;
+    text-anchor: middle;
+  }
+
+  .donut-unit {
+    fill: theme.$muted;
+    font-size: 11px;
+    text-anchor: middle;
+  }
+}
+
+.donut-legend {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.28rem 0;
+    font-size: 0.87rem;
+  }
+
+  .swatch {
+    width: 10px;
+    height: 10px;
+    flex: 0 0 10px;
+    border-radius: 3px;
+  }
+
+  .legend-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: theme.$text;
+  }
+
+  .legend-value {
+    font-weight: 800;
+    color: theme.$ink;
+  }
+
+  .legend-percent {
+    flex: 0 0 2.6rem;
+    text-align: right;
+    color: theme.$muted;
+    font-size: 0.8rem;
+  }
+}
+
+/* ---------- Événements les plus demandés ---------- */
+
+.load-row {
+  padding: 0.55rem 0;
+  border-bottom: 1px solid $separator;
+
+  &:last-of-type { border-bottom: none; }
+
+  .load-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+
+    strong {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.95rem;
+    }
+  }
+
+  .load-count {
+    flex: 0 0 auto;
+    font-weight: 800;
+    color: theme.$blue;
+    font-size: 0.88rem;
+  }
+
+  .load-bar {
+    display: block;
+    height: 8px;
+    margin: 0.35rem 0 0.3rem;
+    border-radius: 999px;
+    background: theme.$sky;
+    overflow: hidden;
+  }
+
+  .load-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, theme.$blue-deep, #3d78d6);
+  }
+
+  .load-meta {
+    color: theme.$muted;
+    font-size: 0.8rem;
+  }
+}
+
+/* ---------- Événements ---------- */
+
+.event-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid $separator;
+
+  &:last-of-type { border-bottom: none; }
+}
+
+.date-badge {
+  width: 50px;
+  flex: 0 0 50px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, theme.$accent-dark, theme.$accent);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0;
+  line-height: 1.1;
+
+  strong { font-size: 1.1rem; font-weight: 800; }
+  small { font-size: 0.66rem; letter-spacing: 0.04em; }
+
+  &.past { background: #aab0c8; }
+}
+
+.event-info,
+.member-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+
+  strong {
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    color: theme.$muted;
+    font-size: 0.83rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ---------- Membres récents ---------- */
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid $separator;
+
+  &:last-of-type { border-bottom: none; }
+}
+
+/* Membre plus ancien : pastille neutre plutôt que verte. */
+.status-pill.neutral {
+  background: #f4f6f9;
+  color: theme.$muted;
+
+  .dot { background: #9aa8b9; }
+}
+
+/* ---------- Villes ---------- */
+
+.city-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.42rem 0;
+
+  .city-name {
+    flex: 0 0 34%;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .city-bar {
+    flex: 1 1 auto;
+    height: 9px;
+    border-radius: 999px;
+    background: theme.$accent-soft;
+    overflow: hidden;
+  }
+
+  .city-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, theme.$accent-dark, theme.$accent);
+  }
+
+  .city-count {
+    flex: 0 0 2rem;
+    text-align: right;
+    font-weight: 800;
+    color: theme.$ink;
+  }
+}
+
+/* ---------- Adaptatif ---------- */
+
+@media (max-width: 1500px) {
+  .kpi-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1180px) {
+  .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .span-2 { grid-column: span 2; }
+}
+
+@media (max-width: 860px) {
+  .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .span-2 { grid-column: auto; }
+
+  .donut-panel .donut-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .donut { align-self: center; }
+}
+
+@media (max-width: 560px) {
+  .kpi-row { grid-template-columns: 1fr; }
+}

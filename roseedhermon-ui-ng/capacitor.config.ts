@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.roseedhermon.app',
   appName: 'Roseed Hermon',
-  webDir: 'dist/sakai-ng',
+  webDir: 'dist/sakai-ng/browser',
   server: {
     androidScheme: 'https'
   },

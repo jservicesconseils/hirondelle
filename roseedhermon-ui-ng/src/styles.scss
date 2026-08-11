@@ -18,10 +18,26 @@ body {
   overflow-y: scroll !important;
 }
 
-/* Force scroll pour la page des événements */
+/**
+ * L'ancre du routeur ne doit occuper aucune place.
+ *
+ * Angular la laisse dans le DOM et insère le composant *à côté* d'elle. Restée en
+ * display: inline, elle ouvre une boîte de ligne au-dessus de la page : la
+ * coquille est décalée vers le bas, le document dépasse la hauteur de l'écran, et
+ * il reste en haut un espace qu'on ne retrouve pas en bas.
+ */
+router-outlet {
+  display: none;
+}
+
+/**
+ * La coquille d'administration occupe l'écran, sans défilement propre : c'est
+ * `.layout-main-container` qui défile, et lui seul. Un `overflow-y: auto` ici
+ * ferait un second conteneur de défilement imbriqué dans le premier.
+ */
 app-layout {
+  display: block;
   height: 100%;
-  overflow-y: auto !important;
 }
 
 .layout-main-container {
@@ -117,9 +133,10 @@ app-layout {
     justify-content: space-between;
     flex-shrink: 0;
     padding: var(--p-dialog-header-padding);
-    background:rgb(46, 49, 164) !important;
+    /* Bleu des modales de création / modification, et non l'ancien indigo. */
+    background:#2b5fb8 !important;
     border-radius: 10px 10px 0px 0px;
-    border:2px solid rgb(46, 49, 164) !important;
+    border:2px solid #2b5fb8 !important;
     color: #FFF !important;
 }
 

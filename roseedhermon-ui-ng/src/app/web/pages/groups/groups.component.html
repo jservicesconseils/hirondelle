@@ -1,0 +1,272 @@
+<div class="groups-page">
+
+  <!-- Bandeau, même dégradé et même typographie que les pages publiques -->
+  <header class="head">
+    <div class="head-inner">
+      <div class="head-text">
+        <span class="eyebrow">
+          <span class="eyebrow-bar"></span>
+          Administration
+        </span>
+
+        <h1>Groupes</h1>
+
+        <p class="lead">
+          {{ auth.isSuperAdmin() || !auth.configured
+            ? 'Toutes les communautés de la plateforme, leurs effectifs et les modules qui leur sont ouverts.'
+            : 'Votre communauté, son effectif et les modules qui lui sont ouverts.' }}
+        </p>
+      </div>
+
+      <button type="button" class="head-cta" *ngIf="auth.isSuperAdmin() || !auth.configured" (click)="openForm()">
+        <i class="pi pi-plus"></i> Créer un groupe
+      </button>
+    </div>
+
+    <!-- Indicateurs posés sur le bandeau, comme le bandeau bas de l'accueil -->
+    <ul class="head-stats" *ngIf="overview">
+      <li>
+        <strong>{{ overview.totalGroups }}</strong>
+        <span>Groupes</span>
+      </li>
+      <li>
+        <strong>{{ totalMembers }}</strong>
+        <span>Membres au total</span>
+      </li>
+      <li>
+        <strong>{{ overview.membersWithoutGroup }}</strong>
+        <span>Fiches à rattacher</span>
+      </li>
+      <li *ngIf="largestGroup">
+        <strong>{{ largestGroup.memberCount }}</strong>
+        <span>{{ largestGroup.name }}</span>
+      </li>
+    </ul>
+  </header>
+
+  <div class="body">
+
+    <p class="load-state" *ngIf="loading">Chargement des groupes…</p>
+    <p class="load-error" *ngIf="loadError">{{ loadError }}</p>
+
+    <ng-container *ngIf="!loading && !loadError">
+
+      <!-- Onglets par module -->
+      <nav class="tabs">
+        <button type="button" [class.is-active]="tab === 'all'" (click)="show('all')">
+          <i class="pi pi-sitemap"></i>
+          <span>Tous</span>
+          <em>{{ groups.length }}</em>
+        </button>
+        <button type="button" [class.is-active]="tab === 'EVENTS'" (click)="show('EVENTS')">
+          <i class="pi pi-calendar"></i>
+          <span>Avec événements</span>
+          <em>{{ countWith('EVENTS') }}</em>
+        </button>
+        <button type="button" [class.is-active]="tab === 'MEMBERS'" (click)="show('MEMBERS')">
+          <i class="pi pi-users"></i>
+          <span>Avec annuaire</span>
+          <em>{{ countWith('MEMBERS') }}</em>
+        </button>
+      </nav>
+
+      <!-- Recherche -->
+      <div class="search">
+        <i class="pi pi-search"></i>
+        <input type="text" placeholder="Rechercher un groupe (nom, ville, type)" [(ngModel)]="search" />
+        <button type="button" class="clear" *ngIf="search" (click)="search = ''" aria-label="Effacer">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <p class="feature-error" *ngIf="featureError">{{ featureError }}</p>
+
+      <div class="content-row" [class.with-drawer]="selectedGroup">
+        <div class="content-main">
+
+          <p class="state" *ngIf="!filteredGroups.length">
+            Aucun groupe ne correspond {{ search.trim() ? 'à la recherche' : 'à ce filtre' }}.
+          </p>
+
+          <!-- Une carte par groupe, sur le modèle des cartes d'événements -->
+          <div class="grid" *ngIf="filteredGroups.length">
+            <article class="group-card" *ngFor="let group of filteredGroups; trackBy: trackByGroup"
+                     [class.is-selected]="selectedGroup === group">
+
+              <div class="group-visual" [style.background]="gradientOf(group)">
+                <span class="group-initials">{{ initialsOf(group.name) }}</span>
+                <span class="count-chip">
+                  <i class="pi pi-users"></i> {{ group.memberCount }}
+                </span>
+              </div>
+
+              <div class="group-body">
+                <div class="group-slot-tag">
+                  <span class="tag" *ngIf="group.type">{{ group.type }}</span>
+                </div>
+
+                <h2>{{ group.name || 'Sans nom' }}</h2>
+
+                <div class="group-slot-meta">
+                  <p class="meta" *ngIf="group.city">
+                    <i class="pi pi-map-marker"></i> {{ group.city }}
+                  </p>
+                  <p class="meta" *ngIf="group.email">
+                    <i class="pi pi-envelope"></i> {{ group.email }}
+                  </p>
+                </div>
+
+                <!--
+                  Chaque module se coupe d'un clic. Le réglage n'est offert qu'au
+                  super administrateur : le serveur refuse les autres.
+                -->
+                <div class="feature-toggles" [class.is-saving]="isFeatureSaving(group)">
+                  <button
+                    type="button"
+                    class="feature-pill"
+                    *ngFor="let choice of featureChoices"
+                    [class.is-on]="hasFeature(group, choice.key)"
+                    [disabled]="!auth.isSuperAdmin() || isFeatureSaving(group)"
+                    [title]="choice.description"
+                    (click)="toggleGroupFeature(group, choice.key)">
+                    <i class="pi" [ngClass]="choice.icon"></i>
+                    <span>{{ choice.label }}</span>
+                  </button>
+                </div>
+
+                <div class="group-foot">
+                  <button type="button" class="cta" (click)="openGroup(group)">
+                    Voir les membres <i class="pi pi-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- Annuaire du groupe sélectionné -->
+        <aside class="detail-panel" *ngIf="selectedGroup">
+          <div class="detail-card group-drawer">
+            <div class="drawer-actions">
+              <button type="button" class="btn-ghost" (click)="closeGroup()">
+                <i class="pi pi-times"></i> Fermer
+              </button>
+            </div>
+
+            <div class="drawer-head">
+              <span class="avatar">{{ initialsOf(selectedGroup.name) }}</span>
+              <h2>{{ selectedGroup.name }}</h2>
+              <p>{{ selectedGroup.city || '—' }}<span *ngIf="selectedGroup.type"> · {{ selectedGroup.type }}</span></p>
+            </div>
+
+            <p class="drawer-note" *ngIf="membersLoading">Chargement de l'annuaire…</p>
+            <p class="drawer-note" *ngIf="!membersLoading && !groupMembers.length">
+              Ce groupe n'a encore aucun membre.
+            </p>
+
+            <div class="member-line" *ngFor="let member of groupMembers">
+              <span class="avatar small">{{ memberInitials(member) }}</span>
+              <div>
+                <strong>{{ member.firstName }} {{ member.lastName }}</strong>
+                <span>{{ member.profession || member.email || '—' }}</span>
+              </div>
+              <span class="role-pill" *ngIf="member.roles?.length">{{ member.roles?.[0] }}</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Création d'un groupe -->
+<div class="modal-backdrop" *ngIf="formVisible" (click)="closeForm()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-band">
+      <h2>Créer un groupe</h2>
+      <p>La communauté et son administrateur pourront ensuite y ajouter des membres.</p>
+    </div>
+
+    <div class="form-grid">
+      <label class="form-field span-2">
+        <span>Nom du groupe *</span>
+        <input type="text" [(ngModel)]="form.name" placeholder="Ex : Association Les Hirondelles" />
+      </label>
+
+      <label class="form-field">
+        <span>Type</span>
+        <input type="text" [(ngModel)]="form.type" placeholder="Association, club, entreprise…" />
+      </label>
+
+      <label class="form-field">
+        <span>Courriel</span>
+        <input type="email" [(ngModel)]="form.email" />
+      </label>
+
+      <label class="form-field">
+        <span>Téléphone</span>
+        <input type="tel" [(ngModel)]="form.phone" />
+      </label>
+
+      <label class="form-field">
+        <span>Site web</span>
+        <input type="url" [(ngModel)]="form.website" />
+      </label>
+
+      <label class="form-field span-2">
+        <span>Adresse</span>
+        <input type="text" [(ngModel)]="form.street" />
+      </label>
+
+      <label class="form-field">
+        <span>Ville</span>
+        <input type="text" [(ngModel)]="form.city" />
+      </label>
+
+      <label class="form-field">
+        <span>Province ou état</span>
+        <input type="text" [(ngModel)]="form.stateOrProvince" />
+      </label>
+
+      <label class="form-field">
+        <span>Pays</span>
+        <input type="text" [(ngModel)]="form.country" />
+      </label>
+
+      <!--
+        Modules du groupe. Un groupe peut ne gérer que ses événements, que son
+        annuaire, ou les deux : c'est ici que ça se décide, et ça se change
+        ensuite depuis la liste.
+      -->
+      <div class="form-field span-2">
+        <span>Modules du groupe</span>
+        <div class="feature-cards">
+          <button
+            type="button"
+            class="feature-card"
+            *ngFor="let choice of featureChoices"
+            [class.is-on]="formHasFeature(choice.key)"
+            (click)="toggleFormFeature(choice.key)">
+            <span class="feature-check"><i class="pi pi-check"></i></span>
+            <i class="pi feature-glyph" [ngClass]="choice.icon"></i>
+            <strong>{{ choice.label }}</strong>
+            <small>{{ choice.description }}</small>
+          </button>
+        </div>
+        <em class="feature-hint" *ngIf="!(form.features || []).length">
+          Sans aucun module, ce groupe n'aura ni agenda ni annuaire — seuls ses
+          administrateurs pourront s'y connecter.
+        </em>
+      </div>
+    </div>
+
+    <p class="form-error" *ngIf="saveError">{{ saveError }}</p>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" (click)="closeForm()">Annuler</button>
+      <button type="button" class="btn-primary" [disabled]="!canSave || saving" (click)="save()">
+        {{ saving ? 'Enregistrement…' : 'Créer le groupe' }}
+      </button>
+    </div>
+  </div>
+</div>

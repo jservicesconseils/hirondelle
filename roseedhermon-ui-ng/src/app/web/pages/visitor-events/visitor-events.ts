@@ -1,8 +1,9 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
-import { EventService } from '../../../../shared/services/events/events.service';
-import { EVENT_CATEGORIES, EventCategoryEnum } from '../../../../shared/models/model';
+import { RouterModule } from '@angular/router';
+import { EventService } from '../../../shared/services/events/events.service';
+import { EventImageService } from '../../../shared/services/events/event-image.service';
+import { EVENT_CATEGORIES, EventCategoryEnum } from '../../../shared/models/model';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
@@ -22,7 +23,7 @@ import { DropdownModule } from 'primeng/dropdown';
                         <h1 class="hero-title">Découvrez nos événements</h1>
                         <p class="hero-subtitle">Rejoignez-nous pour des moments inoubliables et des rencontres enrichissantes</p>
                         <div class="hero-buttons">
-                            <button class="btn btn-primary" (click)="goToEventsList()">Voir les événements</button>
+                            <button class="btn btn-primary">Voir les événements</button>
                             <button class="btn btn-secondary">En savoir plus</button>
                         </div>
                     </div>
@@ -82,8 +83,7 @@ import { DropdownModule } from 'primeng/dropdown';
                         </div>
                     </div>
                     <div class="header-actions">
-                        <button pButton type="button" label="Liste des événements" icon="pi pi-list" class="p-button-primary" (click)="goToEventsList()"></button>
-                        <button pButton type="button" label="Créer un événement" icon="pi pi-plus" class="p-button-outlined"></button>
+                        <button pButton type="button" label="Créer un événement" icon="pi pi-plus" class="p-button-primary"></button>
                         <button pButton type="button" label="Se connecter" icon="pi pi-sign-in" class="p-button-outlined"></button>
                     </div>
                 </div>
@@ -1486,7 +1486,10 @@ export class VisitorEventsComponent implements OnInit {
     events: any[] = [];
     allEvents: any[] = [];
 
-    constructor(private eventService: EventService, private router: Router) { }
+    constructor(
+        private eventService: EventService,
+        private eventImageService: EventImageService
+    ) { }
 
     ngOnInit(): void {
         // Essayer d'abord de récupérer les événements avec fichiers
@@ -1525,53 +1528,17 @@ export class VisitorEventsComponent implements OnInit {
 
     // Méthode pour obtenir l'URL de l'image principale de l'événement
     getEventImageUrl(event: any): string {
-        console.log('🔍 getEventImageUrl appelé pour:', event.name, 'Event data:', event);
-        
-        // Si l'événement a une image principale définie
-        if (event.mainPhotoId && event.files && event.files.length > 0) {
-            console.log('📸 Photo principale trouvée:', event.mainPhotoId);
-            // Chercher la photo principale
-            const mainPhoto = event.files.find((file: any) => file.id === event.mainPhotoId);
-            if (mainPhoto && mainPhoto.fileName) {
-                const imageUrl = `http://localhost:8081/api/v1/files/events/${event.id}/${mainPhoto.fileName}`;
-                console.log('🖼️ URL photo principale:', imageUrl);
-                return imageUrl;
-            }
-        }
-        
-        // Si pas de photo principale, prendre la première image disponible
-        if (event.files && event.files.length > 0) {
-            console.log('🔍 Recherche d\'images disponibles dans:', event.files.length, 'fichiers');
-            const firstImage = event.files.find((file: any) => 
-                file.mimeType && file.mimeType.startsWith('image/')
-            );
-            if (firstImage && firstImage.fileName) {
-                const imageUrl = `http://localhost:8081/api/v1/files/events/${event.id}/${firstImage.fileName}`;
-                console.log('🖼️ URL première image trouvée:', imageUrl);
-                return imageUrl;
-            }
-        }
-        
-        // Fallback vers l'image locale si aucune image n'est disponible
-        console.log('⚠️ Aucune image trouvée, utilisation du fallback local');
-        return '/assets/images/login-page-.png';
+        return this.eventImageService.getEventImageUrl(event);
     }
 
     // Gestion des erreurs de chargement d'images
     onImageError(event: any, eventData: any): void {
-        console.log('❌ Erreur de chargement image pour:', eventData.name);
-        console.log('🖼️ Élément image:', event.target);
-        
-        // Essayer une image de fallback différente
-        const fallbackUrl = 'https://picsum.photos/400/200?random=' + Math.floor(Math.random() * 1000);
-        console.log('🔄 Tentative avec fallback:', fallbackUrl);
-        event.target.src = fallbackUrl;
+        this.eventImageService.onImageError(eventData, event.target);
     }
 
     // Gestion du chargement réussi des images
     onImageLoad(event: any, eventData: any): void {
-        console.log('✅ Image chargée avec succès pour:', eventData.name);
-        console.log('🖼️ URL de l\'image:', event.target.src);
+        this.eventImageService.onImageLoad(eventData, event.target);
     }
 
     setStyle(style: string) {
@@ -1599,9 +1566,5 @@ export class VisitorEventsComponent implements OnInit {
             const catMatch = !this.selectedCategory || event.category === this.selectedCategory;
             return cityMatch && nameMatch && catMatch;
         });
-    }
-
-    goToEventsList() {
-        this.router.navigate(['/web/events']);
     }
 } 

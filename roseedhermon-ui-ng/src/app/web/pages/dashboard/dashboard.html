@@ -1,0 +1,423 @@
+<div class="dashboard-page">
+
+  <!-- Bandeau, même dégradé et même typographie que le menu et les autres pages -->
+  <header class="head">
+    <div class="head-inner">
+      <div class="head-text">
+        <span class="eyebrow">
+          <span class="eyebrow-bar"></span>
+          Pilotage
+        </span>
+
+        <h1>Tableau de bord</h1>
+
+        <p class="lead">
+          Effectifs, agenda, inscriptions et recettes de la communauté, calculés
+          sur les données réellement enregistrées.
+        </p>
+      </div>
+
+      <div class="head-actions">
+        <a class="head-ghost" routerLink="/app/members"><i class="pi pi-users"></i> Membres</a>
+        <a class="head-cta" routerLink="/app/events"><i class="pi pi-calendar"></i> Événements</a>
+      </div>
+    </div>
+
+    <ul class="head-stats">
+      <li>
+        <strong>{{ totalMembers }}</strong>
+        <span>Membres</span>
+      </li>
+      <li>
+        <strong>{{ totalEvents }}</strong>
+        <span>Événements</span>
+      </li>
+      <li>
+        <strong>{{ reservedSeats }}</strong>
+        <span>Places réservées</span>
+      </li>
+      <li>
+        <strong>{{ hasPricing ? money(totalRevenue) : '—' }}</strong>
+        <span>Recettes billetterie</span>
+      </li>
+    </ul>
+  </header>
+
+  <div class="body">
+
+    <p class="state" *ngIf="loading">Chargement des données…</p>
+    <p class="state error" *ngIf="loadError">{{ loadError }}</p>
+
+    <ng-container *ngIf="!loading && !loadError">
+
+      <!-- ---------- Indicateurs ---------- -->
+      <div class="kpi-row">
+        <article class="kpi-card">
+          <span class="kpi-icon blue"><i class="pi pi-users"></i></span>
+          <span class="kpi-label">Total membres</span>
+          <span class="kpi-value">{{ totalMembers }}</span>
+          <span class="kpi-detail" [class.up]="monthlyGrowth > 0">
+            <i class="pi" [ngClass]="monthlyGrowth > 0 ? 'pi-arrow-up-right' : 'pi-minus'"></i>
+            {{ monthlyGrowth > 0 ? '+' + monthlyGrowth + '% vs mois dernier' : 'stable vs mois dernier' }}
+          </span>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-icon orange"><i class="pi pi-user-plus"></i></span>
+          <span class="kpi-label">Nouveaux ce mois</span>
+          <span class="kpi-value">{{ newMembersThisMonth }}</span>
+          <span class="kpi-detail">En {{ currentMonthLabel }}</span>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-icon blue"><i class="pi pi-calendar"></i></span>
+          <span class="kpi-label">Événements</span>
+          <span class="kpi-value">{{ totalEvents }}</span>
+          <span class="kpi-detail" [class.up]="upcomingEventsCount > 0">{{ upcomingEventsCount }} à venir</span>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-icon teal"><i class="pi pi-ticket"></i></span>
+          <span class="kpi-label">Inscriptions</span>
+          <span class="kpi-value">{{ activeRegistrations }}</span>
+          <span class="kpi-detail">{{ reservedSeats }} places • {{ seatsPerRegistration }} par inscription</span>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-icon orange"><i class="pi pi-dollar"></i></span>
+          <span class="kpi-label">Recettes billetterie</span>
+          <span class="kpi-value" [class.muted-value]="!hasPricing">
+            {{ hasPricing ? money(totalRevenue) : '—' }}
+          </span>
+          <span class="kpi-detail">
+            {{ hasPricing ? paidRegistrations + ' inscriptions payantes' : 'Aucun événement payant' }}
+          </span>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-icon violet"><i class="pi pi-chart-pie"></i></span>
+          <span class="kpi-label">Taux de remplissage</span>
+          <span class="kpi-value"
+                [class.muted-value]="occupancyRate === null"
+                [class.over-value]="occupancyExceeded">
+            {{ occupancyRate === null ? '—' : occupancyRate + '%' }}
+          </span>
+          <span class="kpi-detail" [class.warn]="occupancyExceeded">
+            <ng-container *ngIf="occupancyRate === null">Aucune jauge déclarée</ng-container>
+            <ng-container *ngIf="occupancyRate !== null">
+              {{ reservedSeats }} / {{ totalCapacity }} places
+              <ng-container *ngIf="occupancyExceeded"> • jauge dépassée</ng-container>
+            </ng-container>
+          </span>
+        </article>
+      </div>
+
+      <div class="dashboard-grid">
+
+        <!-- ---------- Croissance des effectifs ---------- -->
+        <section class="panel span-2">
+          <div class="panel-head">
+            <h2>Croissance des effectifs</h2>
+            <span class="panel-note">6 derniers mois</span>
+          </div>
+
+          <svg class="growth-chart"
+               [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
+               preserveAspectRatio="none"
+               role="img"
+               aria-label="Évolution du nombre de membres sur six mois">
+            <defs>
+              <linearGradient id="growthFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#2b5fb8" stop-opacity="0.3" />
+                <stop offset="100%" stop-color="#2b5fb8" stop-opacity="0.02" />
+              </linearGradient>
+              <linearGradient id="growthLine" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#16346b" />
+                <stop offset="100%" stop-color="#3d78d6" />
+              </linearGradient>
+            </defs>
+
+            <g class="grid">
+              <line *ngFor="let tick of yTicks" x1="46" [attr.y1]="tick.y"
+                    [attr.x2]="chartWidth - 14" [attr.y2]="tick.y" />
+              <text *ngFor="let tick of yTicks" x="36" [attr.y]="tick.y + 4">{{ tick.label }}</text>
+            </g>
+
+            <path class="area" [attr.d]="areaPath" fill="url(#growthFill)" />
+            <path class="line" [attr.d]="linePath" fill="none" stroke="url(#growthLine)" />
+
+            <g class="points">
+              <circle *ngFor="let point of growthPoints" [attr.cx]="point.x" [attr.cy]="point.y" r="4" />
+            </g>
+
+            <g class="labels">
+              <text *ngFor="let point of growthPoints" [attr.x]="point.x"
+                    [attr.y]="chartHeight - 8">{{ point.label }}</text>
+            </g>
+          </svg>
+
+          <p class="chart-caption">
+            Effectif cumulé à la fin de chaque mois, reconstruit depuis la date d'ajout de chaque fiche.
+          </p>
+        </section>
+
+        <!-- ---------- Montants ---------- -->
+        <section class="panel money-panel">
+          <div class="panel-head">
+            <h2>Montants</h2>
+            <span class="panel-note">Billetterie</span>
+          </div>
+
+          <div class="money-total">
+            <span class="money-label">Encaissé</span>
+            <strong class="money-value" [class.muted-value]="!hasPricing">
+              {{ hasPricing ? money(totalRevenue) : '—' }}
+            </strong>
+          </div>
+
+          <ul class="money-breakdown">
+            <li>
+              <span>Panier moyen</span>
+              <strong>{{ hasPricing ? money(averageBasket) : '—' }}</strong>
+            </li>
+            <li>
+              <span>Reste à encaisser</span>
+              <strong>{{ hasPricing ? money(potentialRevenue) : '—' }}</strong>
+            </li>
+            <li>
+              <span>Événements payants</span>
+              <strong>{{ paidEventsCount }} / {{ totalEvents }}</strong>
+            </li>
+          </ul>
+
+          <!-- Aucun tarif saisi : le dire, plutôt qu'aligner des zéros -->
+          <p class="panel-empty money-empty" *ngIf="!hasPricing">
+            Aucun événement ne porte de tarif. Renseignez un montant à l'étape
+            « Tarification » de la création pour suivre les recettes ici.
+          </p>
+
+          <ng-container *ngIf="hasPricing">
+            <div class="mini-chart-head">Recettes par mois</div>
+            <svg class="bar-chart small"
+                 [attr.viewBox]="'0 0 ' + barWidth + ' ' + barHeight"
+                 preserveAspectRatio="none"
+                 role="img"
+                 aria-label="Recettes mensuelles sur six mois">
+              <g class="grid">
+                <line *ngFor="let tick of revenueChart.ticks" x1="52" [attr.y1]="tick.y"
+                      [attr.x2]="barWidth - 14" [attr.y2]="tick.y" />
+              </g>
+              <g class="bars">
+                <rect *ngFor="let bar of revenueChart.bars; trackBy: trackByBar"
+                      class="bar orange"
+                      [attr.x]="bar.x" [attr.y]="bar.y"
+                      [attr.width]="bar.width" [attr.height]="bar.height"
+                      rx="6" />
+              </g>
+              <g class="labels">
+                <text *ngFor="let bar of revenueChart.bars; trackBy: trackByBar"
+                      [attr.x]="bar.center" [attr.y]="barHeight - 10">{{ bar.label }}</text>
+              </g>
+            </svg>
+          </ng-container>
+        </section>
+
+        <!-- ---------- Inscriptions par mois ---------- -->
+        <section class="panel span-2">
+          <div class="panel-head">
+            <h2>Places réservées par mois</h2>
+            <span class="panel-note">{{ registrationsThisMonth }} inscriptions ce mois-ci</span>
+          </div>
+
+          <svg class="bar-chart"
+               [attr.viewBox]="'0 0 ' + barWidth + ' ' + barHeight"
+               preserveAspectRatio="none"
+               role="img"
+               aria-label="Places réservées mois par mois sur six mois">
+            <g class="grid">
+              <line *ngFor="let tick of registrationChart.ticks" x1="52" [attr.y1]="tick.y"
+                    [attr.x2]="barWidth - 14" [attr.y2]="tick.y" />
+              <text *ngFor="let tick of registrationChart.ticks" x="42"
+                    [attr.y]="tick.y + 4">{{ tick.label }}</text>
+            </g>
+
+            <g class="bars">
+              <rect *ngFor="let bar of registrationChart.bars; trackBy: trackByBar"
+                    class="bar"
+                    [attr.x]="bar.x" [attr.y]="bar.y"
+                    [attr.width]="bar.width" [attr.height]="bar.height"
+                    rx="6" />
+            </g>
+
+            <!-- Valeur au-dessus de chaque barre : la lecture ne dépend pas de
+                 l'échelle. Un mois sans inscription n'affiche rien, son absence
+                 de barre suffit à le dire. -->
+            <g class="values">
+              <text *ngFor="let bar of registrationChart.bars; trackBy: trackByBar"
+                    [attr.x]="bar.center" [attr.y]="bar.y - 8">{{ bar.value || '' }}</text>
+            </g>
+
+            <g class="labels">
+              <text *ngFor="let bar of registrationChart.bars; trackBy: trackByBar"
+                    [attr.x]="bar.center" [attr.y]="barHeight - 10">{{ bar.label }}</text>
+            </g>
+          </svg>
+
+          <p class="chart-caption" *ngIf="registrationChart.empty">
+            Aucune inscription enregistrée sur les six derniers mois.
+          </p>
+        </section>
+
+        <!-- ---------- Événements les plus demandés ---------- -->
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Les plus demandés</h2>
+            <a routerLink="/app/events" class="panel-link">Voir tout <i class="pi pi-arrow-right"></i></a>
+          </div>
+
+          <div class="load-row" *ngFor="let item of topEvents; trackBy: trackByEventLoad">
+            <div class="load-head">
+              <strong>{{ item.name }}</strong>
+              <span class="load-count">{{ item.seats }} pl.</span>
+            </div>
+            <span class="load-bar"><span class="load-fill" [style.width.%]="item.percentage"></span></span>
+            <span class="load-meta">
+              {{ item.registrations }} inscription{{ item.registrations > 1 ? 's' : '' }}
+              <ng-container *ngIf="item.fillRate !== null"> • {{ item.fillRate }}% de la jauge</ng-container>
+              <ng-container *ngIf="item.revenue"> • {{ money(item.revenue) }}</ng-container>
+            </span>
+          </div>
+
+          <p class="panel-empty" *ngIf="!topEvents.length">Aucune inscription enregistrée.</p>
+        </section>
+
+        <!-- ---------- Graphes en disque ---------- -->
+        <section class="panel donut-panel">
+          <div class="panel-head">
+            <h2>Catégories d'événements</h2>
+          </div>
+          <ng-container *ngTemplateOutlet="donut; context: { $implicit: categoryDonut, unit: 'événements' }">
+          </ng-container>
+        </section>
+
+        <section class="panel donut-panel">
+          <div class="panel-head">
+            <h2>Accès aux événements</h2>
+          </div>
+          <ng-container *ngTemplateOutlet="donut; context: { $implicit: accessDonut, unit: 'événements' }">
+          </ng-container>
+        </section>
+
+        <section class="panel donut-panel">
+          <div class="panel-head">
+            <h2>Composition des membres</h2>
+          </div>
+          <ng-container *ngTemplateOutlet="donut; context: { $implicit: genderDonut, unit: 'membres' }">
+          </ng-container>
+        </section>
+
+        <!-- ---------- Prochains événements ---------- -->
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Prochains événements</h2>
+            <a routerLink="/app/events" class="panel-link">Voir tout <i class="pi pi-arrow-right"></i></a>
+          </div>
+
+          <div class="event-row" *ngFor="let item of upcomingEvents">
+            <span class="date-badge" [class.past]="!item.upcoming">
+              <strong>{{ item.day }}</strong>
+              <small>{{ item.month }}</small>
+            </span>
+            <div class="event-info">
+              <strong>{{ item.name }}</strong>
+              <span>{{ item.meta || 'Détails à préciser' }}</span>
+            </div>
+            <span class="role-pill">{{ item.category }}</span>
+          </div>
+
+          <p class="panel-empty" *ngIf="!upcomingEvents.length">Aucun événement enregistré.</p>
+          <p class="panel-note-inline" *ngIf="upcomingEvents.length && !upcomingEventsCount">
+            Aucun événement à venir : les plus récents sont affichés.
+          </p>
+        </section>
+
+        <!-- ---------- Derniers membres ---------- -->
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Derniers membres</h2>
+            <a routerLink="/app/members" class="panel-link">Voir tout <i class="pi pi-arrow-right"></i></a>
+          </div>
+
+          <div class="member-row" *ngFor="let item of recentMembers">
+            <span class="avatar small">{{ item.initials }}</span>
+            <div class="member-info">
+              <strong>{{ item.fullName }}</strong>
+              <span>{{ item.sinceLabel }}</span>
+            </div>
+            <span class="status-pill" [class.neutral]="!item.isNew">
+              <span class="dot"></span>{{ item.isNew ? 'Nouveau' : 'Actif' }}
+            </span>
+          </div>
+
+          <p class="panel-empty" *ngIf="!recentMembers.length">Aucun membre enregistré.</p>
+        </section>
+
+        <!-- ---------- Villes ----------
+             En barres et non en disque : un classement se compare mieux
+             qu'il ne se partage. -->
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Villes les plus représentées</h2>
+            <span class="panel-note">{{ citiesCount }} au total</span>
+          </div>
+
+          <div class="city-row" *ngFor="let city of topCities">
+            <span class="city-name">{{ city.city }}</span>
+            <span class="city-bar"><span class="city-fill" [style.width.%]="city.percentage"></span></span>
+            <span class="city-count">{{ city.count }}</span>
+          </div>
+
+          <p class="panel-empty" *ngIf="!topCities.length">Aucune ville renseignée.</p>
+        </section>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!--
+  Un seul gabarit de disque pour les trois répartitions : le cercle porte une part
+  par tranche, découpée en `stroke-dasharray`, et la légende donne les chiffres
+  que l'anneau ne peut pas dire.
+-->
+<ng-template #donut let-data let-unit="unit">
+  <div class="donut-wrap" *ngIf="data.total; else donutEmpty">
+    <svg class="donut" [attr.viewBox]="'0 0 ' + donutSize + ' ' + donutSize" role="img"
+         [attr.aria-label]="'Répartition en ' + data.slices.length + ' parts'">
+      <g [attr.transform]="'rotate(-90 ' + donutSize / 2 + ' ' + donutSize / 2 + ')'">
+        <circle class="donut-track"
+                [attr.cx]="donutSize / 2" [attr.cy]="donutSize / 2" [attr.r]="donutRadius" />
+        <circle *ngFor="let slice of data.slices; trackBy: trackBySlice"
+                class="donut-slice"
+                [attr.cx]="donutSize / 2" [attr.cy]="donutSize / 2" [attr.r]="donutRadius"
+                [attr.stroke]="slice.color"
+                [attr.stroke-dasharray]="slice.dash"
+                [attr.stroke-dashoffset]="slice.offset" />
+      </g>
+      <text class="donut-total" [attr.x]="donutSize / 2" [attr.y]="donutSize / 2 - 2">{{ data.total }}</text>
+      <text class="donut-unit" [attr.x]="donutSize / 2" [attr.y]="donutSize / 2 + 18">{{ unit }}</text>
+    </svg>
+
+    <ul class="donut-legend">
+      <li *ngFor="let slice of data.slices; trackBy: trackBySlice">
+        <span class="swatch" [style.background]="slice.color"></span>
+        <span class="legend-label">{{ slice.label }}</span>
+        <span class="legend-value">{{ slice.value }}</span>
+        <span class="legend-percent">{{ slice.percent }}%</span>
+      </li>
+    </ul>
+  </div>
+
+  <ng-template #donutEmpty>
+    <p class="panel-empty">Aucune donnée à répartir.</p>
+  </ng-template>
+</ng-template>

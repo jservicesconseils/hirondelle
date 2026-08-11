@@ -1,24 +1,30 @@
-import { Component, OnInit, AfterViewInit, Input, Output, EventEmitter, SimpleChanges, OnChanges } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, Input, Output, EventEmitter, SimpleChanges, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray, AbstractControl, ValidationErrors, FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators, FormArray, AbstractControl, ValidationErrors, FormControl } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
 import { CalendarModule } from 'primeng/calendar';
-import { InputTextarea } from 'primeng/inputtextarea';
-import { ButtonModule } from 'primeng/button';
 import { EventService } from '../../../../shared/services/events/events.service';
 import { EventDTO } from '../../../../shared/services/api/model/eventDTO';
 import { EventLocation } from '../../../../shared/services/api/model/eventLocation';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
-import { TabViewModule } from 'primeng/tabview';
 import { EVENT_CATEGORIES, EventCategoryEnum, EVENT_TYPES, EventTypeEnum } from '../../../../shared/models/model';
-import { DropdownModule } from 'primeng/dropdown';
-import { RadioButtonModule } from 'primeng/radiobutton';
-import { FileUploadModule } from 'primeng/fileupload';
-import { ProgressBarModule } from 'primeng/progressbar';
 import { EventFileControllerService } from '../../../../shared/services/api/api/eventFileController.service';
 import { EventFileDTO, EventFileDTOFileTypeEnum } from '../../../../shared/services/api/model/eventFileDTO';
+import { AddressLookupService, AddressSuggestion } from '../../../../shared/services/address/address-lookup.service';
+import { Subject } from 'rxjs';
+import { debounceTime, switchMap, takeUntil } from 'rxjs/operators';
+import { environment } from '../../../../../environments/environment';
+
+/** Les 5 étapes de la maquette de création d'événement. */
+interface WizardStep {
+  label: string;
+  icon: string;
+  badge: string;
+  title: string;
+  subtitle: string;
+  tip: string;
+}
 
 @Component({
   selector: 'app-create-event',
@@ -26,27 +32,64 @@ import { EventFileDTO, EventFileDTOFileTypeEnum } from '../../../../shared/servi
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     DialogModule,
-    InputTextModule,
     CalendarModule,
-    InputTextarea,
-    ButtonModule,
-    ToastModule,
-    TabViewModule,
-    DropdownModule,
-    RadioButtonModule,
-    FileUploadModule,
-    ProgressBarModule
+    ToastModule
   ],
   providers: [MessageService, EventFileControllerService],
   templateUrl: './create-event.component.html',
   styleUrls: ['./create-event.component.scss']
 })
-export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
+export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
   @Input() eventToEdit: EventDTO | null = null;
   @Input() visible: boolean = false;
   @Output() close = new EventEmitter<void>();
   eventForm: FormGroup;
+
+  activeStep = 0;
+  readonly steps: WizardStep[] = [
+    {
+      label: 'Informations',
+      icon: 'pi-clipboard',
+      badge: 'Informations',
+      title: 'Informations',
+      subtitle: 'Décrivez votre événement en quelques mots',
+      tip: 'Un nom court et parlant est plus facile à retrouver dans la liste des événements.'
+    },
+    {
+      label: 'Lieu et heure',
+      icon: 'pi-map-marker',
+      badge: 'Lieu & horaire',
+      title: 'Lieu et heure',
+      subtitle: 'Indiquez où et quand se déroulera votre événement',
+      tip: 'Ajoutez un rappel 1 jour avant pour vos participants.'
+    },
+    {
+      label: 'Présentateurs',
+      icon: 'pi-users',
+      badge: 'Intervenants',
+      title: 'Présentateurs',
+      subtitle: 'Qui animera cet événement ?',
+      tip: 'Une courte biographie rassure les participants et valorise vos intervenants.'
+    },
+    {
+      label: 'Photo',
+      icon: 'pi-image',
+      badge: 'Visuels',
+      title: 'Photos de présentation',
+      subtitle: 'Choisissez les images qui illustreront l\'événement',
+      tip: 'La photo marquée « Principale » est celle affichée en premier sur la fiche.'
+    },
+    {
+      label: 'Documents',
+      icon: 'pi-file',
+      badge: 'Pièces jointes',
+      title: 'Documents',
+      subtitle: 'Programme, affiche, formulaire… ajoutez vos pièces jointes',
+      tip: 'Les fichiers sont envoyés automatiquement une fois l\'événement enregistré.'
+    }
+  ];
   submitted: boolean = false;
   eventCategories = EVENT_CATEGORIES;
   eventTypes = EVENT_TYPES;
@@ -65,15 +108,34 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
   imageModalVisible: boolean = false;
   selectedImage: EventFileDTO | null = null;
 
+  /**
+   * Les deux sélecteurs de date travaillent sur des `Date`, alors que l'API stocke
+   * des chaînes « JJ/MM/AAAA » : ces propriétés font le pont avec le formulaire.
+   */
+  eventDate: Date | null = null;
+  lastRegistrationDate: Date | null = null;
+
+  // Recherche d'adresse
+  addressSuggestions: AddressSuggestion[] = [];
+  addressSearching = false;
+  addressPanelOpen = false;
+  /** Vrai une fois la recherche lancée, pour distinguer « aucun résultat » de l'état initial. */
+  addressSearched = false;
+  private addressQuery$ = new Subject<string>();
+  private destroy$ = new Subject<void>();
+
   constructor(
     private fb: FormBuilder,
     private eventService: EventService,
     private messageService: MessageService,
-    private eventFileService: EventFileControllerService
+    private eventFileService: EventFileControllerService,
+    private addressLookup: AddressLookupService
   ) {
     this.eventForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       date: ['', [Validators.required, this.dateFrValidator]],
+      /** Heure de début, format `HH:mm` (champ `time` de l'entité événement). */
+      time: [''],
       description: ['', Validators.required],
       free: [false],
       amount: [null],
@@ -86,7 +148,10 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
         address: ['', Validators.required],
         city: ['', Validators.required],
         postalCode: ['', Validators.required],
-        country: ['', Validators.required]
+        country: ['', Validators.required],
+        // Renseignées par la recherche d'adresse ; déjà portées par l'API.
+        latitude: [null],
+        longitude: [null]
       }),
       presenters: this.fb.array([
         this.fb.group({
@@ -96,13 +161,92 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
           resume: ['']
         })
       ]),
-      eventType: [EventTypeEnum.PUBLIC, Validators.required]
+      eventType: [EventTypeEnum.PUBLIC, Validators.required],
+      // Visibilité réelle de l'événement, indépendante de son type.
+      visibility: ['PUBLIC', Validators.required]
     });
     this.isFormReady = true;
   }
 
   ngOnInit(): void {
-    // Le FormArray est déjà initialisé dans le constructeur
+    // La politique d'usage de Nominatim impose de rester sous une requête par
+    // seconde : d'où la temporisation, et `switchMap` qui abandonne la requête
+    // précédente dès que la saisie change.
+    this.addressQuery$
+      .pipe(
+        debounceTime(450),
+        switchMap((query) => {
+          this.addressSearching = true;
+          return this.addressLookup.search(query);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((suggestions) => {
+        this.addressSuggestions = suggestions;
+        this.addressSearching = false;
+        this.addressSearched = true;
+        this.addressPanelOpen = true;
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // --- Sélecteurs de date -------------------------------------------------------
+
+  /** Écrit la date choisie dans le formulaire au format attendu par l'API. */
+  onDatePicked(controlName: 'date' | 'lastRegistrationDate', value: Date | null) {
+    this.eventForm.patchValue({ [controlName]: formatFrDate(value) });
+    this.eventForm.get(controlName)?.markAsDirty();
+  }
+
+  /** Relit les chaînes du formulaire vers les deux sélecteurs. */
+  private syncDatePickers() {
+    this.eventDate = parseFrDate(this.eventForm.get('date')?.value);
+    this.lastRegistrationDate = parseFrDate(this.eventForm.get('lastRegistrationDate')?.value);
+  }
+
+  // --- Recherche d'adresse ------------------------------------------------------
+
+  onAddressInput(event: Event) {
+    const query = (event.target as HTMLInputElement).value;
+    this.addressSearched = false;
+
+    if (query.trim().length < 3) {
+      this.addressSuggestions = [];
+      this.addressPanelOpen = false;
+      return;
+    }
+
+    this.addressPanelOpen = true;
+    this.addressQuery$.next(query);
+  }
+
+  /** Remplit les champs du lieu ; ils restent modifiables à la main ensuite. */
+  applyAddress(suggestion: AddressSuggestion) {
+    const location = this.eventForm.get('location') as FormGroup;
+
+    location.patchValue({
+      address: suggestion.address,
+      city: suggestion.city,
+      postalCode: suggestion.postalCode,
+      country: suggestion.country,
+      latitude: suggestion.latitude,
+      longitude: suggestion.longitude,
+      // Le nom du lieu saisi à la main l'emporte sur celui deviné par le géocodeur.
+      placeName: location.get('placeName')?.value || suggestion.placeName
+    });
+    location.markAsDirty();
+
+    this.closeAddressPanel();
+  }
+
+  closeAddressPanel() {
+    this.addressPanelOpen = false;
+    this.addressSuggestions = [];
+    this.addressSearched = false;
   }
 
   ngAfterViewInit(): void {
@@ -173,6 +317,7 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
     const formData = {
       name: event.name || '',
       date: event.date || '',
+      time: event.time || '',
       description: event.description || '',
       free: event.free !== undefined ? event.free : false,
       amount: event.amount || null,
@@ -229,12 +374,14 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
     
     // Forcer la détection des changements
     this.eventForm.updateValueAndValidity();
-    
+    this.syncDatePickers();
+
     console.log('=== FIN PATCH DU FORMULAIRE ===');
   }
 
   showDialog() {
     this.visible = true;
+    this.activeStep = 0;
     // Ne pas reset le formulaire si on est en mode modification
     if (!this.eventToEdit) {
       console.log('Mode CRÉATION: reset du formulaire');
@@ -252,6 +399,9 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   resetForm() {
+    this.activeStep = 0;
+    this.eventDate = null;
+    this.lastRegistrationDate = null;
     this.eventForm.reset();
     this.presenters.clear();
     this.addPresenter();
@@ -300,6 +450,7 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
       const eventData = {
         name: formValue.name,
         date: formValue.date,
+        time: formValue.time,
         description: formValue.description,
         location: formValue.location,
               free: formValue.free !== null ? formValue.free : false,
@@ -660,6 +811,55 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
         }
       });
     });
+  }
+
+  // --- Navigation entre les 5 étapes -------------------------------------------
+
+  goToStep(index: number) {
+    this.activeStep = Math.max(0, Math.min(index, this.steps.length - 1));
+  }
+
+  nextStep() {
+    this.goToStep(this.activeStep + 1);
+  }
+
+  previousStep() {
+    this.goToStep(this.activeStep - 1);
+  }
+
+  /**
+   * La visibilité était rangée dans `eventType`, qui désigne autre chose. Elle a
+   * désormais son champ : le serveur s'en sert pour n'exposer un événement privé
+   * qu'aux membres du groupe organisateur.
+   */
+  setVisibility(type: 'PUBLIC' | 'PRIVATE') {
+    this.eventForm.patchValue({ visibility: type });
+  }
+
+  /** « Laissez 0 € pour un événement gratuit » : `free` suit le montant saisi. */
+  onAmountChange() {
+    const amount = Number(this.eventForm.get('amount')?.value);
+    this.eventForm.patchValue({ free: !amount }, { emitEvent: false });
+  }
+
+  /** Documents = tout ce qui n'est pas une image de présentation. */
+  get documentFiles(): EventFileDTO[] {
+    const photoIds = new Set(this.presentationPhotos.map((photo) => photo.id));
+    return this.uploadedFiles.filter((file) => !photoIds.has(file.id));
+  }
+
+  onPhotoInputChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+    input.value = '';
+    if (files.length) this.onMainPhotoSelect({ files });
+  }
+
+  onDocumentInputChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+    input.value = '';
+    if (files.length) this.onFileSelect({ files });
   }
 
   get f() {
@@ -1271,7 +1471,7 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
     // Pour les images, construire l'URL en utilisant l'endpoint du FileController
     if (file.mimeType?.startsWith('image/') && file.fileName && this.eventToEdit?.id) {
       // Construire l'URL pour récupérer l'image depuis le backend
-      const baseUrl = 'http://localhost:8081'; // URL du backend
+      const baseUrl = environment.host;
       const imageUrl = `${baseUrl}/api/v1/files/events/${this.eventToEdit.id}/${file.fileName}`;
       
       console.log('✅ URL de l\'image construite avec succès:', {
@@ -1306,7 +1506,7 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
     
     // Pour les images, construire l'URL du thumbnail
     if (file.mimeType?.startsWith('image/') && file.fileName && this.eventToEdit?.id) {
-      const baseUrl = 'http://localhost:8081';
+      const baseUrl = environment.host;
       const thumbnailUrl = `${baseUrl}/api/v1/files/events/${this.eventToEdit.id}/thumbnails/${file.fileName}`;
       
       console.log('✅ URL du thumbnail construite avec succès:', {
@@ -1618,4 +1818,20 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges {
       });
     }
   }
+}
+
+/** `Date` -> « JJ/MM/AAAA », le format stocké par l'API. */
+function formatFrDate(value: Date | null): string {
+  if (!value || isNaN(value.getTime())) return '';
+  const day = `${value.getDate()}`.padStart(2, '0');
+  const month = `${value.getMonth() + 1}`.padStart(2, '0');
+  return `${day}/${month}/${value.getFullYear()}`;
+}
+
+/** « JJ/MM/AAAA » -> `Date` locale (midi évité : on reste à minuit local). */
+function parseFrDate(value: unknown): Date | null {
+  if (typeof value !== 'string') return null;
+  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value.trim());
+  if (!match) return null;
+  return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
 }

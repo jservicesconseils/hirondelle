@@ -1,0 +1,450 @@
+@use '../../../styles/public-theme' as *;
+
+:host {
+  display: block;
+  background: $cream;
+  color: $text;
+  font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+}
+
+.shell {
+  @include shell;
+}
+
+.cta {
+  @include cta;
+}
+
+.tag {
+  @include tag;
+}
+
+.create {
+  padding: clamp(2rem, 5vw, 3.5rem) 0 clamp(3.5rem, 7vw, 5rem);
+}
+
+// ---------------------------------------------------------------- en-tête
+
+.create-head {
+  margin-bottom: 2.25rem;
+
+  h1 {
+    margin: 0.4rem 0 0.8rem;
+    font-size: clamp(1.9rem, 3.8vw, 2.7rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: $ink;
+
+    em {
+      font-style: normal;
+      color: $accent;
+    }
+  }
+}
+
+.kicker {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: $accent;
+}
+
+.lead {
+  max-width: 56ch;
+  margin: 0;
+  color: $muted;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+  color: $muted;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: $accent;
+  }
+
+  i {
+    font-size: 0.78rem;
+  }
+}
+
+// ---------------------------------------------------------------- disposition
+
+.create-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.create-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.panel {
+  padding: 1.9rem 1.8rem;
+  border: 1px solid $line;
+  border-radius: 20px;
+  background: #fff;
+
+  h2 {
+    margin: 0 0 1.3rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: $ink;
+  }
+}
+
+// ---------------------------------------------------------------- choix
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.3rem;
+}
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1.1rem 1.2rem;
+  border: 1.5px solid $line;
+  border-radius: 18px;
+  background: #fff;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover:not(:disabled) {
+    border-color: rgba(244, 85, 29, 0.4);
+  }
+
+  &.is-active {
+    border-color: $accent;
+    background: $accent-soft;
+    box-shadow: 0 0 0 3px rgba(244, 85, 29, 0.12);
+  }
+
+  // Le choix privé reste affiché mais inerte : il faut voir qu'il existe.
+  &.is-locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  > .pi-check-circle {
+    margin-left: auto;
+    color: $accent;
+  }
+}
+
+.choice-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  color: #fff;
+  font-size: 1rem;
+
+  &.public {
+    background: linear-gradient(140deg, #8fb8ff 0%, #2f6bdd 100%);
+  }
+  &.private {
+    background: linear-gradient(140deg, #b79bff 0%, #6d3be4 100%);
+  }
+  &.free {
+    background: linear-gradient(140deg, #6fe3c0 0%, #0e8f72 100%);
+  }
+  &.paid {
+    background: linear-gradient(140deg, #ffd879 0%, #c07a06 100%);
+  }
+}
+
+.choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+
+  strong {
+    font-size: 1rem;
+    font-weight: 800;
+    color: $ink;
+  }
+
+  small {
+    color: $muted;
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+}
+
+.locked-note {
+  display: flex;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: $sky;
+  color: #2b4d80;
+  font-size: 0.88rem;
+  line-height: 1.55;
+
+  a {
+    color: $accent;
+    font-weight: 700;
+  }
+
+  i {
+    flex: 0 0 auto;
+    margin-top: 0.15rem;
+  }
+}
+
+// ---------------------------------------------------------------- champs
+
+.field {
+  display: block;
+  margin-bottom: 1.15rem;
+
+  > span {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: $muted;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+
+    small {
+      margin-left: 0.4rem;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      opacity: 0.75;
+    }
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid $line;
+    border-radius: 12px;
+    background: #fff;
+    color: $text;
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+
+    &:focus {
+      border-color: $accent;
+      box-shadow: 0 0 0 3px rgba(244, 85, 29, 0.14);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    line-height: 1.55;
+  }
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.error {
+  display: block;
+  margin-top: 0.35rem;
+  color: #c62828;
+  font-size: 0.83rem;
+  font-style: normal;
+  font-weight: 600;
+
+  &.block {
+    margin: 0 0 1rem;
+    padding: 0.75rem 0.95rem;
+    border-radius: 10px;
+    background: #fdecea;
+  }
+}
+
+.hint {
+  display: block;
+  margin-top: 0.35rem;
+  color: $muted;
+  font-size: 0.82rem;
+  font-style: normal;
+}
+
+// ---------------------------------------------------------------- aperçu
+
+.preview {
+  position: sticky;
+  top: 96px;
+}
+
+.preview-card {
+  position: relative;
+  margin-bottom: 1.25rem;
+  border: 1px solid $line;
+  border-radius: 22px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(16, 28, 48, 0.08);
+}
+
+.preview-label {
+  position: absolute;
+  top: 0.9rem;
+  left: 0.9rem;
+  z-index: 2;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(16, 28, 48, 0.62);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview-visual {
+  position: relative;
+  height: 150px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.preview-date {
+  position: absolute;
+  right: 0.9rem;
+  bottom: -20px;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(16, 28, 48, 0.2);
+
+  strong {
+    font-size: 1.2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: $ink;
+  }
+
+  small {
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    color: $accent;
+  }
+}
+
+.preview-private {
+  position: absolute;
+  bottom: 0.8rem;
+  left: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(16, 28, 48, 0.62);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+
+  i {
+    font-size: 0.65rem;
+  }
+}
+
+.preview-body {
+  padding: 1.5rem 1.4rem 1.3rem;
+
+  h3 {
+    margin: 0.7rem 0 0.8rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: $ink;
+    // Un nom très long ne doit pas déformer l'aperçu.
+    overflow-wrap: anywhere;
+  }
+}
+
+.preview-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.4rem;
+  color: $muted;
+  font-size: 0.88rem;
+
+  i {
+    color: $accent;
+    font-size: 0.85rem;
+  }
+}
+
+.preview-foot {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid $line;
+}
+
+.price {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: $ink;
+}
+
+.cta-block {
+  width: 100%;
+  padding: 0.95rem 1.5rem;
+  font-size: 1rem;
+}
+
+.preview-note {
+  margin: 0.9rem 0 0;
+  color: $muted;
+  font-size: 0.83rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
+@media (max-width: 940px) {
+  .create-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .preview {
+    position: static;
+  }
+}

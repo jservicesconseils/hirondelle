@@ -1,0 +1,317 @@
+@use '../../../styles/public-theme' as *;
+
+:host {
+  display: block;
+  background: $cream;
+  color: $text;
+  font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+}
+
+.shell {
+  @include shell;
+}
+
+.members {
+  min-height: 60vh;
+  padding: clamp(2rem, 5vw, 3.5rem) 0 clamp(3.5rem, 7vw, 5rem);
+}
+
+// ---------------------------------------------------------------- en-tête
+
+.members-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 1.75rem;
+
+  h1 {
+    margin: 0.4rem 0 0.5rem;
+    font-size: clamp(1.8rem, 3.6vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: $ink;
+
+    em {
+      font-style: normal;
+      color: $accent;
+    }
+  }
+}
+
+.kicker {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: $accent;
+}
+
+.lead {
+  margin: 0;
+  color: $muted;
+  font-size: 1rem;
+}
+
+.group-picker {
+  flex: 0 0 auto;
+
+  label {
+    display: block;
+  }
+
+  span {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: $muted;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  select {
+    min-width: 220px;
+    padding: 0.75rem 1rem;
+    border: 1px solid $line;
+    border-radius: 12px;
+    background: #fff;
+    color: $text;
+    font-family: inherit;
+    font-size: 0.98rem;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+
+    &:focus {
+      border-color: $accent;
+      box-shadow: 0 0 0 3px rgba(244, 85, 29, 0.14);
+    }
+  }
+}
+
+// Groupe imposé par la session : affiché, mais non modifiable.
+.group-fixed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.1rem;
+  border: 1px solid $line;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: $ink;
+
+  i {
+    color: $accent;
+    font-size: 0.85rem;
+  }
+}
+
+// ---------------------------------------------------------------- recherche
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1 1 auto;
+  max-width: 460px;
+  padding: 0.7rem 1.1rem;
+  border: 1px solid $line;
+  border-radius: 999px;
+  background: #fff;
+
+  i {
+    color: $accent;
+    font-size: 0.9rem;
+  }
+
+  input {
+    width: 100%;
+    border: 0;
+    background: none;
+    color: $text;
+    font-family: inherit;
+    font-size: 0.97rem;
+    outline: none;
+  }
+}
+
+.count {
+  color: $muted;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.state {
+  margin: 0;
+  padding: 2.5rem 0;
+  color: $muted;
+  font-size: 0.98rem;
+  text-align: center;
+
+  &.error {
+    color: #c62828;
+    font-weight: 600;
+  }
+}
+
+// ---------------------------------------------------------------- fiches
+
+.member-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 1.25rem;
+}
+
+.member-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.9rem 1.4rem 1.6rem;
+  border: 1px solid $line;
+  border-radius: 20px;
+  background: #fff;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 38px rgba(16, 28, 48, 0.12);
+  }
+
+  h3 {
+    margin: 0.9rem 0 0.4rem;
+    font-size: 1.06rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: $ink;
+    overflow-wrap: anywhere;
+  }
+}
+
+.member-avatar {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.member-role {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: #eef2f8;
+  color: $muted;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  // Un rôle d'administration se repère d'un coup d'œil.
+  &.is-admin {
+    background: $accent-soft;
+    color: $accent-dark;
+  }
+}
+
+.member-job {
+  margin: 0.8rem 0 0;
+  color: $muted;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.member-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  margin: 1.1rem 0 0;
+  padding: 1rem 0 0;
+  border-top: 1px solid $line;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    color: $muted;
+    font-size: 0.85rem;
+    // Un courriel long ne doit pas élargir la fiche.
+    overflow-wrap: anywhere;
+  }
+
+  i {
+    flex: 0 0 auto;
+    color: $accent;
+    font-size: 0.8rem;
+  }
+}
+
+.more {
+  margin-top: 2.25rem;
+  text-align: center;
+
+  button {
+    padding: 0.85rem 2rem;
+    border: 1px solid $line;
+    border-radius: 999px;
+    background: #fff;
+    color: $ink;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    small {
+      margin-left: 0.35rem;
+      color: $muted;
+      font-weight: 600;
+    }
+
+    &:hover {
+      border-color: $accent;
+      color: $accent;
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .members-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search {
+    max-width: none;
+  }
+}

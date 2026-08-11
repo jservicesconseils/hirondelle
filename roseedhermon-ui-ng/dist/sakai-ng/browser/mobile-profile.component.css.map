@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/mobile/pages/profile/mobile-profile.component.ts"],
-  "sourcesContent": ["\n    .profile-header {\n      text-align: center;\n      background: linear-gradient(135deg, #ED5F00 0%, #9914CB 100%);\n      color: white;\n      margin-bottom: 20px;\n    }\n    \n    .profile-avatar {\n      --size: 100px;\n      margin: 0 auto 16px;\n    }\n    \n    .profile-header h2 {\n      margin: 0 0 8px 0;\n      font-size: 1.5rem;\n      font-weight: 600;\n    }\n    \n    .profile-header p {\n      margin: 0;\n      opacity: 0.9;\n    }\n  "],
-  "mappings": ";AACI,CAAA;AACE,cAAA;AACA;IAAA;MAAA,MAAA;MAAA,QAAA,EAAA;MAAA,QAAA;AACA,SAAA;AACA,iBAAA;;AAGF,CAAA;AACE,UAAA;AACA,UAAA,EAAA,KAAA;;AAGF,CAZA,eAYA;AACE,UAAA,EAAA,EAAA,IAAA;AACA,aAAA;AACA,eAAA;;AAGF,CAlBA,eAkBA;AACE,UAAA;AACA,WAAA;;",
-  "names": []
-}

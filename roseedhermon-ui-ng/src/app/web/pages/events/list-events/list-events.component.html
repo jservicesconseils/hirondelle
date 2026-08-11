@@ -1,101 +1,276 @@
-<div class="container">
-  <div class="toolbar">
-    <div class="navigation-section">
-      <button pButton 
-              icon="pi pi-home" 
-              label="Retour à l'accueil" 
-              class="p-button-outlined"
-              (click)="goToHome()">
+<div class="events-page">
+
+  <!-- Bandeau, même dégradé et même typographie que le menu et les pages publiques -->
+  <header class="head">
+    <div class="head-inner">
+      <div class="head-text">
+        <span class="eyebrow">
+          <span class="eyebrow-bar"></span>
+          Activité
+        </span>
+
+        <h1>Événements</h1>
+
+        <p class="lead">
+          L'agenda de la communauté : dates, lieux et organisateurs, du prochain
+          rendez-vous jusqu'aux éditions passées.
+        </p>
+      </div>
+
+      <div class="head-actions">
+        <button type="button" class="head-ghost" (click)="exportCsv()">
+          <i class="pi pi-download"></i> Exporter CSV
+        </button>
+        <button type="button" class="head-cta" (click)="showCreateEventDialog()">
+          <i class="pi pi-plus"></i> Créer un événement
+        </button>
+      </div>
+    </div>
+
+    <!-- Indicateurs calculés sur les événements réellement chargés -->
+    <ul class="head-stats">
+      <li>
+        <strong>{{ totalEvents }}</strong>
+        <span>Événements</span>
+      </li>
+      <li>
+        <strong>{{ upcomingEvents }}</strong>
+        <span>À venir</span>
+      </li>
+      <li>
+        <strong>{{ citiesCount }}</strong>
+        <span>Villes</span>
+      </li>
+      <li>
+        <strong class="stat-text">{{ nextEventLabel }}</strong>
+        <span>Prochain rendez-vous</span>
+      </li>
+    </ul>
+  </header>
+
+  <div class="body">
+
+    <!-- Recherche -->
+    <div class="search">
+      <i class="pi pi-search"></i>
+      <input type="text"
+             placeholder="Rechercher un événement (nom, lieu, ville)"
+             [(ngModel)]="globalSearch"
+             (input)="onGlobalSearchChange()" />
+      <button type="button" class="clear" *ngIf="globalSearch"
+              (click)="globalSearch = ''; onGlobalSearchChange()" aria-label="Effacer">
+        <i class="pi pi-times"></i>
       </button>
     </div>
-    <div class="filter-section">
-      <div class="filter-item">
-        <label for="eventNameFilter">Événement</label>
-        <p-autoComplete
-          id="eventNameFilter"
-          [(ngModel)]="eventNameFilter"
-          [suggestions]="eventNameSuggestions"
-          (completeMethod)="filterEventName($event)"
-          (onSelect)="onEventNameSelect($event)"
-          (onClear)="onEventNameClear()"
-          (input)="onEventNameChange()"
-          placeholder="Filtrer par événement..."
-          [dropdown]="true"
-          [showClear]="true"
-          class="filter-autocomplete">
-        </p-autoComplete>
-      </div>
-      <div class="filter-item">
-        <label for="placeFilter">Lieu</label>
-        <p-autoComplete
-          id="placeFilter"
-          [(ngModel)]="placeFilter"
-          [suggestions]="placeSuggestions"
-          (completeMethod)="filterPlace($event)"
-          (onSelect)="onPlaceSelect($event)"
-          (onClear)="onPlaceClear()"
-          (input)="onPlaceChange()"
-          placeholder="Filtrer par lieu..."
-          [dropdown]="true"
-          [showClear]="true"
-          class="filter-autocomplete">
-        </p-autoComplete>
-      </div>
-      <div class="filter-item">
-        <label for="cityFilter">Ville</label>
-        <p-autoComplete
-          id="cityFilter"
-          [(ngModel)]="cityFilter"
-          [suggestions]="citySuggestions"
-          (completeMethod)="filterCity($event)"
-          (onSelect)="onCitySelect($event)"
-          (onClear)="onCityClear()"
-          (input)="onCityChange()"
-          placeholder="Filtrer par ville..."
-          [dropdown]="true"
-          [showClear]="true"
-          class="filter-autocomplete">
-        </p-autoComplete>
+
+    <!-- Tri, filtre par groupe et bascule d'affichage -->
+    <div class="controls">
+      <nav class="tabs">
+        <button type="button" [class.is-active]="sortKey === 'date'" (click)="setSortKey('date')">
+          <i class="pi pi-calendar"></i>
+          <span>Date</span>
+        </button>
+        <button type="button" [class.is-active]="sortKey === 'name'" (click)="setSortKey('name')">
+          <i class="pi pi-sort-alpha-down"></i>
+          <span>Nom</span>
+        </button>
+        <button type="button" [class.is-active]="sortKey === 'city'" (click)="setSortKey('city')">
+          <i class="pi pi-map-marker"></i>
+          <span>Ville</span>
+        </button>
+      </nav>
+
+      <div class="controls-right">
+        <!--
+          Le filtre ne s'affiche que s'il y a un choix à faire : un administrateur
+          de groupe ne reçoit que le sien, et n'a donc rien à filtrer.
+        -->
+        <label class="group-filter" *ngIf="showGroupFilter">
+          <i class="pi pi-sitemap"></i>
+          <select [(ngModel)]="groupFilter" (ngModelChange)="onGroupFilterChange()"
+                  aria-label="Filtrer par groupe organisateur">
+            <option value="">Tous les groupes</option>
+            <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
+            <option *ngIf="hasUngrouped" [value]="noGroup">Sans groupe</option>
+          </select>
+        </label>
+
+        <div class="view-switch">
+          <button type="button" [class.is-active]="viewMode === 'grid'" (click)="setViewMode('grid')"
+                  title="Affichage en cartes">
+            <i class="pi pi-th-large"></i>
+          </button>
+          <button type="button" [class.is-active]="viewMode === 'table'" (click)="setViewMode('table')"
+                  title="Affichage en tableau">
+            <i class="pi pi-list"></i>
+          </button>
+        </div>
       </div>
     </div>
-    <button pButton
-            icon="pi pi-plus-circle"
-            label="Créer un événement"
-            class="p-button-success wide-btn"
-            (click)="showCreateEventDialog()">
-    </button>
-  </div>
-  <div [class.reduced]="selectedEvent" class="grid-section">
-    <ag-grid-angular
-      style="width: 100%; height: 600px;"
-      class="ag-theme-alpine"
-      [rowData]="filteredEventList"
-      [columnDefs]="columnDefs"
-      [defaultColDef]="defaultColDef"
-      [gridOptions]="gridOptions"
-      [pagination]="true"
-      [theme]="'legacy'"
-      [paginationPageSize]="paginationPageSize"
-      (rowClicked)="onRowClicked($event)"
-      [suppressColumnVirtualisation]="true"
-      [suppressHorizontalScroll]="true"
-    >
-    </ag-grid-angular>
-  </div>
 
-  <div *ngIf="selectedEvent" class="detail-panel">
-    <app-detail-event
-      [event]="selectedEvent"
-      (close)="onCloseDetail()"
-      (editEvent)="onEditEvent($event)"
-    ></app-detail-event>
-  </div>
+    <!-- Liste et tiroir de détail partagent la même rangée : le tiroir prend 30 %
+         de la largeur et la liste se réduit d'autant. -->
+    <div class="content-row">
+      <div class="content-main">
 
-  <app-create-event #createEvent></app-create-event>
-  <app-create-event 
-    *ngIf="editEventVisible"
-    [visible]="editEventVisible"
-    [eventToEdit]="eventToEdit"
-    (close)="closeEditEvent()"
-  ></app-create-event>
-</div> 
+        <!-- Vue en cartes -->
+        <section class="cards-section" *ngIf="viewMode === 'grid'">
+          <div class="section-head">
+            <h2>Vue en cartes</h2>
+            <span class="section-note">{{ pagedRows.length }} événements affichés</span>
+          </div>
+
+          <div class="cards-grid">
+            <article class="list-card" *ngFor="let row of pagedRows; trackBy: trackByRow" (click)="openEvent(row)">
+              <div class="card-top">
+                <span class="avatar">{{ row.initials }}</span>
+                <div class="card-identity">
+                  <strong>{{ row.name }}</strong>
+                  <span class="card-email">{{ row.date ? (row.date | date:'dd MMM y') : 'Date à définir' }}</span>
+                </div>
+                <span class="status-pill" [class.past]="!row.upcoming">
+                  <span class="dot"></span>{{ row.upcoming ? 'À venir' : 'Passé' }}
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="city"><i class="pi pi-map-marker"></i>{{ row.placeName }}, {{ row.cityLabel }}</span>
+                <span class="role-pill">{{ row.category }}</span>
+                <span class="group-tag" *ngIf="showGroupFilter" [class.is-none]="!row.event.groupId">
+                  {{ groupNameOf(row) }}
+                </span>
+              </div>
+              <button type="button" class="btn-message" (click)="openEvent(row); $event.stopPropagation()">
+                <i class="pi pi-eye"></i> Voir le détail
+              </button>
+            </article>
+          </div>
+
+          <p class="empty" *ngIf="!pagedRows.length">Aucun événement ne correspond à la recherche.</p>
+        </section>
+
+        <!-- Vue tableau -->
+        <section class="table-section" *ngIf="viewMode === 'table'">
+          <div class="section-head">
+            <h2>Tous les événements <span class="section-sub">— Vue tableau</span></h2>
+            <button type="button" class="sort-link" (click)="setSortKey('date')">
+              Trié par: <strong>Date</strong>
+              <i class="pi" [ngClass]="sortDescending && sortKey === 'date' ? 'pi-arrow-down' : 'pi-arrow-up'"></i>
+            </button>
+          </div>
+
+          <div class="table-card">
+            <table class="list-table">
+              <thead>
+                <tr>
+                  <th><i class="pi pi-calendar"></i> ÉVÉNEMENT</th>
+                  <th><i class="pi pi-map-marker"></i> LIEU</th>
+                  <th><span class="dot"></span> STATUT</th>
+                  <th><i class="pi pi-tag"></i> CATÉGORIE</th>
+                  <th *ngIf="showGroupFilter"><i class="pi pi-sitemap"></i> GROUPE</th>
+                  <th><i class="pi pi-clock"></i> DATE</th>
+                  <th class="actions-col">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of pagedRows; trackBy: trackByRow">
+                  <td>
+                    <div class="cell-member">
+                      <span class="avatar small">{{ row.initials }}</span>
+                      <div>
+                        <strong>{{ row.name }}</strong>
+                        <span class="cell-email">{{ row.event.description }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="cell-city">{{ row.placeName }}, {{ row.cityLabel }}</td>
+                  <td>
+                    <span class="status-pill" [class.past]="!row.upcoming">
+                      <span class="dot"></span>{{ row.upcoming ? 'À venir' : 'Passé' }}
+                    </span>
+                  </td>
+                  <td><span class="role-pill">{{ row.category }}</span></td>
+                  <td *ngIf="showGroupFilter">
+                    <span class="group-tag" [class.is-none]="!row.event.groupId">{{ groupNameOf(row) }}</span>
+                  </td>
+                  <td class="cell-date">{{ row.date ? (row.date | date:'dd MMM y') : '—' }}</td>
+                  <td class="actions-col">
+                    <button type="button" class="icon-action" (click)="openEvent(row)" aria-label="Aperçu">
+                      <i class="pi pi-eye"></i>
+                    </button>
+                    <button type="button" class="btn-view" (click)="openEvent(row)">Voir</button>
+                  </td>
+                </tr>
+                <tr *ngIf="!pagedRows.length">
+                  <td [attr.colspan]="showGroupFilter ? 7 : 6" class="empty-row">Aucun événement ne correspond à la recherche.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+    </div>
+
+    <!-- Pagination commune aux deux vues, sous les deux colonnes -->
+    <div class="table-footer">
+      <span class="range">Affichage de {{ rangeStart }} à {{ rangeEnd }} sur {{ filteredRows.length }} résultats</span>
+      <div class="pagination">
+        <button type="button"
+                class="page"
+                *ngFor="let page of pageNumbers"
+                [class.active]="page === currentPage"
+                (click)="goToPage(page)">{{ page + 1 }}</button>
+        <button type="button" class="page chevron" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+          <i class="pi pi-chevron-right"></i>
+        </button>
+        <button type="button" class="page next" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Suivant</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--
+  Détail d'un événement, en modale plutôt qu'en tiroir : le tableau garde toute
+  sa largeur, et le bandeau reprend celui de l'assistant de création.
+-->
+<p-dialog
+  *ngIf="selectedEvent"
+  [visible]="true"
+  [modal]="true"
+  [style]="{width: 'min(820px, 94vw)'}"
+  [breakpoints]="{'960px': '96vw'}"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="false"
+  [dismissableMask]="true"
+  (onHide)="onCloseDetail()"
+  styleClass="detail-dialog">
+  <ng-template pTemplate="header">
+    <div class="modal-header-band">
+      <span class="header-icon"><i class="pi pi-calendar"></i></span>
+      <div class="header-text">
+        <strong>{{ selectedEvent.name || 'Événement' }}</strong>
+        <small>{{ selectedEvent.date || 'Date à définir' }}<span *ngIf="selectedEvent.location?.city"> • {{ selectedEvent.location?.city }}</span></small>
+      </div>
+      <button type="button" class="header-close" (click)="onCloseDetail()" aria-label="Fermer">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  </ng-template>
+
+  <app-detail-event
+    [event]="selectedEvent"
+    (close)="onCloseDetail()"
+    (editEvent)="onEditEvent($event)"
+  ></app-detail-event>
+</p-dialog>
+
+<app-create-event #createEvent (close)="loadEvents()"></app-create-event>
+
+<app-create-event
+  *ngIf="editEventVisible"
+  [visible]="editEventVisible"
+  [eventToEdit]="eventToEdit"
+  (close)="closeEditEvent()"
+></app-create-event>

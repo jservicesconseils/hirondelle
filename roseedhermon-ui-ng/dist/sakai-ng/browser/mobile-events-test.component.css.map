@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/mobile/pages/events/mobile-events-test.component.ts"],
-  "sourcesContent": ["\n    ion-card {\n      margin: 16px;\n    }\n    \n    ion-button {\n      margin: 16px 0;\n    }\n  "],
-  "mappings": ";AACI;AACE,UAAA;;AAGF;AACE,UAAA,KAAA;;",
-  "names": []
-}

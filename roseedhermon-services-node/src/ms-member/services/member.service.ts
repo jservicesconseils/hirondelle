@@ -43,6 +43,16 @@ export async function getAllMembers(): Promise<MemberDocument[]> {
   return MemberModel.find().exec();
 }
 
+/** Membres rattachés à un groupe : la portée de tout ce que voit un administrateur. */
+export async function getMembersByGroup(groupId: string): Promise<MemberDocument[]> {
+  return MemberModel.find({ groupId }).exec();
+}
+
+/** Retrouve un membre par son courriel : lien entre le compte Cognito et sa fiche. */
+export async function findMemberByEmail(email: string): Promise<MemberDocument | null> {
+  return MemberModel.findOne({ email: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }).exec();
+}
+
 export async function getMemberById(id: string): Promise<MemberDocument | null> {
   return MemberModel.findOne(springIdFilter(id)).exec();
 }

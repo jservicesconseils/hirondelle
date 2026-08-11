@@ -20,5 +20,10 @@ export interface GroupEntity {
     phone?: string;
     email?: string;
     website?: string;
+    /**
+     * Modules attribués au groupe : « EVENTS », « MEMBERS », ou les deux.
+     * Ajouté après la génération : le serveur le renvoie toujours explicitement.
+     */
+    features?: string[];
 }
 

@@ -1,0 +1,261 @@
+@use '../styles/public-theme' as *;
+
+:host {
+  display: block;
+  font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+  color: $text;
+}
+
+.shell {
+  @include shell;
+}
+
+// Repère d'un pixel observé pour savoir si la page a quitté le haut.
+.scroll-sentinel {
+  display: block;
+  height: 1px;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &.is-scrolled {
+    border-bottom-color: $line;
+    box-shadow: 0 8px 26px rgba(16, 28, 48, 0.07);
+  }
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  height: 74px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: $ink;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: linear-gradient(140deg, $accent 0%, #ff8748 100%);
+  color: #fff;
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.brand-text {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+
+  // Les entrées réservées aux personnes connectées sont des liens, pas des ancres :
+  // elles doivent avoir exactement la même allure que les autres.
+  button,
+  .nav-link {
+    padding: 0.55rem 0.9rem;
+    border: 0;
+    background: none;
+    color: $text;
+    font-family: inherit;
+    font-size: 0.94rem;
+    font-weight: 600;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.18s ease, background 0.18s ease;
+
+    &:hover {
+      color: $accent;
+      background: $accent-soft;
+    }
+  }
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cta {
+  @include cta;
+  padding: 0.7rem 1.35rem;
+  font-size: 0.92rem;
+
+  i {
+    font-size: 0.8rem;
+  }
+}
+
+.ghost {
+  padding: 0.7rem 1rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease;
+
+  &:hover {
+    background: rgba(16, 28, 48, 0.06);
+  }
+}
+
+// Pastille de compte : initiales, nom, rôle, et déconnexion au clic.
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.9rem 0.4rem 0.4rem;
+  border: 1px solid $line;
+  border-radius: 999px;
+  background: #fff;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+
+  &:hover {
+    border-color: $accent;
+    background: $accent-soft;
+  }
+
+  i {
+    color: $muted;
+    font-size: 0.85rem;
+  }
+}
+
+.account-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(140deg, $accent 0%, #ff8748 100%);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.account-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+
+  strong {
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+
+  small {
+    color: $muted;
+    font-size: 0.74rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  // Le nom déborderait : on ne garde que les initiales.
+  .account-text {
+    display: none;
+  }
+}
+
+.topbar-actions-mobile,
+.burger {
+  display: none;
+}
+
+@media (max-width: 940px) {
+  .topbar-nav {
+    position: absolute;
+    inset: 74px 0 auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0.75rem 1.5rem 1.5rem;
+    background: #fff;
+    border-bottom: 1px solid $line;
+    box-shadow: 0 20px 40px rgba(16, 28, 48, 0.12);
+    // Replié par défaut : seule la classe `is-open` le déploie.
+    display: none;
+
+    &.is-open {
+      display: flex;
+    }
+
+    button,
+    .nav-link {
+      text-align: left;
+      padding: 0.85rem 0.9rem;
+    }
+  }
+
+  .topbar-actions {
+    display: none;
+  }
+
+  .topbar-actions-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid $line;
+
+    .ghost {
+      text-align: center;
+      border: 1px solid $line;
+    }
+  }
+
+  .burger {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    margin-left: auto;
+    border: 1px solid $line;
+    border-radius: 12px;
+    background: #fff;
+    color: $ink;
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+}
+
+// L'en-tête n'a pas sa place sur un billet imprimé.
+@media print {
+  :host {
+    display: none;
+  }
+}
