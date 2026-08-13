@@ -29,7 +29,6 @@ PUBLIC_SUBNET_2_NAME="${PUBLIC_SUBNET_2_NAME:-hirondelle-vpc-subnet-public2-us-e
 # Existing ECS task execution role
 ROLE_NAME="${ECS_TASK_EXECUTION_ROLE_NAME:-ecsTaskExecutionRole}"
 
-
 # ============================================================
 # Build image URI if not provided
 # ============================================================
