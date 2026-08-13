@@ -25,8 +25,8 @@ echo "Using image: $IMAGE_URI"
  # Ensure cluster exists
 CLUSTER_STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --region "$REGION" --query "clusters[0].status" --output text 2>/dev/null || true)
 if [ -z "$CLUSTER_STATUS" ] || [ "$CLUSTER_STATUS" = "None" ] || [ "$CLUSTER_STATUS" = "null" ]; then
-  echo "ECS cluster '$CLUSTER_NAME' not found in region $REGION." >&2
-  echo "This pipeline will not create clusters. Please create the cluster manually or set \\`ECS_CLUSTER_NAME\\` to an existing cluster." >&2
+  echo 'ECS cluster '\''$CLUSTER_NAME'\'' not found in region '\''$REGION'\''.' >&2
+  echo 'This pipeline will not create clusters. Please create the cluster manually or set `ECS_CLUSTER_NAME` to an existing cluster.' >&2
   exit 1
 else
   echo "ECS cluster $CLUSTER_NAME exists (status: $CLUSTER_STATUS)"
