@@ -22,11 +22,12 @@ fi
 
 echo "Using image: $IMAGE_URI"
 
-# Ensure cluster exists
+ # Ensure cluster exists
 CLUSTER_STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --region "$REGION" --query "clusters[0].status" --output text 2>/dev/null || true)
 if [ -z "$CLUSTER_STATUS" ] || [ "$CLUSTER_STATUS" = "None" ] || [ "$CLUSTER_STATUS" = "null" ]; then
-  echo "Creating ECS cluster $CLUSTER_NAME"
-  aws ecs create-cluster --cluster-name "$CLUSTER_NAME" --region "$REGION" >/dev/null
+  echo "ECS cluster '$CLUSTER_NAME' not found in region $REGION." >&2
+  echo "This pipeline will not create clusters. Please create the cluster manually or set \\`ECS_CLUSTER_NAME\\` to an existing cluster." >&2
+  exit 1
 else
   echo "ECS cluster $CLUSTER_NAME exists (status: $CLUSTER_STATUS)"
 fi
@@ -81,12 +82,13 @@ fi
 SUBNET_LIST=$(printf "%s," "${SELECTED_SUBNETS[@]}")
 SUBNET_LIST=${SUBNET_LIST%,}
 
-# Create or update task execution role if missing.
+ # Require an existing task execution role.
 ROLE_NAME="ecsTaskExecutionRole-hirondelle"
 if ! aws iam get-role --role-name "$ROLE_NAME" >/dev/null 2>&1; then
-  echo "Creating IAM role $ROLE_NAME"
-  aws iam create-role --role-name "$ROLE_NAME" --assume-role-policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ecs-tasks.amazonaws.com"},"Action":"sts:AssumeRole"}]}' >/dev/null
-  aws iam attach-role-policy --role-name "$ROLE_NAME" --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy >/dev/null
+  echo "IAM role '$ROLE_NAME' not found." >&2
+  echo "This pipeline will not create IAM roles. Please create the role and attach the policy 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'." >&2
+  echo "Example (admin): aws iam create-role --role-name $ROLE_NAME --assume-role-policy-document file://trust.json" >&2
+  exit 1
 else
   echo "IAM role $ROLE_NAME exists"
 fi
