@@ -1,0 +1,275 @@
+name: Deploy backend to ECS (Fargate)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+
+  # ============================================================
+  # 1. TEST
+  # ============================================================
+  test:
+    name: Test (typecheck)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install and typecheck backend
+        run: |
+          cd roseedhermon-services-node
+          npm ci
+          npm run typecheck
+
+
+  # ============================================================
+  # 2. BUILD + PUSH IMAGE TO ECR
+  # ============================================================
+  build:
+    name: Build image and push to ECR
+    needs: test
+    runs-on: ubuntu-latest
+    environment: deployer_aws_prod
+
+    outputs:
+      IMAGE_URI: ${{ steps.push-image.outputs.IMAGE_URI }}
+      IMAGE_TAG: ${{ steps.push-image.outputs.IMAGE_TAG }}
+
+    permissions:
+      contents: read
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      # --------------------------------------------------------
+      # Validate secrets
+      # --------------------------------------------------------
+      - name: Validate AWS secrets
+        run: |
+          if [ "${{ secrets.AWS_ACCESS_KEY_ID }}" = "" ] || \
+             [ "${{ secrets.AWS_SECRET_ACCESS_KEY }}" = "" ] || \
+             [ "${{ secrets.AWS_ACCOUNT_ID }}" = "" ] || \
+             [ "${{ secrets.ECR_REPOSITORY }}" = "" ]; then
+
+            echo "Missing required AWS/ECR secrets."
+            echo "Required:"
+            echo "- AWS_ACCESS_KEY_ID"
+            echo "- AWS_SECRET_ACCESS_KEY"
+            echo "- AWS_ACCOUNT_ID"
+            echo "- ECR_REPOSITORY"
+            exit 1
+          fi
+
+
+      # --------------------------------------------------------
+      # AWS credentials
+      # --------------------------------------------------------
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+
+      # --------------------------------------------------------
+      # Login ECR
+      # --------------------------------------------------------
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+
+      # --------------------------------------------------------
+      # Verify ECR repository
+      # Repository is created manually in AWS
+      # --------------------------------------------------------
+      - name: Verify ECR repository
+        run: |
+          echo "Checking ECR repository..."
+
+          aws ecr describe-repositories \
+            --repository-names "${{ secrets.ECR_REPOSITORY }}" \
+            --region us-east-1
+
+          echo "ECR repository exists."
+
+
+      # --------------------------------------------------------
+      # Build and push Docker image
+      # --------------------------------------------------------
+      - name: Build, tag and push image
+        id: push-image
+
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+
+        run: |
+
+          cd roseedhermon-services-node
+
+          echo "Building Docker image..."
+
+          docker build \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            .
+
+          echo "Pushing Docker image..."
+
+          docker push \
+            $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          echo "IMAGE_URI=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+
+          echo "Image pushed successfully:"
+          echo "$IMAGE_URI"
+
+
+  # ============================================================
+  # 3. DEPLOY TO ECS FARGATE
+  # ============================================================
+  deploy:
+    name: Deploy to ECS Fargate
+    needs: build
+    runs-on: ubuntu-latest
+    environment: deployer_aws_prod
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      # --------------------------------------------------------
+      # Validate secrets
+      # --------------------------------------------------------
+      - name: Validate AWS secrets
+        run: |
+          if [ "${{ secrets.AWS_ACCESS_KEY_ID }}" = "" ] || \
+             [ "${{ secrets.AWS_SECRET_ACCESS_KEY }}" = "" ] || \
+             [ "${{ secrets.AWS_ACCOUNT_ID }}" = "" ] || \
+             [ "${{ secrets.ECR_REPOSITORY }}" = "" ] || \
+             [ "${{ secrets.ECS_SERVICE_NAME }}" = "" ]; then
+
+            echo "Missing required deployment secrets."
+            echo "Required:"
+            echo "- AWS_ACCESS_KEY_ID"
+            echo "- AWS_SECRET_ACCESS_KEY"
+            echo "- AWS_ACCOUNT_ID"
+            echo "- ECR_REPOSITORY"
+            echo "- ECS_SERVICE_NAME"
+            exit 1
+          fi
+
+
+      # --------------------------------------------------------
+      # AWS credentials
+      # --------------------------------------------------------
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+
+      # --------------------------------------------------------
+      # Verify AWS identity
+      # --------------------------------------------------------
+      - name: Verify AWS identity
+        run: |
+          echo "AWS Account:"
+          aws sts get-caller-identity
+
+
+      # --------------------------------------------------------
+      # Verify ECS cluster
+      # Cluster was created manually
+      # --------------------------------------------------------
+      - name: Verify ECS cluster
+        env:
+          AWS_REGION: us-east-1
+          ECS_CLUSTER_NAME: cluster_hirondelle
+
+        run: |
+
+          echo "========================================"
+          echo "AWS REGION:"
+          echo "$AWS_REGION"
+          echo "========================================"
+
+          echo "ECS CLUSTER:"
+          echo "$ECS_CLUSTER_NAME"
+          echo "========================================"
+
+          echo "Available ECS clusters:"
+
+          aws ecs list-clusters \
+            --region "$AWS_REGION"
+
+          echo "========================================"
+          echo "Checking target ECS cluster..."
+          echo "========================================"
+
+          aws ecs describe-clusters \
+            --region "$AWS_REGION" \
+            --clusters "$ECS_CLUSTER_NAME"
+
+          echo "========================================"
+          echo "ECS cluster exists. "
+          echo "========================================"
+
+
+      # --------------------------------------------------------
+      # Deploy using deploy_ecs.sh
+      # --------------------------------------------------------
+      - name: Deploy to ECS Fargate
+
+        env:
+          AWS_REGION: us-east-1
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+
+          IMAGE_TAG: ${{ needs.build.outputs.IMAGE_TAG }}
+          IMAGE_URI: ${{ needs.build.outputs.IMAGE_URI }}
+
+          ECS_CLUSTER_NAME: cluster_hirondelle
+          ECS_SERVICE_NAME: ${{ secrets.ECS_SERVICE_NAME }}
+
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+
+          COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
+          COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
+          COGNITO_REGION: ${{ secrets.COGNITO_REGION }}
+
+        run: |
+
+          echo "========================================"
+          echo "Starting ECS deployment"
+          echo "========================================"
+
+          echo "Region: $AWS_REGION"
+          echo "Cluster: $ECS_CLUSTER_NAME"
+          echo "Service: $ECS_SERVICE_NAME"
+          echo "Image: $IMAGE_URI"
+
+          bash ./scripts/deploy_ecs.sh
+
+          echo "========================================"
+          echo "ECS deployment completed."
+          echo "========================================"
