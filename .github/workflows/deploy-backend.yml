@@ -223,7 +223,7 @@ jobs:
 
           echo "========================================"
           echo "Checking target ECS cluster..."
-          echo "========================================"
+          echo "=================================== ====="
 
           aws ecs describe-clusters \
             --region "$AWS_REGION" \
