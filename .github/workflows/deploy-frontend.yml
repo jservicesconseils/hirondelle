@@ -44,6 +44,8 @@ jobs:
           aws s3 sync roseedhermon-ui-ng/dist/sakai-ng/browser/ s3://$AWS_S3_BUCKET/ --delete --region $AWS_REGION
 
       - name: Create CloudFront invalidation
-        if: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID != '' }}
+        if: env.CLOUDFRONT_DISTRIBUTION_ID != ''
+        env:
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths '/*'
+          aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths '/*'
