@@ -3,6 +3,9 @@ name: Deploy backend to ECS (Fargate)
 on:
   push:
     branches: [main]
+    paths:
+      - 'roseedhermon-services-node/**'
+      - '.github/workflows/deploy-backend.yml'
 
 jobs:
 

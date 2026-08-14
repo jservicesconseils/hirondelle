@@ -3,6 +3,9 @@ name: Deploy frontend to S3 + CloudFront
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'roseedhermon-ui-ng/**'
+      - '.github/workflows/deploy-frontend.yml'
 
 jobs:
   build-and-deploy:

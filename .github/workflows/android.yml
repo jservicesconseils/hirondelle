@@ -1,10 +1,14 @@
 name: Build Android
 
-# Déclenchement manuel depuis l'onglet Actions, et à chaque poussée sur main.
+# Déclenchement manuel depuis l'onglet Actions, et à chaque poussée sur main
+# qui touche le code du frontend/Capacitor.
 on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths:
+      - 'roseedhermon-ui-ng/**'
+      - '.github/workflows/android.yml'
 
 jobs:
   build:
