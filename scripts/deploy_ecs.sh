@@ -229,6 +229,23 @@ echo "$ROLE_ARN"
 
 
 # ============================================================
+# 6bis. Ensure CloudWatch log group exists
+# ============================================================
+
+LOG_GROUP="/ecs/${SERVICE_NAME}"
+
+echo ""
+echo "Checking CloudWatch log group..."
+
+aws logs create-log-group \
+  --log-group-name "$LOG_GROUP" \
+  --region "$REGION" \
+  >/dev/null 2>&1 || true
+
+echo "Log group: $LOG_GROUP"
+
+
+# ============================================================
 # 7. Register ECS Task Definition
 # ============================================================
 
@@ -245,7 +262,9 @@ python3 - \
   "$ROLE_ARN" \
   "$TARGET_PORT" \
   "$CPU" \
-  "$MEMORY" <<'PY'
+  "$MEMORY" \
+  "$LOG_GROUP" \
+  "$REGION" <<'PY'
 
 import json
 import os
@@ -257,6 +276,8 @@ role_arn = sys.argv[3]
 port = int(sys.argv[4])
 cpu = sys.argv[5]
 memory = sys.argv[6]
+log_group = sys.argv[7]
+log_region = sys.argv[8]
 
 environment = []
 
@@ -309,7 +330,16 @@ payload = {
                 }
             ],
 
-            "environment": environment
+            "environment": environment,
+
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": log_group,
+                    "awslogs-region": log_region,
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
         }
     ]
 }
