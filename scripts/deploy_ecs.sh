@@ -237,10 +237,18 @@ LOG_GROUP="/ecs/${SERVICE_NAME}"
 echo ""
 echo "Checking CloudWatch log group..."
 
-aws logs create-log-group \
-  --log-group-name "$LOG_GROUP" \
-  --region "$REGION" \
-  >/dev/null 2>&1 || true
+CREATE_LOG_GROUP_OUTPUT=$(
+  aws logs create-log-group \
+    --log-group-name "$LOG_GROUP" \
+    --region "$REGION" \
+    2>&1
+) || {
+  if ! echo "$CREATE_LOG_GROUP_OUTPUT" | grep -q "ResourceAlreadyExistsException"; then
+    echo "ERROR: could not create CloudWatch log group '$LOG_GROUP'." >&2
+    echo "$CREATE_LOG_GROUP_OUTPUT" >&2
+    exit 1
+  fi
+}
 
 echo "Log group: $LOG_GROUP"
 
