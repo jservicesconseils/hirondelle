@@ -1,8 +1,8 @@
 /**
  * Configuration des builds de production, y compris les paquets iOS et Android.
  *
- * L'API publique de ce projet passe par la passerelle ECS :
- * http://44.212.11.174:8080
+ * L'API publique de ce projet passe par la passerelle ECS, derrière l'Application
+ * Load Balancer : https://api.hirondelle.app
  *
  * Cette URL est utilisée pour les appels métier (membres, groupes, événements) et
  * pour les flux de données qui passent par le gateway.
@@ -10,8 +10,8 @@
 export const environment = {
   production: true,
 
-  host: 'http://44.212.11.174:8080',
-  memberHost: 'http://44.212.11.174:8080',
+  host: 'https://api.hirondelle.app',
+  memberHost: 'https://api.hirondelle.app',
 
   /**
    * Amazon Cognito. Laisser vide pour le moment tant que le pool n'est pas
