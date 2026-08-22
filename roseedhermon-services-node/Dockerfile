@@ -11,6 +11,9 @@ FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
+# start.sh polls each service's /health with curl before considering it started.
+RUN apk add --no-cache curl
+
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
