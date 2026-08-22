@@ -19,6 +19,11 @@ TARGET_PORT="${TARGET_PORT:-8080}"
 CPU="${CPU:-512}"
 MEMORY="${MEMORY:-1024}"
 
+# ARN of the ALB target group to attach on service creation (optional).
+# Only used when the service does not exist yet: ECS does not allow
+# attaching a load balancer to a service that was created without one.
+TARGET_GROUP_ARN="${TARGET_GROUP_ARN:-}"
+
 # Existing Hirondelle VPC
 VPC_ID="${VPC_ID:-vpc-05ffbeb90d67b70ac}"
 
@@ -55,6 +60,7 @@ echo "Cluster      : $CLUSTER_NAME"
 echo "Service      : $SERVICE_NAME"
 echo "VPC          : $VPC_ID"
 echo "Container port: $TARGET_PORT"
+echo "Target group  : ${TARGET_GROUP_ARN:-<none>}"
 echo "========================================"
 
 
@@ -399,23 +405,37 @@ SERVICE_STATUS=$(
 # 9. Create service
 # ============================================================
 
-if [ -z "$SERVICE_STATUS" ] ||
-   [ "$SERVICE_STATUS" = "None" ] ||
-   [ "$SERVICE_STATUS" = "null" ]; then
+if [ "$SERVICE_STATUS" != "ACTIVE" ]; then
+
+  # A deleted service lingers as INACTIVE instead of disappearing, so any
+  # status other than ACTIVE (missing, INACTIVE, DRAINING) means we need to
+  # create a fresh service rather than update one that no longer runs.
 
   echo ""
   echo "Creating ECS service: $SERVICE_NAME"
 
-  aws ecs create-service \
-    --cluster "$CLUSTER_NAME" \
-    --service-name "$SERVICE_NAME" \
-    --task-definition "$TASK_DEF_ARN" \
-    --desired-count 1 \
-    --launch-type FARGATE \
-    --network-configuration \
-      "awsvpcConfiguration={subnets=[$SUBNET_1,$SUBNET_2],securityGroups=[$SECURITY_GROUP_ID],assignPublicIp=ENABLED}" \
-    --region "$REGION" \
-    >/dev/null
+  CONTAINER_NAME="${SERVICE_NAME}-task"
+  CONTAINER_NAME="${CONTAINER_NAME%-task}"
+
+  CREATE_SERVICE_ARGS=(
+    --cluster "$CLUSTER_NAME"
+    --service-name "$SERVICE_NAME"
+    --task-definition "$TASK_DEF_ARN"
+    --desired-count 1
+    --launch-type FARGATE
+    --network-configuration
+      "awsvpcConfiguration={subnets=[$SUBNET_1,$SUBNET_2],securityGroups=[$SECURITY_GROUP_ID],assignPublicIp=ENABLED}"
+    --region "$REGION"
+  )
+
+  if [ -n "$TARGET_GROUP_ARN" ]; then
+    CREATE_SERVICE_ARGS+=(
+      --load-balancers
+        "targetGroupArn=$TARGET_GROUP_ARN,containerName=$CONTAINER_NAME,containerPort=$TARGET_PORT"
+    )
+  fi
+
+  aws ecs create-service "${CREATE_SERVICE_ARGS[@]}" >/dev/null
 
 else
 
