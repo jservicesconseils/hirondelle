@@ -33,6 +33,8 @@ export interface EventDTO {
     visibility?: string;
     /** Groupe organisateur ; renseigné par le serveur d'après le compte connecté. */
     groupId?: string;
+    /** Auteur de l'événement ; renseigné par le serveur d'après le compte connecté. */
+    createdByEmail?: string;
     /** Fichiers joints, renvoyés par `/events/with-files`. */
     files?: Array<EventFileDTO>;
     /** Identifiant du fichier servant de visuel principal. */

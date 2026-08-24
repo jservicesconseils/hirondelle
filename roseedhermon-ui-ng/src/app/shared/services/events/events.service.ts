@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { EventDTO } from '../api/model/eventDTO';
 import { EventRegistrationDTO } from '../api/model/eventRegistrationDTO';
 import { EventFeedbackDTO } from '../api/model/eventFeedbackDTO';
+import { EventStats } from '../api/model/eventStats';
 import { environment } from '../../../../environments/environment';
 
 // Tous les appels passent par la passerelle : une URL en dur casserait les
@@ -45,6 +46,11 @@ export class EventService {
   deleteEvent(id: string): Observable<any> {
     const deleteEndpoint = this.apiUrl + `/${id}`;
     return this.httpClient.delete(deleteEndpoint);
+  }
+
+  /** Réservé à l'organisateur : rejeté par le serveur pour qui ne l'est pas. */
+  getEventStats(id: string): Observable<EventStats> {
+    return this.httpClient.get<EventStats>(`${this.apiUrl}/${id}/stats`);
   }
 
   // Méthodes pour la gestion des inscriptions

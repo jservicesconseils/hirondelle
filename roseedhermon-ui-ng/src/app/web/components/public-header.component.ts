@@ -52,9 +52,9 @@ export class PublicHeaderComponent implements AfterViewInit, OnDestroy {
     return 'Membre';
   }
 
-  /** Les administrateurs vont à leur espace ; les autres à la création d'événement. */
+  /** Les administrateurs vont à leur espace ; les autres à ce qu'ils ont créé. */
   get workspaceLink(): string {
-    return this.auth.canAdminister() ? '/app/dashboard' : '/app/events';
+    return this.auth.canAdminister() ? '/app/dashboard' : '/web/evenements-organises';
   }
 
   signOut(): void {
