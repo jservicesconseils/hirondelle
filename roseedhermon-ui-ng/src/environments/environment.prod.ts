@@ -14,14 +14,13 @@ export const environment = {
   memberHost: 'https://api.hirondelle.app',
 
   /**
-   * Amazon Cognito. Laisser vide pour le moment tant que le pool n'est pas
-   * configuré dans AWS. En production, il faut remplir ces valeurs avec le bon
-   * client Cognito public.
+   * Amazon Cognito. `domain` reste vide : la connexion Google (Hosted UI) n'est
+   * pas encore activée, seul le formulaire courriel/mot de passe fonctionne.
    */
   cognito: {
-    userPoolId: '',
-    clientId: '',
-    region: 'ca-central-1',
+    userPoolId: 'us-east-1_atbIxF284',
+    clientId: '5vo28853100fa873hve1untd02',
+    region: 'us-east-1',
     domain: '',
     redirectUri: ''
   }
