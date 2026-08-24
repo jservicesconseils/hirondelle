@@ -89,6 +89,8 @@ const eventSchema = new Schema(
     // Java reste donc possible sans migration.
     visibility: String,
     groupId: String,
+    /** Champ additif : qui a créé l'événement, pour lui laisser voir ses statistiques. */
+    createdByEmail: String,
     files: { type: [embeddedEventFileSchema], default: undefined },
     mainPhotoId: String,
     _class: { type: String, default: EVENT_CLASS },

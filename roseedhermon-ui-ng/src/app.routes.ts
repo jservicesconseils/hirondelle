@@ -43,7 +43,9 @@ export const appRoutes: Routes = [
     // Routes web
     { path: 'web', component: HomeComponent },
     { path: 'web/decouvrir', component: VisitorEventsComponent },
-    { path: 'web/creer-un-evenement', component: WebCreateEventComponent },
+    // Un événement a besoin d'un auteur : sans session, personne ne pourrait ensuite
+    // en consulter les statistiques (voir `administers` côté serveur).
+    { path: 'web/creer-un-evenement', component: WebCreateEventComponent, canActivate: [authGuard] },
     // L'annuaire n'est visible que connecté, et seulement si le groupe gère ses
     // membres. Le serveur applique les deux mêmes règles.
     { path: 'web/membres', component: WebMembersComponent, canActivate: [authGuard, membersGuard] },

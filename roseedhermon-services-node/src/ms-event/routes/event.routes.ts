@@ -71,8 +71,15 @@ eventRouter.get(
 
 eventRouter.post(
   '/with-photos',
+  requireAuth,
   asyncHandler(async (req, res) => {
-    res.json(await createEventWithPhotos(createEventWithPhotosFromBody(req.body)));
+    const body = { ...(req.body ?? {}) } as Record<string, unknown>;
+    const outcome = applyCreationOwnership(req, body);
+    if (outcome.error) {
+      res.status(outcome.error.status).json({ error: outcome.error.message });
+      return;
+    }
+    res.json(await createEventWithPhotos(createEventWithPhotosFromBody(body)));
   }),
 );
 
@@ -289,46 +296,69 @@ eventRouter.get(
 );
 
 /**
- * Création d'un événement.
+ * Règles communes à la création d'un événement, avec ou sans photos.
  *
- * Un événement **public** est ouvert à tous, y compris sans session : c'est le
- * parcours « Créer un événement » du site. Un événement **privé** n'a de sens que
- * rattaché à un groupe : il exige donc une session d'administration.
+ * Un événement **public** exige désormais une session — sans quoi personne ne
+ * peut ensuite en consulter les statistiques, faute d'auteur à qui les montrer.
+ * Un événement **privé** n'a de sens que rattaché à un groupe : il exige donc une
+ * session d'administration de ce groupe.
  */
-eventRouter.post(
-  '/',
-  asyncHandler(async (req, res) => {
-    const body = { ...(req.body ?? {}) } as Record<string, unknown>;
-    const wantsPrivate = isPrivate(body.visibility);
-    const administrator =
-      !!req.auth && req.auth.roles.some((role) => role === ROLES.SUPER_ADMIN || role === ROLES.GROUP_ADMIN);
+function applyCreationOwnership(
+  req: Request,
+  body: Record<string, unknown>,
+): { error?: { status: number; message: string } } {
+  const wantsPrivate = isPrivate(body.visibility);
+  const administrator =
+    !!req.auth && req.auth.roles.some((role) => role === ROLES.SUPER_ADMIN || role === ROLES.GROUP_ADMIN);
 
-    /**
-     * Le module conditionne le rattachement au groupe, pas l'accès au site : un
-     * administrateur dont le groupe ne gère que son annuaire reste libre de créer
-     * un événement public, comme n'importe quel visiteur — il sera simplement
-     * sans groupe. Le privé, lui, n'a pas de sens sans le module et est refusé.
-     */
-    const organises = administrator && requestAllows(req, FEATURES.EVENTS);
+  /**
+   * Le module conditionne le rattachement au groupe, pas l'accès au site : un
+   * administrateur dont le groupe ne gère que son annuaire reste libre de créer
+   * un événement public, comme n'importe quelle personne connectée — il sera
+   * simplement sans groupe. Le privé, lui, n'a pas de sens sans le module et est
+   * refusé.
+   */
+  const organises = administrator && requestAllows(req, FEATURES.EVENTS);
 
-    if (wantsPrivate && !organises) {
-      res.status(req.auth ? 403 : 401).json({
-        error: administrator
+  if (wantsPrivate && !organises) {
+    return {
+      error: {
+        status: 403,
+        message: administrator
           ? "La gestion des événements n'est pas activée pour votre groupe."
           : "Un événement réservé à un groupe ne peut être créé que par un administrateur de groupe.",
-      });
-      return;
-    }
+      },
+    };
+  }
 
-    if (organises) {
-      body.visibility = wantsPrivate ? 'PRIVATE' : 'PUBLIC';
-      body.groupId = ownerGroupId(req, body);
-    } else {
-      // Création sans droits d'organisateur : l'événement est public et n'appartient
-      // à aucun groupe. Le client ne peut donc pas se rattacher à un groupe qui
-      // n'est pas le sien, ni à un groupe qui ne gère pas d'événements.
-      body.visibility = 'PUBLIC';
-      body.groupId = null;
+  if (organises) {
+    body.visibility = wantsPrivate ? 'PRIVATE' : 'PUBLIC';
+    body.groupId = ownerGroupId(req, body);
+  } else {
+    // Création sans droits d'organisateur : l'événement est public et n'appartient
+    // à aucun groupe. Le client ne peut donc pas se rattacher à un groupe qui
+    // n'est pas le sien, ni à un groupe qui ne gère pas d'événements.
+    body.visibility = 'PUBLIC';
+    body.groupId = null;
+  }
+
+  // Posé depuis la session vérifiée, jamais depuis ce que le client envoie :
+  // c'est ce qui permettra à l'auteur de consulter les statistiques de ce
+  // qu'il a créé (voir `administers` dans `event-visibility.ts`).
+  body.createdByEmail = req.auth?.email ?? null;
+
+  return {};
+}
+
+eventRouter.post(
+  '/',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const body = { ...(req.body ?? {}) } as Record<string, unknown>;
+    const outcome = applyCreationOwnership(req, body);
+    if (outcome.error) {
+      res.status(outcome.error.status).json({ error: outcome.error.message });
+      return;
     }
 
     res.json(await createEvent(eventFromBody(body)));

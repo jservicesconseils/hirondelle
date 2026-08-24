@@ -42,11 +42,19 @@ export function ownerGroupId(req: Request, body: Record<string, unknown>): strin
 }
 
 /**
- * Vrai si la requête administre l'événement : super administrateur, ou
- * administrateur du groupe organisateur.
+ * Vrai si la requête administre l'événement : super administrateur, auteur de
+ * l'événement, ou administrateur du groupe organisateur.
  */
 export function administers(req: Request, event: Record<string, unknown>): boolean {
   if (isSuperAdmin(req)) return true;
+
+  // L'auteur garde la main sur ce qu'il a créé, même sans rôle d'administration —
+  // c'est ce qui rend un événement public créé hors groupe consultable par la
+  // seule personne qui l'a créé.
+  const createdByEmail = event.createdByEmail ? String(event.createdByEmail).trim().toLowerCase() : null;
+  const requesterEmail = req.auth?.email?.trim().toLowerCase() ?? null;
+  if (createdByEmail && requesterEmail && createdByEmail === requesterEmail) return true;
+
   // Administrer un événement suppose que le groupe en gère : un groupe qui ne tient
   // que son annuaire n'a pas d'organisateur.
   if (!requestAllows(req, FEATURES.EVENTS)) return false;

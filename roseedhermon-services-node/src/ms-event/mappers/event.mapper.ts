@@ -48,6 +48,8 @@ export interface EventFields {
   eventStatus: string | null;
   visibility: string | null;
   groupId: string | null;
+  /** Auteur de l'événement, posé par la route à partir de la session — jamais du client. */
+  createdByEmail: string | null;
   files: EventFileInput[] | null;
   mainPhotoId: string | null;
 }
@@ -117,6 +119,8 @@ export function eventFromBody(body: unknown): EventFields & { id: string | null 
     // des documents existants, créés avant l'introduction des groupes.
     visibility: toStringOrNull(source.visibility) ?? 'PUBLIC',
     groupId: toStringOrNull(source.groupId),
+    // Posé par la route (`applyCreationOwnership`) avant l'appel, pas par le client.
+    createdByEmail: toStringOrNull(source.createdByEmail),
     files: filesFromBody(source.files),
     mainPhotoId: toStringOrNull(source.mainPhotoId),
   };
@@ -216,6 +220,7 @@ export function eventToJson(
     eventStatus: toStringOrNull(raw.eventStatus),
     visibility: toStringOrNull(raw.visibility) ?? 'PUBLIC',
     groupId: toStringOrNull(raw.groupId),
+    createdByEmail: toStringOrNull(raw.createdByEmail),
     files: overrideFiles === undefined ? embeddedFiles : overrideFiles,
     mainPhotoId: toStringOrNull(raw.mainPhotoId),
   };
