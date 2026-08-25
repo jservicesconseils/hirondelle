@@ -1173,6 +1173,7 @@
     font-weight: 800;
     line-height: 1.15;
     letter-spacing: -0.02em;
+    white-space: nowrap;
 
     em {
       font-style: normal;
@@ -1229,6 +1230,14 @@
   font-size: 1.05rem;
   font-weight: 800;
   color: $accent;
+}
+
+@media (max-width: 1300px) {
+  /* La colonne se resserre avant que la grille ne repasse à une seule colonne (900px) :
+     le titre garde sa ligne unique, mais doit rétrécir pour ne pas chevaucher les étapes. */
+  .organize-text h2 {
+    font-size: clamp(1.4rem, 2.6vw, 2rem);
+  }
 }
 
 @media (max-width: 900px) {
