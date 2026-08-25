@@ -60,11 +60,13 @@ const ICONS = {
       <a class="brand" routerLink="/app/dashboard" (click)="closed.emit()">
         <span class="brand-mark">
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="currentColor" />
+            <path
+              d="M21 4c-4.2.5-7.4 2.2-9.6 5.1C9.6 11.6 8.6 14.6 8.3 18l-2.6 3h3.5c.4-2.9 1.2-5.3 2.6-7.2 1.9-2.6 4.7-4.1 8.2-4.6L21 4z"
+              fill="currentColor" />
           </svg>
         </span>
         <span class="brand-text">
-          <strong>Rosée d'Hermon</strong>
+          <strong>Hirondelle</strong>
           <small>Communauté</small>
         </span>
       </a>
@@ -126,10 +128,18 @@ const ICONS = {
      * la remplit, sans défilement propre.
      */
     .sidebar {
-      flex: 1 1 auto;
+      /* Largeur propre : sans elle, un simple « flex: 1 1 auto » la mettait en
+         concurrence avec le contenu pour l'espace, au lieu de rester un rail étroit. */
+      flex: 0 0 272px;
       min-height: 0;
-      /* Le retrait vertical vient de la rangée, commun aux deux colonnes. */
-      margin-left: 1rem;
+      /*
+       * Le retrait vertical vient de la rangée, commun aux deux colonnes. À
+       * droite, sans cette marge, le contenu touchait le menu : comme le menu
+       * a des coins arrondis sur tout son pourtour, le contenu — carré, lui —
+       * venait combler l'espace laissé par la courbe, donnant l'impression
+       * qu'un bloc blanc mordait sur le menu.
+       */
+      margin: 0 1rem;
       padding: 1.5rem 0.9rem 1rem;
       display: flex;
       flex-direction: column;

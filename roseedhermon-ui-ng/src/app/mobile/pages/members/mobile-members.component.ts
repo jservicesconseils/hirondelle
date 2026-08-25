@@ -76,7 +76,7 @@ export class MobileMembersComponent implements OnInit {
   // --- Entête ------------------------------------------------------------------------
 
   get groupName(): string {
-    return this.auth.user().group?.name?.trim() || "Rosée d'Hermon";
+    return this.auth.user().group?.name?.trim() || "Hirondelle";
   }
 
   /** Villes distinctes, comptées sur les fiches réellement chargées. */
