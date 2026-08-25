@@ -231,16 +231,6 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  /** Part vers Google. La page ne revient qu'après le détour par Cognito. */
-  async signInWithGoogle(): Promise<void> {
-    this.error = '';
-    try {
-      await this.auth.signInWithGoogle(this.redirect || '/app/dashboard', this.remember);
-    } catch (error) {
-      this.error = (error as Error)?.message || "La connexion par Google n'a pas pu démarrer.";
-    }
-  }
-
   private signIn(): Promise<CurrentUser> {
     if (this.auth.configured) return this.auth.signIn(this.email.trim(), this.password, this.remember);
     return this.auth.signInMock(this.email, this.password, this.groupId, this.remember);

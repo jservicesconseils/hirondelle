@@ -279,7 +279,7 @@
   line-height: 1.6;
 }
 
-// ---------------------------------------------------------------- Google
+// ---------------------------------------------------------------- connexion par téléphone
 
 .federated {
   display: flex;
@@ -308,25 +308,10 @@
     opacity: 0.6;
     cursor: not-allowed;
   }
-}
 
-.g-mark {
-  width: 19px;
-  height: 19px;
-}
-
-.federated-note {
-  margin: 0.7rem 0 0;
-  color: $muted;
-  font-size: 0.8rem;
-  line-height: 1.55;
-
-  code {
-    padding: 0.08rem 0.35rem;
-    border-radius: 5px;
-    background: $sky;
-    color: $blue-deep;
-    font-weight: 700;
+  i {
+    color: $accent;
+    font-size: 1rem;
   }
 }
 
@@ -574,17 +559,6 @@
 
     &:hover {
       color: $accent;
-    }
-  }
-
-  &.phone-entry {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
-
-    i {
-      font-size: 0.85rem;
     }
   }
 }
