@@ -24,13 +24,13 @@
       <a class="nav-link" *ngIf="auth.canSeeMembers()" routerLink="/web/membres">Membres</a>
       <!-- Un simple compte y voit ses événements organisés ; un administrateur, son espace. -->
       <a class="nav-link" *ngIf="auth.isAuthenticated()" [routerLink]="workspaceLink">Mon espace</a>
-      <a class="nav-link" *ngIf="auth.isAuthenticated()" routerLink="/web/profil">Mon profil</a>
 
       <div class="topbar-actions-mobile">
         <a class="ghost" *ngIf="!auth.isAuthenticated()" routerLink="/login">Se connecter</a>
-        <button type="button" class="ghost" *ngIf="auth.isAuthenticated()" (click)="signOut()">
-          Se déconnecter
-        </button>
+        <ng-container *ngIf="auth.isAuthenticated()">
+          <a class="ghost" routerLink="/web/profil">Mon profil</a>
+          <button type="button" class="ghost" (click)="signOut()">Se déconnecter</button>
+        </ng-container>
         <a class="cta" routerLink="/web/creer-un-evenement">Créer un événement</a>
       </div>
     </nav>
@@ -38,15 +38,30 @@
     <div class="topbar-actions">
       <a class="ghost" *ngIf="!auth.isAuthenticated()" routerLink="/login">Se connecter</a>
 
-      <!-- Session ouverte : le nom, le rôle, et la déconnexion -->
-      <button type="button" class="account" *ngIf="auth.isAuthenticated()" (click)="signOut()" title="Se déconnecter">
-        <span class="account-avatar">{{ initials }}</span>
-        <span class="account-text">
-          <strong>{{ userName }}</strong>
-          <small>{{ roleLabel }}</small>
-        </span>
-        <i class="pi pi-sign-out"></i>
-      </button>
+      <!-- Session ouverte : le nom et le rôle ouvrent le menu du compte -->
+      <div class="account" #accountMenu *ngIf="auth.isAuthenticated()">
+        <button
+          type="button"
+          class="account-trigger"
+          (click)="toggleAccountMenu()"
+          [attr.aria-expanded]="accountMenuOpen">
+          <span class="account-avatar">{{ initials }}</span>
+          <span class="account-text">
+            <strong>{{ userName }}</strong>
+            <small>{{ roleLabel }}</small>
+          </span>
+          <i class="pi" [ngClass]="accountMenuOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+        </button>
+
+        <div class="account-dropdown" *ngIf="accountMenuOpen">
+          <a class="account-item" routerLink="/web/profil" (click)="accountMenuOpen = false">
+            <i class="pi pi-user"></i> Mon profil
+          </a>
+          <button type="button" class="account-item" (click)="signOut()">
+            <i class="pi pi-sign-out"></i> Se déconnecter
+          </button>
+        </div>
+      </div>
 
       <a class="cta" routerLink="/web/creer-un-evenement">
         Créer un événement

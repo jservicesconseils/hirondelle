@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 
@@ -22,8 +22,12 @@ export class PublicHeaderComponent implements AfterViewInit, OnDestroy {
   /** Repère placé au-dessus de l'en-tête : sa sortie de l'écran déclenche l'ombre. */
   @ViewChild('sentinel', { static: true }) sentinel!: ElementRef<HTMLElement>;
 
+  /** Le bouton compte lui-même, pour ignorer ses propres clics dans `onDocumentClick`. */
+  @ViewChild('accountMenu') accountMenuRef?: ElementRef<HTMLElement>;
+
   scrolled = false;
   menuOpen = false;
+  accountMenuOpen = false;
 
   private observer?: IntersectionObserver;
 
@@ -60,7 +64,20 @@ export class PublicHeaderComponent implements AfterViewInit, OnDestroy {
   signOut(): void {
     this.auth.signOut();
     this.menuOpen = false;
+    this.accountMenuOpen = false;
     this.router.navigate(['/web']);
+  }
+
+  toggleAccountMenu(): void {
+    this.accountMenuOpen = !this.accountMenuOpen;
+  }
+
+  /** Un clic hors du bouton et de son panneau referme le menu. */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.accountMenuOpen && !this.accountMenuRef?.nativeElement.contains(event.target as Node)) {
+      this.accountMenuOpen = false;
+    }
   }
 
   /**
