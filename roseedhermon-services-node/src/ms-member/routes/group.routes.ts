@@ -224,7 +224,19 @@ groupRouter.put(
     if (!canReach(req, req.params.id)) {
       return res.status(403).json({ error: 'Droits insuffisants.' });
     }
-    const updated = await groupService.updateGroup(req.params.id, req.body ?? {});
+
+    const body = { ...(req.body ?? {}) } as Record<string, unknown>;
+
+    /**
+     * Les modules ouvrent des droits (annuaire, gestion d'événements) : seul
+     * le super administrateur les accorde. L'écran désactive déjà ce contrôle
+     * pour un administrateur de groupe, mais un appel direct à cette route ne
+     * doit pas pouvoir le contourner — on retire simplement le champ, ce qui
+     * fait reconduire `updateGroup` la valeur déjà enregistrée.
+     */
+    if (!isSuperAdmin(req)) delete body.features;
+
+    const updated = await groupService.updateGroup(req.params.id, body);
     return res.json(groupToJson(updated));
   }),
 );
