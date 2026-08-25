@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { FEATURES, Feature, ROLES, Role } from '../../core/auth/auth.model';
 
@@ -99,15 +99,6 @@ const ICONS = {
           </ng-container>
         </section>
       </nav>
-
-      <button type="button" class="user-card" (click)="signOut()" title="Se déconnecter">
-        <span class="user-avatar">{{ initials }}</span>
-        <span class="user-text">
-          <strong>{{ userName }}</strong>
-          <small>{{ userRole }}</small>
-        </span>
-        <svg class="user-out" viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="icons.signOut" /></svg>
-      </button>
     </aside>
   `,
   styles: [`
@@ -301,80 +292,6 @@ const ICONS = {
       padding: 0.12rem 0.45rem;
     }
 
-    /* ---------- Carte du compte ---------- */
-
-    .user-card {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      width: 100%;
-      margin-top: 1rem;
-      padding: 0.65rem;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 16px;
-      cursor: pointer;
-      text-align: left;
-      font: inherit;
-      color: #fff;
-      transition: background 0.16s ease, border-color 0.16s ease;
-    }
-
-    .user-card:hover {
-      background: rgba(255, 255, 255, 0.16);
-      border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    .user-card:focus-visible {
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55);
-    }
-
-    .user-avatar {
-      flex: 0 0 38px;
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #f4551d 0%, #ff8748 100%);
-      color: #fff;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 0.88rem;
-    }
-
-    .user-text {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      line-height: 1.25;
-    }
-
-    .user-text strong {
-      font-size: 0.9rem;
-      font-weight: 700;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .user-text small {
-      font-size: 0.76rem;
-      color: rgba(255, 255, 255, 0.58);
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .user-out {
-      flex: 0 0 18px;
-      width: 18px;
-      height: 18px;
-      margin-left: auto;
-      fill: rgba(255, 255, 255, 0.6);
-    }
-
-    .user-card:hover .user-out { fill: #ff8748; }
-
     /* ---------- Adaptatif : tiroir coulissant ---------- */
 
     @media (max-width: 1100px) {
@@ -402,25 +319,7 @@ export class AppSidebar {
   @Input() open = false;
   @Output() closed = new EventEmitter<void>();
 
-  constructor(
-    public auth: AuthService,
-    private router: Router
-  ) {}
-
-  /** Nom affiché : celui de la fiche membre liée au compte, sinon le courriel. */
-  get userName(): string {
-    const user = this.auth.user();
-    const member = user.member;
-    const full = `${member?.firstName || ''} ${member?.lastName || ''}`.trim();
-    return full || user.email || 'Utilisateur';
-  }
-
-  get userRole(): string {
-    const user = this.auth.user();
-    if (user.roles.includes(ROLES.SUPER_ADMIN)) return 'Super administrateur';
-    if (user.roles.includes(ROLES.GROUP_ADMIN)) return user.group?.name || 'Administrateur de groupe';
-    return user.group?.name || 'Membre';
-  }
+  constructor(public auth: AuthService) {}
 
   readonly icons = ICONS;
 
@@ -461,11 +360,6 @@ export class AppSidebar {
     return item.label;
   }
 
-  signOut(): void {
-    this.auth.signOut();
-    this.router.navigate(['/login']);
-  }
-
   // Les entrées sans `route` reprennent la maquette mais n'ont pas encore de page.
   sections: NavSection[] = [
     {
@@ -495,12 +389,4 @@ export class AppSidebar {
       items: [{ label: 'Paramètres', icon: ICONS.settings }]
     }
   ];
-
-  get initials(): string {
-    return this.userName
-      .split(' ')
-      .map((part) => part.charAt(0))
-      .join('')
-      .toUpperCase();
-  }
 }
