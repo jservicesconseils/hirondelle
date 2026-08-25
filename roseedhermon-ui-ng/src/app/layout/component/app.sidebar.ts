@@ -128,9 +128,13 @@ const ICONS = {
      * la remplit, sans défilement propre.
      */
     .sidebar {
-      /* Largeur propre : sans elle, un simple « flex: 1 1 auto » la mettait en
-         concurrence avec le contenu pour l'espace, au lieu de rester un rail étroit. */
-      flex: 0 0 272px;
+      /*
+       * L'hôte du composant fixe déjà la largeur totale à 272px (plus haut) —
+       * cet élément doit donc se rétrécir pour laisser la place à ses propres
+       * marges, pas garder 272px pour lui seul. Une largeur figée ici
+       * referait déborder la boîte visible hors de son propre hôte.
+       */
+      flex: 1 1 auto;
       min-height: 0;
       /*
        * Le retrait vertical vient de la rangée, commun aux deux colonnes. À
