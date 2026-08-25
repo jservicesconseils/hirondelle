@@ -300,6 +300,22 @@ export class LoginComponent implements OnInit {
     await this.signInAfterSignUp();
   }
 
+  /** Le code Cognito arrive parfois filtré dans les indésirables, ou expire. */
+  async resendCode(): Promise<void> {
+    if (this.busy) return;
+    this.busy = true;
+    this.error = '';
+    this.notice = '';
+    try {
+      await this.auth.resendSignUpCode(this.email.trim());
+      this.notice = `Un nouveau code a été envoyé à ${this.email.trim()}. Pensez à vérifier vos indésirables.`;
+    } catch (error) {
+      this.error = (error as Error)?.message || "L'envoi du code a échoué.";
+    } finally {
+      this.busy = false;
+    }
+  }
+
   private async signInAfterSignUp(): Promise<void> {
     const user = await this.auth.signIn(this.email.trim(), this.password, this.remember);
     this.leave(user);
