@@ -2,8 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import { EventDTO } from '../../../../shared/services/api/model/eventDTO';
+import { EventStats } from '../../../../shared/services/api/model/eventStats';
 import { EventService } from '../../../../shared/services/events/events.service';
 import { EventImageService } from '../../../../shared/services/events/event-image.service';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -13,9 +16,15 @@ import { PublicHeaderComponent } from '../../../components/public-header.compone
 import { PublicFooterComponent } from '../../../components/public-footer.component';
 
 /** Onglets de la page : ce que le membre choisit de voir. */
-type Scope = 'group' | 'public' | 'past';
+type Scope = 'group' | 'public' | 'past' | 'mine';
 
 const PAGE_SIZE = 9;
+
+/** Une carte organisée par la personne connectée, augmentée de ses chiffres. */
+interface OrganisedCard {
+  card: EventCard;
+  stats: EventStats | null;
+}
 
 /**
  * Agenda d'un membre connecté, côté web.
@@ -43,6 +52,10 @@ export class WebMyEventsComponent implements OnInit {
   cards: EventCard[] = [];
   loading = true;
   failed = false;
+
+  /** Ce que la personne connectée a elle-même créé, avec ses statistiques. */
+  organised: OrganisedCard[] = [];
+  organisedLoading = true;
 
   scope: Scope = 'group';
   query = '';
@@ -78,6 +91,33 @@ export class WebMyEventsComponent implements OnInit {
     // que sur un onglet vide.
     if (!this.reserved.length) this.scope = 'public';
     this.loading = false;
+
+    this.loadOrganised();
+  }
+
+  /**
+   * Événements créés par cette session (`createdByEmail`), avec leurs chiffres.
+   * Une carte s'affiche même si ses statistiques échouent à charger — un seul
+   * appel en échec ne doit pas vider tout l'onglet.
+   */
+  private loadOrganised(): void {
+    const email = (this.auth.user().email ?? '').trim().toLowerCase();
+
+    const mine = email
+      ? this.cards.filter((card) => (card.event.createdByEmail ?? '').trim().toLowerCase() === email)
+      : [];
+
+    if (!mine.length) {
+      this.organisedLoading = false;
+      return;
+    }
+
+    forkJoin(mine.map((card) => this.events.getEventStats(card.id).pipe(catchError(() => of(null))))).subscribe(
+      (allStats) => {
+        this.organised = mine.map((card, index) => ({ card, stats: allStats[index] }));
+        this.organisedLoading = false;
+      }
+    );
   }
 
   get groupName(): string {
@@ -160,6 +200,10 @@ export class WebMyEventsComponent implements OnInit {
 
   trackByCard(_index: number, card: EventCard): string {
     return card.id;
+  }
+
+  trackByOrganised(_index: number, item: OrganisedCard): string {
+    return item.card.id;
   }
 }
 

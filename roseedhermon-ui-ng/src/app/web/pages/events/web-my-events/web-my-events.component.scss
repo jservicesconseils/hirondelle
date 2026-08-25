@@ -432,3 +432,56 @@
   align-items: flex-end;
   gap: 0.45rem;
 }
+
+// ---------------------------------------------------------------- organisés par moi
+
+.state.small {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.state.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cta-create {
+  @include cta;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0 0.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: $accent-soft;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  strong {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: $ink;
+  }
+
+  span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+}

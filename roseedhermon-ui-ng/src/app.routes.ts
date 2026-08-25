@@ -22,7 +22,6 @@ import { WebTicketComponent } from './app/web/pages/events/web-ticket/web-ticket
 import { WebCreateEventComponent } from './app/web/pages/events/web-create-event/web-create-event.component';
 import { WebMembersComponent } from './app/web/pages/members/web-members/web-members.component';
 import { WebMyEventsComponent } from './app/web/pages/events/web-my-events/web-my-events.component';
-import { WebMyCreatedEventsComponent } from './app/web/pages/events/web-my-created-events/web-my-created-events.component';
 import { WebProfileComponent } from './app/web/pages/profile/web-profile.component';
 import { VisitorEventsComponent } from './app/web/pages/visitor-events/visitor-events';
 import { MobileEventsComponent } from './app/mobile/pages/events/mobile-events.component';
@@ -56,10 +55,9 @@ export const appRoutes: Routes = [
      * catalogue public. Pas de `eventsGuard` ici — un groupe sans le module garde
      * accès au catalogue, et la page l'explique au lieu de rediriger.
      */
+    // Agenda à assister ET onglet « Organisés par moi » (créés par la session) : les deux
+    // sur cette même page, plutôt que deux pages qu'il aurait fallu deviner l'une de l'autre.
     { path: 'web/mes-evenements', component: WebMyEventsComponent, canActivate: [authGuard] },
-    // Ce que la personne connectée a elle-même créé, avec ses statistiques —
-    // distinct de « mes événements » ci-dessus, qui est son agenda à assister.
-    { path: 'web/evenements-organises', component: WebMyCreatedEventsComponent, canActivate: [authGuard] },
     { path: 'web/profil', component: WebProfileComponent, canActivate: [authGuard] },
     { path: 'web/evenements/:id', component: WebEventDetailComponent },
     { path: 'web/evenements/:id/reservation', component: WebReservationComponent },
