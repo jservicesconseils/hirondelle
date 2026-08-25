@@ -68,8 +68,29 @@
       </ng-container>
 
       <form (ngSubmit)="submit()" novalidate>
-        <!-- Numéro : seul champ de la connexion par téléphone, et posé à l'inscription -->
-        <label class="field" *ngIf="view === 'phone' || view === 'signup'">
+        <!-- Deux façons de créer un compte, avant tout le reste -->
+        <div class="method-toggle" *ngIf="view === 'signup'">
+          <button
+            type="button"
+            [class.is-active]="signupMethod === 'phone'"
+            (click)="chooseSignupMethod('phone')">
+            <i class="pi pi-mobile"></i> Par téléphone
+          </button>
+          <button
+            type="button"
+            [class.is-active]="signupMethod === 'email'"
+            (click)="chooseSignupMethod('email')">
+            <i class="pi pi-envelope"></i> Par courriel
+          </button>
+        </div>
+
+        <p class="method-hint" *ngIf="view === 'signup' && signupMethod === 'phone'">
+          Aucun mot de passe à choisir&nbsp;: un code à six chiffres, envoyé par courriel, suffira
+          à vous connecter la prochaine fois.
+        </p>
+
+        <!-- Numéro : seul champ (avec le courriel) de la connexion et de l'inscription par téléphone -->
+        <label class="field" *ngIf="view === 'phone' || (view === 'signup' && signupMethod === 'phone')">
           <span>Téléphone</span>
           <input
             type="tel"
@@ -150,8 +171,9 @@
             placeholder="••••••" />
         </label>
 
-        <!-- Nouveau mot de passe : inscription, réinitialisation et première connexion -->
-        <ng-container *ngIf="view === 'reset' || view === 'challenge' || view === 'signup'">
+        <!-- Nouveau mot de passe : réinitialisation, première connexion, et inscription par courriel -->
+        <ng-container
+          *ngIf="view === 'reset' || view === 'challenge' || (view === 'signup' && signupMethod === 'email')">
           <label class="field">
             <span>{{ view === 'signup' ? 'Mot de passe' : 'Nouveau mot de passe' }}</span>
             <input type="password" name="newPassword" autocomplete="new-password" [(ngModel)]="newPassword" />

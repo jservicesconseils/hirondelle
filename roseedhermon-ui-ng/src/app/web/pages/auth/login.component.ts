@@ -59,6 +59,9 @@ export class LoginComponent implements OnInit {
   /** Connexion par téléphone : le numéro saisi, conservé pour l'attacher au compte. */
   phone = '';
 
+  /** Inscription : par téléphone (sans mot de passe) ou par courriel. */
+  signupMethod: 'phone' | 'email' = 'email';
+
   // Réinitialisation : le code reçu par courriel, puis le mot de passe choisi.
   code = '';
   newPassword = '';
@@ -171,6 +174,18 @@ export class LoginComponent implements OnInit {
     this.notice = '';
   }
 
+  /** Bascule entre les deux façons de créer un compte ; chacune n'utilise que ses propres champs. */
+  chooseSignupMethod(method: 'phone' | 'email'): void {
+    this.signupMethod = method;
+    this.error = '';
+    if (method === 'phone') {
+      this.newPassword = '';
+      this.confirmation = '';
+    } else {
+      this.phone = '';
+    }
+  }
+
   /**
    * Une photo absente laisse sa place à la suivante, puis au dégradé : la page
    * garde sa composition en deux moitiés dans tous les cas.
@@ -216,7 +231,9 @@ export class LoginComponent implements OnInit {
     try {
       if (this.view === 'forgot') await this.sendCode();
       else if (this.view === 'reset') await this.applyNewPassword();
-      else if (this.view === 'signup') await this.doSignUp();
+      else if (this.view === 'signup') {
+        await (this.signupMethod === 'phone' ? this.doSignUpByPhone() : this.doSignUpByEmail());
+      }
       else if (this.view === 'confirm') await this.doConfirmSignUp();
       else if (this.view === 'phone') await this.requestPhoneCode();
       else if (this.view === 'phone-code') await this.confirmPhoneCode();
@@ -281,15 +298,10 @@ export class LoginComponent implements OnInit {
     return this.auth.completeNewPassword(this.challenge!, this.newPassword);
   }
 
-  private async doSignUp(): Promise<void> {
+  private async doSignUpByEmail(): Promise<void> {
     const email = this.email.trim();
-    const phone = toE164(this.phone.trim());
     if (!email) {
       this.error = 'Indiquez votre courriel.';
-      return;
-    }
-    if (!phone) {
-      this.error = 'Indiquez un numéro de téléphone valide.';
       return;
     }
     if (!this.auth.configured) {
@@ -298,10 +310,40 @@ export class LoginComponent implements OnInit {
     }
     if (!this.passwordsAgree()) return;
 
-    const { needsConfirmation } = await this.auth.signUp(email, this.newPassword, phone);
+    const { needsConfirmation } = await this.auth.signUp(email, this.newPassword);
     // Conservé pour la connexion automatique une fois le compte confirmé.
     this.password = this.newPassword;
+    await this.afterSignUp(email, needsConfirmation);
+  }
 
+  /**
+   * Sans mot de passe : comme la connexion par téléphone, un mot de passe
+   * aléatoire est attribué en coulisses et jamais montré. Le compte reste
+   * identifié par courriel côté Cognito — c'est le numéro qui, lui, sera
+   * retrouvé via `account_phones` à la prochaine connexion.
+   */
+  private async doSignUpByPhone(): Promise<void> {
+    const email = this.email.trim();
+    const phone = toE164(this.phone.trim());
+    if (!phone) {
+      this.error = 'Indiquez un numéro de téléphone valide.';
+      return;
+    }
+    if (!email) {
+      this.error = 'Indiquez votre courriel.';
+      return;
+    }
+    if (!this.auth.configured) {
+      this.error = "L'inscription n'est disponible qu'une fois Cognito configuré.";
+      return;
+    }
+
+    this.password = randomTempPassword();
+    const { needsConfirmation } = await this.auth.signUp(email, this.password, phone);
+    await this.afterSignUp(email, needsConfirmation);
+  }
+
+  private async afterSignUp(email: string, needsConfirmation: boolean): Promise<void> {
     if (needsConfirmation) {
       this.code = '';
       this.show('confirm');
