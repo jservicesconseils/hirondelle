@@ -27,6 +27,12 @@
     </a>
   </header>
 
+  <!-- Hors de la carte : visible même si le formulaire est long ou décalé. -->
+  <div class="banner-rail" *ngIf="error || notice">
+    <p class="error" *ngIf="error">{{ error }}</p>
+    <p class="notice" *ngIf="notice"><i class="pi pi-check-circle"></i> {{ notice }}</p>
+  </div>
+
   <main class="inner">
     <!-- ------------------------------ le discours ------------------------------ -->
     <section class="pitch">
@@ -164,9 +170,6 @@
             <input type="password" name="confirmation" autocomplete="new-password" [(ngModel)]="confirmation" />
           </label>
         </ng-container>
-
-        <p class="error" *ngIf="error">{{ error }}</p>
-        <p class="notice" *ngIf="notice"><i class="pi pi-check-circle"></i> {{ notice }}</p>
 
         <button type="submit" class="submit" [disabled]="busy">{{ submitLabel }}</button>
 

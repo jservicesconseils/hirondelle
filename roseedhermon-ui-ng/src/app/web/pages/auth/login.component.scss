@@ -515,34 +515,46 @@
 }
 
 // ---------------------------------------------------------------- messages
+//
+// Hors de la carte, sur toute la largeur : un message glissé dans le formulaire
+// se perdait facilement entre les champs, surtout sur l'écran de confirmation
+// où il arrive juste après un long code à saisir.
 
-.error {
-  margin: 0 0 1rem;
-  padding: 0.75rem 0.95rem;
-  border-radius: 10px;
-  background: #fdecea;
-  color: #c62828;
-  font-size: 0.88rem;
-  font-weight: 600;
-  line-height: 1.5;
+.banner-rail {
+  position: relative;
+  z-index: 1;
+  @include shell;
+  margin-top: 0.5rem;
 }
 
+.error,
 .notice {
   display: flex;
   align-items: flex-start;
-  gap: 0.55rem;
-  margin: 0 0 1rem;
-  padding: 0.75rem 0.95rem;
-  border-radius: 10px;
-  background: rgba(31, 157, 118, 0.1);
-  color: #147356;
-  font-size: 0.88rem;
-  font-weight: 600;
+  gap: 0.6rem;
+  margin: 0 0 0.85rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
   line-height: 1.5;
+  box-shadow: 0 10px 24px rgba(8, 18, 38, 0.18);
 
   i {
-    margin-top: 0.12rem;
+    margin-top: 0.15rem;
   }
+}
+
+.error {
+  background: #fff;
+  color: #c62828;
+  border: 1px solid rgba(198, 40, 40, 0.25);
+}
+
+.notice {
+  background: #fff;
+  color: #147356;
+  border: 1px solid rgba(20, 115, 86, 0.25);
 }
 
 .submit {
