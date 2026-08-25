@@ -190,15 +190,23 @@ export async function updateGroup(id: string, body: Record<string, unknown>): Pr
   const document = toDocument(body);
 
   /**
-   * Seule entorse au remplacement intégral : `features` porte des droits. Une
-   * modification qui ne le mentionne pas — l'écran d'identité du groupe, par
-   * exemple — reconduit la valeur enregistrée plutôt que de l'effacer, ce qui
-   * reviendrait à accorder tous les modules par omission.
+   * Seule entorse au remplacement intégral : `features` et `showPublicCatalog`
+   * portent des droits. Une modification qui ne les mentionne pas — l'écran
+   * d'identité du groupe, par exemple — reconduit la valeur enregistrée
+   * plutôt que de l'effacer, ce qui reviendrait à tout rouvrir par omission.
    */
-  if (body.features === undefined) {
+  if (body.features === undefined || body.showPublicCatalog === undefined) {
     const existing = await GroupModel.findOne(springIdFilter(id)).exec();
-    const kept = existing?.get('features');
-    if (Array.isArray(kept)) document.features = kept;
+
+    if (body.features === undefined) {
+      const kept = existing?.get('features');
+      if (Array.isArray(kept)) document.features = kept;
+    }
+
+    if (body.showPublicCatalog === undefined) {
+      const kept = existing?.get('showPublicCatalog');
+      if (kept !== undefined) document.showPublicCatalog = kept;
+    }
   }
 
   const replaced = await GroupModel.findOneAndReplace(

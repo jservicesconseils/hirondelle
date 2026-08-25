@@ -30,7 +30,9 @@ export class WebGroupRequestComponent implements OnInit {
   loading = true;
   request: GroupEntity | null = null;
 
-  form: GroupEntity = {};
+  // Coché par défaut : c'est le comportement d'origine, celui qu'un champ
+  // absent produit déjà côté serveur — voir `showPublicCatalog` dans le mapper.
+  form: GroupEntity = { showPublicCatalog: true };
   saving = false;
   error = '';
 
@@ -82,7 +84,7 @@ export class WebGroupRequestComponent implements OnInit {
   /** Après rejet, on efface la décision passée pour repartir d'un formulaire vide. */
   startOver(): void {
     this.request = null;
-    this.form = {};
+    this.form = { showPublicCatalog: true };
   }
 
   signOutAndReturn(): void {

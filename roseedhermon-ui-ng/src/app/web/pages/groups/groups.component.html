@@ -325,6 +325,16 @@
           administrateurs pourront s'y connecter.
         </em>
       </div>
+
+      <label class="form-field span-2 checkbox-field">
+        <input type="checkbox" [(ngModel)]="form.showPublicCatalog" />
+        <span>
+          Montrer aux membres les événements publics des autres communautés
+          <em class="feature-hint">
+            Décoché, les membres de ce groupe ne verront que les événements que lui-même organise.
+          </em>
+        </span>
+      </label>
     </div>
 
     <p class="form-error" *ngIf="saveError">{{ saveError }}</p>

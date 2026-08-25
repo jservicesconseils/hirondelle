@@ -14,6 +14,8 @@ export interface GroupInput {
   website: string | null;
   /** `null` = absent du corps, à distinguer d'une liste vide (voir `groupFromBody`). */
   features: Feature[] | null;
+  /** `null` = non transmis, à distinguer de `false` (voir `groupFromBody`). */
+  showPublicCatalog: boolean | null;
 }
 
 export type GroupStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -39,6 +41,7 @@ export function groupToJson(doc: GroupDocument) {
     website: doc.website ?? null,
     // Toujours explicite : le client n'a pas à deviner ce que signifie l'absence.
     features: normalizeFeatures(doc.features),
+    showPublicCatalog: doc.showPublicCatalog !== false,
     status: normalizeStatus(doc.status),
     requestedByEmail: doc.requestedByEmail ?? null,
     requestedAt: doc.requestedAt ?? null,
@@ -65,5 +68,6 @@ export function groupFromBody(body: Record<string, unknown>): GroupInput {
      * la valeur enregistrée au lieu d'accorder tous les modules par omission.
      */
     features: body.features === undefined ? null : normalizeFeatures(body.features),
+    showPublicCatalog: body.showPublicCatalog === undefined ? null : Boolean(body.showPublicCatalog),
   };
 }

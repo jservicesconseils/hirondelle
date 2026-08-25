@@ -31,6 +31,12 @@ const groupSchema = new Schema(
      */
     features: { type: [String] },
     /**
+     * Champ additif : absent ou vrai, les membres du groupe voient aussi les
+     * événements publics des autres groupes — le comportement d'origine.
+     * `false` referme le catalogue à ce que ce groupe organise lui-même.
+     */
+    showPublicCatalog: { type: Boolean },
+    /**
      * Champ additif : un groupe créé par le super administrateur (formulaire
      * `/app/groups`, ou document antérieur à cette fonctionnalité) n'en porte
      * pas et vaut `APPROVED` — voir `normalizeStatus`. Seule une demande

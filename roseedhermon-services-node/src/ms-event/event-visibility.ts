@@ -17,13 +17,25 @@ import { FEATURES, isSuperAdmin, requestAllows, ROLES } from '../common';
  * n'importe quel visiteur consulte déjà sans session. Ce sont les événements
  * **réservés au groupe** qui disparaissent quand le module EVENTS ne lui est pas
  * attribué — ils n'ont alors, littéralement, pas lieu d'être.
+ *
+ * Exception au catalogue public : un groupe peut fermer à ses propres membres les
+ * événements publics créés par d'autres groupes ou par une personne sans groupe
+ * (`showPublicCatalog` à `false`). Un membre dans ce cas ne voit alors que ce que
+ * son propre groupe organise — publics et réservés confondus.
  */
 export function isVisibleTo(req: Request, event: Record<string, unknown>): boolean {
   if (isSuperAdmin(req)) return true;
-  if (!isPrivate(event.visibility)) return true;
+
+  const eventGroupId = event.groupId ? String(event.groupId) : null;
+  const ownGroup = eventGroupId !== null && eventGroupId === (req.auth?.groupId ?? null);
+
+  if (!isPrivate(event.visibility)) {
+    if (ownGroup) return true;
+    return req.showPublicCatalog ?? true;
+  }
+
   if (!requestAllows(req, FEATURES.EVENTS)) return false;
-  const groupId = event.groupId ? String(event.groupId) : null;
-  return groupId !== null && groupId === (req.auth?.groupId ?? null);
+  return ownGroup;
 }
 
 /** Vrai pour « PRIVATE » comme pour « PRIVE » : les deux formes existent en base. */

@@ -52,7 +52,14 @@ export function normalizeFeatures(value: unknown): Feature[] {
  * `forgetGroupFeatures` supprime l'attente après une modification.
  */
 const TTL_MS = 15_000;
-const cache = new Map<string, { features: Feature[]; readAt: number }>();
+
+interface GroupSettings {
+  features: Feature[];
+  /** Absent ou vrai : le groupe voit le catalogue public des autres groupes. */
+  showPublicCatalog: boolean;
+}
+
+const cache = new Map<string, { settings: GroupSettings; readAt: number }>();
 
 export function forgetGroupFeatures(groupId?: string | null): void {
   if (groupId) cache.delete(groupId);
@@ -60,7 +67,7 @@ export function forgetGroupFeatures(groupId?: string | null): void {
 }
 
 /**
- * Fonctionnalités d'un groupe, lues directement dans la collection.
+ * Réglages d'un groupe, lus directement dans la collection.
  *
  * On passe par le pilote plutôt que par un modèle Mongoose : `GroupModel` n'est
  * déclaré que dans ms-member, et l'enregistrer une seconde fois dans ms-event
@@ -70,26 +77,33 @@ export function forgetGroupFeatures(groupId?: string | null): void {
  * Spring Data l'écrit en `ObjectId` quand il tient sur 24 caractères hexadécimaux.
  * Chercher la chaîne telle quelle ne trouverait rien.
  */
-export async function featuresOfGroup(groupId: string | null | undefined): Promise<Feature[]> {
-  if (!groupId) return [...ALL_FEATURES];
+async function settingsOfGroup(groupId: string | null | undefined): Promise<GroupSettings> {
+  if (!groupId) return { features: [...ALL_FEATURES], showPublicCatalog: true };
 
   const cached = cache.get(groupId);
-  if (cached && Date.now() - cached.readAt < TTL_MS) return cached.features;
+  if (cached && Date.now() - cached.readAt < TTL_MS) return cached.settings;
 
-  let features: Feature[] = [...ALL_FEATURES];
+  let settings: GroupSettings = { features: [...ALL_FEATURES], showPublicCatalog: true };
   try {
     const document = await mongoose.connection
       .collection('groups')
-      .findOne(springIdFilter(groupId) as never, { projection: { features: 1 } });
-    features = normalizeFeatures(document?.features);
+      .findOne(springIdFilter(groupId) as never, { projection: { features: 1, showPublicCatalog: 1 } });
+    settings = {
+      features: normalizeFeatures(document?.features),
+      showPublicCatalog: document?.showPublicCatalog !== false,
+    };
   } catch (error) {
     // La base est injoignable : on n'invente pas un refus. La garde d'authentification
     // a déjà fait son travail, et l'appel échouera de lui-même s'il a besoin de Mongo.
     console.warn('[features] groupe illisible :', (error as Error).message);
   }
 
-  cache.set(groupId, { features, readAt: Date.now() });
-  return features;
+  cache.set(groupId, { settings, readAt: Date.now() });
+  return settings;
+}
+
+export async function featuresOfGroup(groupId: string | null | undefined): Promise<Feature[]> {
+  return (await settingsOfGroup(groupId)).features;
 }
 
 export async function groupAllows(groupId: string | null | undefined, feature: Feature): Promise<boolean> {
@@ -103,12 +117,17 @@ declare global {
     interface Request {
       /** Modules ouverts à l'appelant, posés par `attachGroupFeatures`. */
       features?: Feature[];
+      /**
+       * Faux seulement si le groupe de l'appelant a fermé le catalogue public
+       * des autres groupes à ses propres membres — voir `isVisibleTo`.
+       */
+      showPublicCatalog?: boolean;
     }
   }
 }
 
 /**
- * Charge une fois par requête les modules de l'appelant.
+ * Charge une fois par requête les réglages de groupe de l'appelant.
  *
  * Les règles de visibilité s'appliquent dans des `filter()` synchrones : sans ce
  * chargement en amont, il faudrait une lecture asynchrone par événement. Un
@@ -122,9 +141,12 @@ export async function attachGroupFeatures(
 ): Promise<void> {
   if (!req.auth || isSuperAdmin(req)) {
     req.features = [...ALL_FEATURES];
+    req.showPublicCatalog = true;
     return next();
   }
-  req.features = await featuresOfGroup(req.auth.groupId);
+  const settings = await settingsOfGroup(req.auth.groupId);
+  req.features = settings.features;
+  req.showPublicCatalog = settings.showPublicCatalog;
   return next();
 }
 

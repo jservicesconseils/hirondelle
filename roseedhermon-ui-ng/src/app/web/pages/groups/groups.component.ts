@@ -304,7 +304,12 @@ export class GroupsComponent implements OnInit {
   openForm(): void {
     // Un groupe créé sans précision fait tout : c'est le cas le plus courant, et
     // retirer un module est plus facile à comprendre que d'en chercher un absent.
-    this.form = { type: 'Association', country: 'Canada', features: [FEATURES.EVENTS, FEATURES.MEMBERS] };
+    this.form = {
+      type: 'Association',
+      country: 'Canada',
+      features: [FEATURES.EVENTS, FEATURES.MEMBERS],
+      showPublicCatalog: true
+    };
     this.saveError = '';
     this.formVisible = true;
   }

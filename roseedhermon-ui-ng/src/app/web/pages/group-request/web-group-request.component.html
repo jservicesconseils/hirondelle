@@ -78,6 +78,16 @@
             <input type="text" name="city" [(ngModel)]="form.city" />
           </label>
 
+          <label class="field checkbox-field">
+            <input type="checkbox" name="showPublicCatalog" [(ngModel)]="form.showPublicCatalog" />
+            <span>
+              Montrer à mes membres les événements publics des autres communautés
+              <em class="hint">
+                Décoché, vos membres ne verront que les événements que vous organisez vous-même.
+              </em>
+            </span>
+          </label>
+
           <p class="error" *ngIf="error">{{ error }}</p>
 
           <button type="submit" class="submit" [disabled]="!canSave">

@@ -25,6 +25,12 @@ export interface GroupEntity {
      * Ajouté après la génération : le serveur le renvoie toujours explicitement.
      */
     features?: string[];
+    /**
+     * Absent ou vrai : les membres du groupe voient aussi les événements
+     * publics des autres groupes. `false` referme le catalogue à ce que ce
+     * groupe organise lui-même.
+     */
+    showPublicCatalog?: boolean;
     /** Champs additifs — demande de création par un membre, et sa décision. */
     status?: 'PENDING' | 'APPROVED' | 'REJECTED';
     requestedByEmail?: string | null;

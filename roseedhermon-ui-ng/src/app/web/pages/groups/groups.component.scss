@@ -469,6 +469,26 @@
   font-style: normal;
 }
 
+.checkbox-field {
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+
+  input[type='checkbox'] {
+    width: auto !important;
+    margin-top: 0.2rem;
+    accent-color: theme.$accent;
+  }
+
+  > span {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 600;
+    color: theme.$ink;
+  }
+}
+
 @media (max-width: 640px) {
   .feature-cards { grid-template-columns: 1fr; }
 }
