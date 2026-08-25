@@ -374,6 +374,33 @@ export class AuthService {
     });
   }
 
+  /**
+   * Attache le numéro à la session ouverte — appelé après une connexion par
+   * téléphone, pour que le compte le porte la prochaine fois. Best-effort :
+   * l'appelant ignore un échec plutôt que de faire capoter la connexion pour
+   * un attribut secondaire.
+   */
+  updatePhoneNumber(phoneNumber: string): Promise<void> {
+    const user = this.pool?.getCurrentUser();
+    if (!user) return Promise.reject(new Error('Aucune session ouverte.'));
+
+    return new Promise((resolve, reject) => {
+      user.getSession((error: Error | null) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        user.updateAttributes([new CognitoUserAttribute({ Name: 'phone_number', Value: phoneNumber })], (updateError) => {
+          if (updateError) {
+            reject(updateError);
+            return;
+          }
+          resolve();
+        });
+      });
+    });
+  }
+
   confirmPassword(email: string, code: string, password: string): Promise<void> {
     if (!this.pool) return Promise.reject(new Error("Cognito n'est pas configuré."));
     const user = new CognitoUser({ Username: email, Pool: this.pool, Storage: this.store });

@@ -576,6 +576,17 @@
       color: $accent;
     }
   }
+
+  &.phone-entry {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+
+    i {
+      font-size: 0.85rem;
+    }
+  }
 }
 
 // ---------------------------------------------------------------- démonstration

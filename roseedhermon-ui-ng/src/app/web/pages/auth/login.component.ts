@@ -15,12 +15,21 @@ import { GroupEntity } from '../../../shared/services/api/model/groupEntity';
 import { MockDirectoryService } from '../../../core/auth/mock-directory.service';
 
 /**
- * Les six écrans de la page, qui se succèdent dans le même panneau : connexion,
- * inscription et son code de confirmation, demande de code de réinitialisation,
- * choix du nouveau mot de passe, et le mot de passe provisoire imposé par
- * Cognito à la première connexion.
+ * Les écrans de la page, qui se succèdent dans le même panneau : connexion,
+ * inscription et son code de confirmation, connexion par téléphone et son
+ * propre code, demande de code de réinitialisation, choix du nouveau mot de
+ * passe, et le mot de passe provisoire imposé par Cognito à la première
+ * connexion.
  */
-export type LoginView = 'signin' | 'signup' | 'confirm' | 'forgot' | 'reset' | 'challenge';
+export type LoginView =
+  | 'signin'
+  | 'signup'
+  | 'confirm'
+  | 'phone'
+  | 'phone-code'
+  | 'forgot'
+  | 'reset'
+  | 'challenge';
 
 /**
  * Illustration de la moitié droite : la photo de rue en fête, le même fichier que
@@ -45,6 +54,9 @@ export class LoginComponent implements OnInit {
   password = '';
   remember = false;
   revealPassword = false;
+
+  /** Connexion par téléphone : le numéro saisi, conservé pour l'attacher au compte. */
+  phone = '';
 
   // Réinitialisation : le code reçu par courriel, puis le mot de passe choisi.
   code = '';
@@ -98,6 +110,8 @@ export class LoginComponent implements OnInit {
   get title(): string {
     if (this.view === 'signup') return 'Créer un compte';
     if (this.view === 'confirm') return 'Confirmez votre courriel';
+    if (this.view === 'phone') return 'Connexion par téléphone';
+    if (this.view === 'phone-code') return 'Confirmez le code';
     if (this.view === 'forgot') return 'Mot de passe oublié';
     if (this.view === 'reset') return 'Choisissez un nouveau mot de passe';
     if (this.view === 'challenge') return 'Choisissez votre mot de passe';
@@ -109,6 +123,13 @@ export class LoginComponent implements OnInit {
       return "Un compte suffit pour organiser votre propre événement — aucun groupe requis.";
     }
     if (this.view === 'confirm') {
+      return `Saisissez le code à six chiffres envoyé à ${this.email.trim()}.`;
+    }
+    if (this.view === 'phone') {
+      return "Indiquez votre téléphone et le courriel de votre compte. Le code de vérification " +
+        "part par courriel pour l'instant — le SMS suivra dès que le numéro sera activé.";
+    }
+    if (this.view === 'phone-code') {
       return `Saisissez le code à six chiffres envoyé à ${this.email.trim()}.`;
     }
     if (this.view === 'forgot') {
@@ -125,6 +146,8 @@ export class LoginComponent implements OnInit {
     if (this.busy) return 'Un instant…';
     if (this.view === 'signup') return 'Créer mon compte';
     if (this.view === 'confirm') return 'Confirmer';
+    if (this.view === 'phone') return 'Recevoir mon code';
+    if (this.view === 'phone-code') return 'Confirmer et me connecter';
     if (this.view === 'forgot') return 'Envoyer le code';
     if (this.view === 'reset') return 'Enregistrer le mot de passe';
     if (this.view === 'challenge') return 'Enregistrer et continuer';
@@ -194,6 +217,8 @@ export class LoginComponent implements OnInit {
       else if (this.view === 'reset') await this.applyNewPassword();
       else if (this.view === 'signup') await this.doSignUp();
       else if (this.view === 'confirm') await this.doConfirmSignUp();
+      else if (this.view === 'phone') await this.requestPhoneCode();
+      else if (this.view === 'phone-code') await this.confirmPhoneCode();
       else {
         const user = this.view === 'challenge' ? await this.completeChallenge() : await this.signIn();
         if (user) this.leave(user);
@@ -316,6 +341,53 @@ export class LoginComponent implements OnInit {
     }
   }
 
+  /**
+   * Connexion sans mot de passe, pour un compte qui existe déjà : le code
+   * réutilise le mécanisme Cognito de réinitialisation, mais au lieu de
+   * demander un mot de passe à retenir, on lui en attribue un aléatoire et on
+   * enchaîne directement sur la connexion.
+   */
+  private async requestPhoneCode(): Promise<void> {
+    const email = this.email.trim();
+    const phone = this.phone.trim();
+    if (!phone) {
+      this.error = 'Indiquez votre numéro de téléphone.';
+      return;
+    }
+    if (!email) {
+      this.error = 'Indiquez le courriel de votre compte.';
+      return;
+    }
+    if (!this.auth.configured) {
+      this.error = 'La connexion par téléphone requiert Cognito.';
+      return;
+    }
+
+    await this.auth.forgotPassword(email);
+    this.code = '';
+    this.show('phone-code');
+    this.notice = `Un code à six chiffres a été envoyé à ${email}.`;
+  }
+
+  private async confirmPhoneCode(): Promise<void> {
+    if (!this.code.trim()) {
+      this.error = 'Saisissez le code reçu par courriel.';
+      return;
+    }
+
+    const email = this.email.trim();
+    const tempPassword = randomTempPassword();
+
+    await this.auth.confirmPassword(email, this.code.trim(), tempPassword);
+    const user = await this.auth.signIn(email, tempPassword, this.remember);
+
+    // Accessoire : la connexion ne doit pas échouer pour un attribut secondaire.
+    const phone = toE164(this.phone.trim());
+    if (phone) this.auth.updatePhoneNumber(phone).catch(() => undefined);
+
+    this.leave(user);
+  }
+
   private async signInAfterSignUp(): Promise<void> {
     const user = await this.auth.signIn(this.email.trim(), this.password, this.remember);
     this.leave(user);
@@ -355,6 +427,10 @@ export class LoginComponent implements OnInit {
       this.error = 'Un compte existe déjà avec ce courriel. Connectez-vous plutôt.';
       return;
     }
+    if (code === 'UserNotFoundException' && (this.view === 'phone' || this.view === 'forgot')) {
+      this.error = "Aucun compte n'est rattaché à ce courriel. Créez-en un d'abord.";
+      return;
+    }
 
     this.error = (error as Error)?.message || 'La connexion a échoué.';
   }
@@ -380,4 +456,27 @@ export class LoginComponent implements OnInit {
     // sur un écran de bureau.
     this.router.navigate(['/web/mes-evenements']);
   }
+}
+
+/**
+ * Mot de passe jetable, jamais vu par la personne : la connexion par téléphone
+ * enchaîne aussitôt sur `signIn`. Construit pour satisfaire à coup sûr la
+ * politique par défaut de Cognito (majuscule, minuscule, chiffre, symbole,
+ * huit caractères) sans dépendre de ce qu'un générateur aléatoire produirait.
+ */
+function randomTempPassword(): string {
+  return `Aa1!${crypto.randomUUID()}`;
+}
+
+/** Format E.164 attendu par Cognito ; `null` si le numéro reste inexploitable. */
+function toE164(value: string): string | null {
+  if (!value) return null;
+  if (value.startsWith('+')) {
+    const digits = value.slice(1).replace(/\D/g, '');
+    return digits.length >= 8 ? `+${digits}` : null;
+  }
+  const digits = value.replace(/\D/g, '');
+  if (digits.length < 8) return null;
+  // Dix chiffres : numéro nord-américain sans indicatif.
+  return digits.length === 10 ? `+1${digits}` : `+${digits}`;
 }

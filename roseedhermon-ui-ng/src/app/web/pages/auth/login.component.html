@@ -82,8 +82,20 @@
       </ng-container>
 
       <form (ngSubmit)="submit()" novalidate>
-        <!-- Connexion et demande de code partagent le champ courriel -->
-        <label class="field" *ngIf="view === 'signin' || view === 'forgot' || view === 'signup'">
+        <!-- Numéro, avant le courriel sur l'écran de connexion par téléphone -->
+        <label class="field" *ngIf="view === 'phone'">
+          <span>Téléphone</span>
+          <input
+            type="tel"
+            name="phone"
+            autocomplete="tel"
+            inputmode="tel"
+            [(ngModel)]="phone"
+            placeholder="514 555-0123" />
+        </label>
+
+        <!-- Connexion, demande de code et inscription partagent le champ courriel -->
+        <label class="field" *ngIf="view === 'signin' || view === 'forgot' || view === 'signup' || view === 'phone'">
           <span>Courriel</span>
           <input
             type="email"
@@ -135,10 +147,14 @@
           <p class="remember-hint" *ngIf="!remember">
             Sans cette case, la session se ferme à la fermeture du navigateur.
           </p>
+
+          <button type="button" class="link centered phone-entry" (click)="show('phone')">
+            <i class="pi pi-mobile"></i> Se connecter par téléphone
+          </button>
         </ng-container>
 
         <!-- Code reçu par courriel -->
-        <label class="field" *ngIf="view === 'reset' || view === 'confirm'">
+        <label class="field" *ngIf="view === 'reset' || view === 'confirm' || view === 'phone-code'">
           <span>Code de vérification</span>
           <input
             type="text"
@@ -177,7 +193,14 @@
         <button
           type="button"
           class="link centered"
-          *ngIf="view === 'forgot' || view === 'reset' || view === 'signup' || view === 'confirm'"
+          *ngIf="
+            view === 'forgot' ||
+            view === 'reset' ||
+            view === 'signup' ||
+            view === 'confirm' ||
+            view === 'phone' ||
+            view === 'phone-code'
+          "
           (click)="show('signin')">
           Revenir à la connexion
         </button>
