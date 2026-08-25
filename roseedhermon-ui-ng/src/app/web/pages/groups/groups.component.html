@@ -248,8 +248,11 @@
 <div class="modal-backdrop" *ngIf="formVisible" (click)="closeForm()">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-header-band">
-      <h2>Créer un groupe</h2>
-      <p>La communauté et son administrateur pourront ensuite y ajouter des membres.</p>
+      <span class="header-icon"><i class="pi pi-sitemap"></i></span>
+      <div class="header-text">
+        <strong>Créer un groupe</strong>
+        <small>La communauté et son administrateur pourront ensuite y ajouter des membres.</small>
+      </div>
     </div>
 
     <div class="form-grid">
