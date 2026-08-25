@@ -87,14 +87,8 @@
           <div class="field-row">
             <label class="field">
               <span>Date</span>
-              <input
-                type="text"
-                name="date"
-                inputmode="numeric"
-                placeholder="JJ/MM/AAAA"
-                [ngModel]="date"
-                (ngModelChange)="onDateInput($event)" />
-              <em class="error" *ngIf="touched && !dateValid">Indiquez une date au format JJ/MM/AAAA.</em>
+              <input type="date" name="date" [(ngModel)]="dateIso" />
+              <em class="error" *ngIf="touched && !dateValid">Indiquez une date.</em>
             </label>
 
             <label class="field">
@@ -187,13 +181,7 @@
 
           <label class="field">
             <span>Clôture des inscriptions <small>facultatif</small></span>
-            <input
-              type="text"
-              name="lastRegistrationDate"
-              inputmode="numeric"
-              placeholder="JJ/MM/AAAA"
-              [ngModel]="lastRegistrationDate"
-              (ngModelChange)="onDeadlineInput($event)" />
+            <input type="date" name="lastRegistrationDate" [(ngModel)]="lastRegistrationDateIso" />
           </label>
         </article>
       </div>

@@ -124,17 +124,25 @@ export class WebCreateEventComponent implements OnInit {
     return this.nameValid && this.categoryValid && this.dateValid && this.amountValid;
   }
 
-  onDateInput(value: string): void {
-    // Insère les barres obliques au fil de la frappe : 12122026 → 12/12/2026.
-    const digits = value.replace(/\D/g, '').slice(0, 8);
-    const parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)];
-    this.date = parts.filter(Boolean).join('/');
+  /**
+   * `<input type="date">` ne parle que le format ISO ; l'API attend « JJ/MM/AAAA ».
+   * Ces accesseurs font la conversion sans changer ce que le reste du
+   * composant (validation, envoi) connaît déjà comme `date`.
+   */
+  get dateIso(): string {
+    return frToIso(this.date);
   }
 
-  onDeadlineInput(value: string): void {
-    const digits = value.replace(/\D/g, '').slice(0, 8);
-    const parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)];
-    this.lastRegistrationDate = parts.filter(Boolean).join('/');
+  set dateIso(value: string) {
+    this.date = isoToFr(value);
+  }
+
+  get lastRegistrationDateIso(): string {
+    return frToIso(this.lastRegistrationDate);
+  }
+
+  set lastRegistrationDateIso(value: string) {
+    this.lastRegistrationDate = isoToFr(value);
   }
 
   chooseVisibility(value: Visibility): void {
@@ -194,6 +202,16 @@ export class WebCreateEventComponent implements OnInit {
 }
 
 const MONTHS = ['JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUIN', 'JUIL', 'AOÛT', 'SEPT', 'OCT', 'NOV', 'DÉC'];
+
+function frToIso(value: string): string {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim());
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : '';
+}
+
+function isoToFr(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : '';
+}
 
 /** Le serveur explique lui-même ses refus ; on les relaie tels quels. */
 function describeError(error: HttpErrorResponse): string {
