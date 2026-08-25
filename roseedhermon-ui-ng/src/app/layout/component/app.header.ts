@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -31,28 +31,20 @@ import { ROLES } from '../../core/auth/auth.model';
           <i class="pi pi-question-circle"></i>
         </button>
 
-        <div class="account" #accountMenu>
-          <button
-            type="button"
-            class="user-avatar"
-            (click)="menuOpen = !menuOpen"
-            [attr.aria-expanded]="menuOpen"
-            title="Mon compte">
-            {{ initials }}
-          </button>
+        <div class="account">
+          <span class="user-avatar" title="Mon compte">{{ initials }}</span>
 
-          <div class="account-dropdown" *ngIf="menuOpen">
-            <div class="account-identity">
-              <strong>{{ userName }}</strong>
-              <small>{{ userRole }}</small>
-            </div>
-            <a class="account-item" routerLink="/web/profil" (click)="menuOpen = false">
-              <i class="pi pi-user"></i> Mon profil
-            </a>
-            <button type="button" class="account-item" (click)="signOut()">
-              <i class="pi pi-sign-out"></i> Se déconnecter
-            </button>
+          <div class="account-identity">
+            <strong>{{ userName }}</strong>
+            <small>{{ userRole }}</small>
           </div>
+
+          <a class="account-item" routerLink="/web/profil">
+            <i class="pi pi-user"></i> Mon profil
+          </a>
+          <button type="button" class="account-item" (click)="signOut()">
+            <i class="pi pi-sign-out"></i> Se déconnecter
+          </button>
         </div>
       </div>
     </header>
@@ -143,10 +135,16 @@ import { ROLES } from '../../core/auth/auth.model';
     }
 
     .account {
-      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding-left: 0.85rem;
+      margin-left: 0.25rem;
+      border-left: 1px solid #e7eaf0;
     }
 
     .user-avatar {
+      flex: 0 0 44px;
       width: 44px;
       height: 44px;
       border: 0;
@@ -158,60 +156,48 @@ import { ROLES } from '../../core/auth/auth.model';
       justify-content: center;
       font: inherit;
       font-weight: 700;
-      cursor: pointer;
       box-shadow: 0 8px 20px rgba(244, 85, 29, 0.28);
     }
 
-    .account-dropdown {
-      position: absolute;
-      top: calc(100% + 0.6rem);
-      right: 0;
-      z-index: 20;
+    .account-identity {
       display: flex;
       flex-direction: column;
-      gap: 0.15rem;
-      min-width: 220px;
-      padding: 0.5rem;
-      border: 1px solid #e7eaf0;
-      border-radius: 16px;
-      background: #fff;
-      box-shadow: 0 16px 32px rgba(16, 28, 48, 0.16);
-    }
+      line-height: 1.25;
+      white-space: nowrap;
 
-    .account-identity {
-      padding: 0.5rem 0.75rem 0.6rem;
-      border-bottom: 1px solid #e7eaf0;
-      margin-bottom: 0.3rem;
-
-      strong { display: block; font-size: 0.92rem; color: #14243c; }
-      small { color: #667a92; font-size: 0.78rem; }
+      strong { font-size: 0.88rem; color: #14243c; }
+      small { color: #667a92; font-size: 0.76rem; }
     }
 
     .account-item {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 0.6rem;
-      padding: 0.6rem 0.75rem;
-      border: 0;
-      border-radius: 9px;
-      background: none;
+      gap: 0.4rem;
+      padding: 0.55rem 0.9rem;
+      border: 1px solid #e7eaf0;
+      border-radius: 999px;
+      background: #fff;
       color: #14243c;
       font: inherit;
-      font-size: 0.88rem;
+      font-size: 0.82rem;
       font-weight: 600;
-      text-align: left;
+      white-space: nowrap;
       text-decoration: none;
       cursor: pointer;
-      transition: background 0.15s ease;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 
-      &:hover { background: #fff0ea; color: #d3410d; }
+      &:hover { background: #fff0ea; color: #d3410d; border-color: #ffd6c2; }
 
-      i { color: #667a92; font-size: 0.85rem; }
+      i { color: #667a92; font-size: 0.8rem; }
       &:hover i { color: #f4551d; }
     }
 
     @media (max-width: 1100px) {
       .menu-btn { display: inline-flex; align-items: center; justify-content: center; }
+    }
+
+    @media (max-width: 900px) {
+      .account-identity { display: none; }
     }
 
     @media (max-width: 700px) {
@@ -222,11 +208,6 @@ import { ROLES } from '../../core/auth/auth.model';
 export class AppHeader {
   /** Ouvre ou ferme le menu latéral sur petit écran. */
   @Output() toggleMenu = new EventEmitter<void>();
-
-  /** Le bouton compte lui-même, pour ignorer ses propres clics dans `onDocumentClick`. */
-  @ViewChild('accountMenu') accountMenuRef?: ElementRef<HTMLElement>;
-
-  menuOpen = false;
 
   constructor(
     public auth: AuthService,
@@ -254,13 +235,6 @@ export class AppHeader {
       .map((part) => part.charAt(0))
       .join('')
       .toUpperCase();
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (this.menuOpen && !this.accountMenuRef?.nativeElement.contains(event.target as Node)) {
-      this.menuOpen = false;
-    }
   }
 
   signOut(): void {
