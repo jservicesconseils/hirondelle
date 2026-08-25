@@ -83,7 +83,7 @@
 
       <form (ngSubmit)="submit()" novalidate>
         <!-- Connexion et demande de code partagent le champ courriel -->
-        <label class="field" *ngIf="view === 'signin' || view === 'forgot'">
+        <label class="field" *ngIf="view === 'signin' || view === 'forgot' || view === 'signup'">
           <span>Courriel</span>
           <input
             type="email"
@@ -138,7 +138,7 @@
         </ng-container>
 
         <!-- Code reçu par courriel -->
-        <label class="field" *ngIf="view === 'reset'">
+        <label class="field" *ngIf="view === 'reset' || view === 'confirm'">
           <span>Code de vérification</span>
           <input
             type="text"
@@ -151,10 +151,10 @@
             placeholder="••••••" />
         </label>
 
-        <!-- Nouveau mot de passe : réinitialisation et première connexion -->
-        <ng-container *ngIf="view === 'reset' || view === 'challenge'">
+        <!-- Nouveau mot de passe : inscription, réinitialisation et première connexion -->
+        <ng-container *ngIf="view === 'reset' || view === 'challenge' || view === 'signup'">
           <label class="field">
-            <span>Nouveau mot de passe</span>
+            <span>{{ view === 'signup' ? 'Mot de passe' : 'Nouveau mot de passe' }}</span>
             <input type="password" name="newPassword" autocomplete="new-password" [(ngModel)]="newPassword" />
             <em class="hint">Huit caractères au minimum.</em>
           </label>
@@ -170,7 +170,11 @@
 
         <button type="submit" class="submit" [disabled]="busy">{{ submitLabel }}</button>
 
-        <button type="button" class="link centered" *ngIf="view === 'forgot' || view === 'reset'" (click)="show('signin')">
+        <button
+          type="button"
+          class="link centered"
+          *ngIf="view === 'forgot' || view === 'reset' || view === 'signup' || view === 'confirm'"
+          (click)="show('signin')">
           Revenir à la connexion
         </button>
       </form>
@@ -211,10 +215,11 @@
   </main>
 
   <!-- Bandeau du bas, comme celui de la bannière d'accueil -->
-  <footer class="rail">
+  <footer class="rail" *ngIf="view === 'signin'">
     <p>
-      Vous n'avez pas de compte&nbsp;? Un événement public se crée
-      <a routerLink="/web/creer-un-evenement">sans connexion</a>.
+      Vous n'avez pas de compte&nbsp;?
+      <button type="button" class="link" (click)="show('signup')">Créez-en un</button>
+      — aucun groupe requis pour organiser votre propre événement.
     </p>
   </footer>
 </div>

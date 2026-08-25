@@ -7,8 +7,8 @@
       <span class="kicker">Organisateurs</span>
       <h1>Créer un <em>événement</em></h1>
       <p class="lead">
-        Un événement public est visible de tous et se crée sans compte. Un événement
-        réservé à un groupe demande une session d'administration.
+        Un événement public est visible de tous — n'importe quel compte peut en créer un,
+        même sans groupe. Un événement réservé à un groupe demande un compte administrateur.
       </p>
     </header>
 
@@ -27,7 +27,7 @@
               <span class="choice-icon public"><i class="pi pi-globe"></i></span>
               <span class="choice-text">
                 <strong>Public</strong>
-                <small>Visible de tout le monde sur le site. Aucun compte requis.</small>
+                <small>Visible de tout le monde sur le site. Aucun groupe requis.</small>
               </span>
               <i class="pi pi-check-circle" *ngIf="visibility === 'PUBLIC'"></i>
             </button>
@@ -52,9 +52,8 @@
           <p class="locked-note" *ngIf="!canCreatePrivate">
             <i class="pi pi-info-circle"></i>
             <span>
-              Vous n'êtes pas connecté comme administrateur de groupe.
-              <a routerLink="/login" [queryParams]="{ redirect: '/web/creer-un-evenement' }">Se connecter</a>
-              pour créer un événement privé.
+              Réservé aux comptes administrateurs de groupe — le vôtre n'en est pas un.
+              Continuez pour un événement public, visible de tous.
             </span>
           </p>
         </article>

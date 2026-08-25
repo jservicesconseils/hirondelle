@@ -5,6 +5,7 @@ import { catchError, tap } from 'rxjs/operators';
 import {
   AuthenticationDetails,
   CognitoUser,
+  CognitoUserAttribute,
   CognitoUserPool,
   CognitoUserSession,
   ICognitoStorage
@@ -203,6 +204,59 @@ export class AuthService {
       throw new Error("Le serveur n'a pas accepté la session. Vérifiez que la passerelle répond.");
     }
     return user;
+  }
+
+  // --- Inscription libre ---------------------------------------------------------------
+
+  /**
+   * N'importe qui peut créer un compte — sans groupe ni rôle d'administration,
+   * exactement ce qu'il faut pour organiser un événement public par soi-même
+   * (l'anniversaire d'un enfant, par exemple). Le serveur lui donnera le rôle
+   * `MEMBER` par défaut, faute de groupe Cognito : voir `toRoles` côté serveur.
+   */
+  signUp(email: string, password: string): Promise<{ needsConfirmation: boolean }> {
+    if (!this.pool) return Promise.reject(new Error("Cognito n'est pas configuré."));
+    const trimmed = email.trim();
+    const attributes = [new CognitoUserAttribute({ Name: 'email', Value: trimmed })];
+
+    return new Promise((resolve, reject) => {
+      this.pool!.signUp(trimmed, password, attributes, [], (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve({ needsConfirmation: !(result?.userConfirmed ?? false) });
+      });
+    });
+  }
+
+  /** Code à six chiffres envoyé par courriel à l'inscription. */
+  confirmSignUp(email: string, code: string): Promise<void> {
+    if (!this.pool) return Promise.reject(new Error("Cognito n'est pas configuré."));
+    const user = new CognitoUser({ Username: email.trim(), Pool: this.pool, Storage: this.store });
+    return new Promise((resolve, reject) => {
+      user.confirmRegistration(code, true, (error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      });
+    });
+  }
+
+  resendSignUpCode(email: string): Promise<void> {
+    if (!this.pool) return Promise.reject(new Error("Cognito n'est pas configuré."));
+    const user = new CognitoUser({ Username: email.trim(), Pool: this.pool, Storage: this.store });
+    return new Promise((resolve, reject) => {
+      user.resendConfirmationCode((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      });
+    });
   }
 
   /** Deuxième étape lorsque Cognito impose un nouveau mot de passe. */

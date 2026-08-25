@@ -94,6 +94,18 @@ jobs:
             echo "Created app client: $CLIENT_ID"
           fi
 
+          echo "Enabling self-service sign-up..."
+
+          # The pool was created with admin-only user creation (matching a
+          # closed, invite-only app). Public event creation now needs anyone
+          # to be able to open their own (groupless) account, so this flips
+          # that back open. Safe to re-run: it's a plain idempotent update.
+          aws cognito-idp update-user-pool \
+            --user-pool-id "$POOL_ID" \
+            --admin-create-user-config AllowAdminCreateUserOnly=false \
+            --region "$AWS_REGION" \
+            >/dev/null
+
           for GROUP in SUPER_ADMIN GROUP_ADMIN MEMBER; do
             if aws cognito-idp get-group --user-pool-id "$POOL_ID" --group-name "$GROUP" >/dev/null 2>&1; then
               echo "Group $GROUP already exists."

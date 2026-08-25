@@ -15,11 +15,12 @@ import { GroupEntity } from '../../../shared/services/api/model/groupEntity';
 import { MockDirectoryService } from '../../../core/auth/mock-directory.service';
 
 /**
- * Les quatre écrans de la page, qui se succèdent dans le même panneau :
- * connexion, demande de code, choix du nouveau mot de passe, et le mot de passe
- * provisoire imposé par Cognito à la première connexion.
+ * Les six écrans de la page, qui se succèdent dans le même panneau : connexion,
+ * inscription et son code de confirmation, demande de code de réinitialisation,
+ * choix du nouveau mot de passe, et le mot de passe provisoire imposé par
+ * Cognito à la première connexion.
  */
-export type LoginView = 'signin' | 'forgot' | 'reset' | 'challenge';
+export type LoginView = 'signin' | 'signup' | 'confirm' | 'forgot' | 'reset' | 'challenge';
 
 /**
  * Illustration de la moitié droite : la photo de rue en fête, le même fichier que
@@ -95,6 +96,8 @@ export class LoginComponent implements OnInit {
   // --- État de l'écran ----------------------------------------------------------------
 
   get title(): string {
+    if (this.view === 'signup') return 'Créer un compte';
+    if (this.view === 'confirm') return 'Confirmez votre courriel';
     if (this.view === 'forgot') return 'Mot de passe oublié';
     if (this.view === 'reset') return 'Choisissez un nouveau mot de passe';
     if (this.view === 'challenge') return 'Choisissez votre mot de passe';
@@ -102,6 +105,12 @@ export class LoginComponent implements OnInit {
   }
 
   get lead(): string {
+    if (this.view === 'signup') {
+      return "Un compte suffit pour organiser votre propre événement — aucun groupe requis.";
+    }
+    if (this.view === 'confirm') {
+      return `Saisissez le code à six chiffres envoyé à ${this.email.trim()}.`;
+    }
     if (this.view === 'forgot') {
       return 'Indiquez le courriel de votre compte : nous vous enverrons un code à six chiffres.';
     }
@@ -114,6 +123,8 @@ export class LoginComponent implements OnInit {
 
   get submitLabel(): string {
     if (this.busy) return 'Un instant…';
+    if (this.view === 'signup') return 'Créer mon compte';
+    if (this.view === 'confirm') return 'Confirmer';
     if (this.view === 'forgot') return 'Envoyer le code';
     if (this.view === 'reset') return 'Enregistrer le mot de passe';
     if (this.view === 'challenge') return 'Enregistrer et continuer';
@@ -181,6 +192,8 @@ export class LoginComponent implements OnInit {
     try {
       if (this.view === 'forgot') await this.sendCode();
       else if (this.view === 'reset') await this.applyNewPassword();
+      else if (this.view === 'signup') await this.doSignUp();
+      else if (this.view === 'confirm') await this.doConfirmSignUp();
       else {
         const user = this.view === 'challenge' ? await this.completeChallenge() : await this.signIn();
         if (user) this.leave(user);
@@ -250,6 +263,46 @@ export class LoginComponent implements OnInit {
   private async completeChallenge(): Promise<CurrentUser | null> {
     if (!this.passwordsAgree()) return null;
     return this.auth.completeNewPassword(this.challenge!, this.newPassword);
+  }
+
+  private async doSignUp(): Promise<void> {
+    const email = this.email.trim();
+    if (!email) {
+      this.error = 'Indiquez votre courriel.';
+      return;
+    }
+    if (!this.auth.configured) {
+      this.error = "L'inscription n'est disponible qu'une fois Cognito configuré.";
+      return;
+    }
+    if (!this.passwordsAgree()) return;
+
+    const { needsConfirmation } = await this.auth.signUp(email, this.newPassword);
+    // Conservé pour la connexion automatique une fois le compte confirmé.
+    this.password = this.newPassword;
+
+    if (needsConfirmation) {
+      this.code = '';
+      this.show('confirm');
+      this.notice = `Un code à six chiffres a été envoyé à ${email}.`;
+      return;
+    }
+
+    await this.signInAfterSignUp();
+  }
+
+  private async doConfirmSignUp(): Promise<void> {
+    if (!this.code.trim()) {
+      this.error = 'Saisissez le code reçu par courriel.';
+      return;
+    }
+    await this.auth.confirmSignUp(this.email.trim(), this.code.trim());
+    await this.signInAfterSignUp();
+  }
+
+  private async signInAfterSignUp(): Promise<void> {
+    const user = await this.auth.signIn(this.email.trim(), this.password, this.remember);
+    this.leave(user);
   }
 
   /** Les deux règles communes aux deux écrans de saisie d'un mot de passe. */
