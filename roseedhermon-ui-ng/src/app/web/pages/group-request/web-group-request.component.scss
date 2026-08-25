@@ -88,7 +88,8 @@
     text-transform: uppercase;
   }
 
-  input {
+  input,
+  select {
     width: 100%;
     padding: 0.82rem 1rem;
     border: 1px solid $line;

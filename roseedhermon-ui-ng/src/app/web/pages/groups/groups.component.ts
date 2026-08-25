@@ -29,6 +29,9 @@ const CARD_GRADIENTS = [
   'linear-gradient(135deg, #f5a623 0%, #ffca6b 100%)'
 ];
 
+/** Même liste que le formulaire de demande côté membre (`/web/creer-un-groupe`). */
+const TYPE_CHOICES = ['Association', 'Club', 'Famille', 'Communauté religieuse', 'École', 'Entreprise', 'Autre'];
+
 const FEATURE_CHOICES: FeatureChoice[] = [
   {
     key: FEATURES.EVENTS,
@@ -52,6 +55,8 @@ const FEATURE_CHOICES: FeatureChoice[] = [
   styleUrls: ['./groups.component.scss']
 })
 export class GroupsComponent implements OnInit {
+  readonly typeChoices = TYPE_CHOICES;
+
   overview: GroupsOverview | null = null;
   groups: GroupWithCount[] = [];
 

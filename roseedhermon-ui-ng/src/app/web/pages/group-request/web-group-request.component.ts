@@ -9,6 +9,9 @@ import { GroupService } from '../../../shared/services/groups/groups.service';
 import { PublicHeaderComponent } from '../../components/public-header.component';
 import { PublicFooterComponent } from '../../components/public-footer.component';
 
+/** Repris du formulaire de création admin (`/app/groups`), pour la même liste des deux côtés. */
+const TYPE_CHOICES = ['Association', 'Club', 'Famille', 'Communauté religieuse', 'École', 'Entreprise', 'Autre'];
+
 /**
  * Un compte sans groupe ouvre sa propre communauté ici. La demande doit être
  * approuvée par un super administrateur avant que le compte ne devienne
@@ -22,6 +25,8 @@ import { PublicFooterComponent } from '../../components/public-footer.component'
   styleUrls: ['./web-group-request.component.scss']
 })
 export class WebGroupRequestComponent implements OnInit {
+  readonly typeChoices = TYPE_CHOICES;
+
   loading = true;
   request: GroupEntity | null = null;
 

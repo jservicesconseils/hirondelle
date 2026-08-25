@@ -67,7 +67,10 @@
 
           <label class="field">
             <span>Type</span>
-            <input type="text" name="type" [(ngModel)]="form.type" placeholder="Association, club, famille…" />
+            <select name="type" [(ngModel)]="form.type">
+              <option value="" disabled>Choisissez un type</option>
+              <option *ngFor="let choice of typeChoices" [value]="choice">{{ choice }}</option>
+            </select>
           </label>
 
           <label class="field">
