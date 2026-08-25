@@ -348,6 +348,14 @@ export class LoginComponent implements OnInit {
       return;
     }
 
+    // Cognito répond en anglais ; ce cas est fréquent (l'inscription) pour qu'il
+    // reste seul dans la langue de la page.
+    const code = (error as { code?: string })?.code;
+    if (code === 'UsernameExistsException') {
+      this.error = 'Un compte existe déjà avec ce courriel. Connectez-vous plutôt.';
+      return;
+    }
+
     this.error = (error as Error)?.message || 'La connexion a échoué.';
   }
 
