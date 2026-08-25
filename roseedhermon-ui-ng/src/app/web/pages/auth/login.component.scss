@@ -279,63 +279,7 @@
   line-height: 1.6;
 }
 
-// ---------------------------------------------------------------- connexion par téléphone
-
-.federated {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  width: 100%;
-  padding: 0.85rem 1.25rem;
-  border: 1px solid rgba(16, 28, 48, 0.16);
-  border-radius: 999px;
-  background: #fff;
-  color: $ink;
-  font-family: inherit;
-  font-size: 0.97rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-
-  &:hover:not(:disabled) {
-    border-color: rgba(16, 28, 48, 0.34);
-    box-shadow: 0 8px 20px rgba(16, 28, 48, 0.12);
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  i {
-    color: $accent;
-    font-size: 1rem;
-  }
-}
-
-.separator {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  margin: 1.4rem 0;
-  color: $muted;
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: $line;
-  }
-}
-
-// ---------------------------------------------------------------- méthode d'inscription
+// ---------------------------------------------------------------- méthode de connexion et d'inscription
 
 .method-toggle {
   display: flex;
@@ -882,7 +826,6 @@
     animation: none;
   }
 
-  .federated,
   .demo-card,
   .submit {
     transition: none;

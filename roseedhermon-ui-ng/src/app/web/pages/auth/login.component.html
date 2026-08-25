@@ -57,40 +57,35 @@
       <h2>{{ title }}</h2>
       <p class="lead">{{ lead }}</p>
 
-      <!-- Google -->
-      <ng-container *ngIf="view === 'signin'">
-        <button type="button" class="federated" (click)="show('phone')" [disabled]="busy">
-          <i class="pi pi-mobile"></i>
-          <span>Se connecter par téléphone</span>
-        </button>
-
-        <div class="separator"><span>ou avec votre courriel</span></div>
-      </ng-container>
-
       <form (ngSubmit)="submit()" novalidate>
-        <!-- Deux façons de créer un compte, avant tout le reste -->
-        <div class="method-toggle" *ngIf="view === 'signup'">
+        <!-- Deux façons de se connecter, ou de créer un compte — même bascule dans les deux cas -->
+        <div class="method-toggle" *ngIf="view === 'signin' || view === 'signup'">
           <button
             type="button"
-            [class.is-active]="signupMethod === 'phone'"
-            (click)="chooseSignupMethod('phone')">
+            [class.is-active]="(view === 'signin' ? loginMethod : signupMethod) === 'phone'"
+            (click)="view === 'signin' ? chooseLoginMethod('phone') : chooseSignupMethod('phone')">
             <i class="pi pi-mobile"></i> Par téléphone
           </button>
           <button
             type="button"
-            [class.is-active]="signupMethod === 'email'"
-            (click)="chooseSignupMethod('email')">
+            [class.is-active]="(view === 'signin' ? loginMethod : signupMethod) === 'email'"
+            (click)="view === 'signin' ? chooseLoginMethod('email') : chooseSignupMethod('email')">
             <i class="pi pi-envelope"></i> Par courriel
           </button>
         </div>
 
+        <p class="method-hint" *ngIf="view === 'signin' && loginMethod === 'phone'">
+          Le code de vérification part par courriel pour l'instant — le SMS suivra dès qu'il sera activé.
+        </p>
         <p class="method-hint" *ngIf="view === 'signup' && signupMethod === 'phone'">
           Aucun mot de passe à choisir&nbsp;: un code à six chiffres, envoyé par courriel, suffira
           à vous connecter la prochaine fois.
         </p>
 
-        <!-- Numéro : seul champ (avec le courriel) de la connexion et de l'inscription par téléphone -->
-        <label class="field" *ngIf="view === 'phone' || (view === 'signup' && signupMethod === 'phone')">
+        <!-- Numéro : seul champ de la connexion et de l'inscription par téléphone -->
+        <label
+          class="field"
+          *ngIf="(view === 'signin' && loginMethod === 'phone') || (view === 'signup' && signupMethod === 'phone')">
           <span>Téléphone</span>
           <span class="with-prefix">
             <span class="prefix">+1</span>
@@ -104,9 +99,11 @@
           </span>
         </label>
 
-        <!-- Connexion, demande de code et inscription partagent le champ courriel —
+        <!-- Connexion par courriel, demande de code et inscription partagent ce champ —
              pas la connexion par téléphone, qui le retrouve elle-même par le numéro -->
-        <label class="field" *ngIf="view === 'signin' || view === 'forgot' || view === 'signup'">
+        <label
+          class="field"
+          *ngIf="(view === 'signin' && loginMethod === 'email') || view === 'forgot' || view === 'signup'">
           <span>Courriel</span>
           <input
             type="email"
@@ -116,7 +113,7 @@
             placeholder="vous@exemple.ca" />
         </label>
 
-        <ng-container *ngIf="view === 'signin'">
+        <ng-container *ngIf="view === 'signin' && loginMethod === 'email'">
           <label class="field">
             <span>Mot de passe</span>
             <span class="with-reveal">
@@ -206,7 +203,6 @@
             view === 'reset' ||
             view === 'signup' ||
             view === 'confirm' ||
-            view === 'phone' ||
             view === 'phone-code'
           "
           (click)="show('signin')">
@@ -224,7 +220,7 @@
       </div>
 
       <!-- Comptes de démonstration, en local seulement -->
-      <section class="demo" *ngIf="!auth.configured && view === 'signin'">
+      <section class="demo" *ngIf="!auth.configured && view === 'signin' && loginMethod === 'email'">
         <button type="button" class="demo-toggle" (click)="demoOpen = !demoOpen" [class.is-open]="demoOpen">
           <i class="pi pi-wrench"></i>
           <span>Environnement local — trois comptes pour essayer les rôles</span>

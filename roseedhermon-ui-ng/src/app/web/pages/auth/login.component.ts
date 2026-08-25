@@ -26,7 +26,6 @@ export type LoginView =
   | 'signin'
   | 'signup'
   | 'confirm'
-  | 'phone'
   | 'phone-code'
   | 'forgot'
   | 'reset'
@@ -61,6 +60,9 @@ export class LoginComponent implements OnInit {
 
   /** Inscription : par téléphone (sans mot de passe) ou par courriel. */
   signupMethod: 'phone' | 'email' = 'email';
+
+  /** Connexion : par téléphone (sans mot de passe) ou par courriel — même choix qu'à l'inscription. */
+  loginMethod: 'phone' | 'email' = 'email';
 
   // Réinitialisation : le code reçu par courriel, puis le mot de passe choisi.
   code = '';
@@ -114,7 +116,6 @@ export class LoginComponent implements OnInit {
   get title(): string {
     if (this.view === 'signup') return 'Créer un compte';
     if (this.view === 'confirm') return 'Confirmez votre courriel';
-    if (this.view === 'phone') return 'Connexion par téléphone';
     if (this.view === 'phone-code') return 'Confirmez le code';
     if (this.view === 'forgot') return 'Mot de passe oublié';
     if (this.view === 'reset') return 'Choisissez un nouveau mot de passe';
@@ -128,10 +129,6 @@ export class LoginComponent implements OnInit {
     }
     if (this.view === 'confirm') {
       return `Saisissez le code à six chiffres envoyé à ${this.email.trim()}.`;
-    }
-    if (this.view === 'phone') {
-      return "Indiquez le numéro de votre compte. Le code de vérification part par courriel pour " +
-        "l'instant — le SMS suivra dès que le numéro sera activé.";
     }
     if (this.view === 'phone-code') {
       return `Saisissez le code à six chiffres envoyé à ${this.email.trim()}.`;
@@ -150,11 +147,11 @@ export class LoginComponent implements OnInit {
     if (this.busy) return 'Un instant…';
     if (this.view === 'signup') return 'Créer mon compte';
     if (this.view === 'confirm') return 'Confirmer';
-    if (this.view === 'phone') return 'Recevoir mon code';
     if (this.view === 'phone-code') return 'Confirmer et me connecter';
     if (this.view === 'forgot') return 'Envoyer le code';
     if (this.view === 'reset') return 'Enregistrer le mot de passe';
     if (this.view === 'challenge') return 'Enregistrer et continuer';
+    if (this.view === 'signin' && this.loginMethod === 'phone') return 'Recevoir mon code';
     return 'Se connecter';
   }
 
@@ -184,6 +181,14 @@ export class LoginComponent implements OnInit {
     } else {
       this.phone = '';
     }
+  }
+
+  /** Même bascule, pour la connexion. */
+  chooseLoginMethod(method: 'phone' | 'email'): void {
+    this.loginMethod = method;
+    this.error = '';
+    if (method === 'phone') this.password = '';
+    else this.phone = '';
   }
 
   /**
@@ -235,8 +240,8 @@ export class LoginComponent implements OnInit {
         await (this.signupMethod === 'phone' ? this.doSignUpByPhone() : this.doSignUpByEmail());
       }
       else if (this.view === 'confirm') await this.doConfirmSignUp();
-      else if (this.view === 'phone') await this.requestPhoneCode();
       else if (this.view === 'phone-code') await this.confirmPhoneCode();
+      else if (this.view === 'signin' && this.loginMethod === 'phone') await this.requestPhoneCode();
       else {
         const user = this.view === 'challenge' ? await this.completeChallenge() : await this.signIn();
         if (user) this.leave(user);
