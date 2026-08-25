@@ -30,6 +30,18 @@ const groupSchema = new Schema(
      * s'ajoutera sans migration.
      */
     features: { type: [String] },
+    /**
+     * Champ additif : un groupe créé par le super administrateur (formulaire
+     * `/app/groups`, ou document antérieur à cette fonctionnalité) n'en porte
+     * pas et vaut `APPROVED` — voir `normalizeStatus`. Seule une demande
+     * ouverte par un membre depuis son compte passe par `PENDING`.
+     */
+    status: { type: String },
+    requestedByEmail: { type: String },
+    requestedAt: { type: Date },
+    decidedByEmail: { type: String },
+    decidedAt: { type: Date },
+    rejectionReason: { type: String },
     _class: { type: String, default: GROUP_CLASS },
   },
   {

@@ -16,6 +16,14 @@ export interface GroupInput {
   features: Feature[] | null;
 }
 
+export type GroupStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+/** Un groupe sans statut est antérieur à cette fonctionnalité — donc déjà actif. */
+export function normalizeStatus(value: unknown): GroupStatus {
+  const upper = String(value ?? '').toUpperCase();
+  return upper === 'PENDING' || upper === 'REJECTED' ? upper : 'APPROVED';
+}
+
 /** `GroupEntity` -> JSON, dans l'ordre produit par Jackson. */
 export function groupToJson(doc: GroupDocument) {
   return {
@@ -31,6 +39,12 @@ export function groupToJson(doc: GroupDocument) {
     website: doc.website ?? null,
     // Toujours explicite : le client n'a pas à deviner ce que signifie l'absence.
     features: normalizeFeatures(doc.features),
+    status: normalizeStatus(doc.status),
+    requestedByEmail: doc.requestedByEmail ?? null,
+    requestedAt: doc.requestedAt ?? null,
+    decidedByEmail: doc.decidedByEmail ?? null,
+    decidedAt: doc.decidedAt ?? null,
+    rejectionReason: doc.rejectionReason ?? null,
   };
 }
 

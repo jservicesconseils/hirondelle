@@ -25,5 +25,12 @@ export interface GroupEntity {
      * Ajouté après la génération : le serveur le renvoie toujours explicitement.
      */
     features?: string[];
+    /** Champs additifs — demande de création par un membre, et sa décision. */
+    status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+    requestedByEmail?: string | null;
+    requestedAt?: string | null;
+    decidedByEmail?: string | null;
+    decidedAt?: string | null;
+    rejectionReason?: string | null;
 }
 

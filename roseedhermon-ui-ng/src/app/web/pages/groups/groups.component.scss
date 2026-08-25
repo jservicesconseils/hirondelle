@@ -207,6 +207,39 @@
 
 .drawer-note { color: $muted; font-size: 0.92rem; text-align: center; padding: 1rem 0; }
 
+.drawer-stats {
+  margin-bottom: 1rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  background: theme.$accent-soft;
+
+  strong {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: theme.$ink;
+  }
+
+  span {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: theme.$muted;
+  }
+}
+
 .member-line {
   display: flex;
   align-items: center;
@@ -438,4 +471,98 @@
 
 @media (max-width: 640px) {
   .feature-cards { grid-template-columns: 1fr; }
+}
+
+/* ---------- Demandes de création en attente ---------- */
+
+.requests {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid theme.$line;
+  border-radius: 18px;
+  background: theme.$cream;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: theme.$ink;
+
+    i { color: theme.$accent; }
+  }
+}
+
+.decide-error {
+  margin: 0 0 0.75rem;
+  color: #b00020;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.request-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.request-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.15rem;
+  border: 1px solid theme.$line;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.request-main {
+  h3 {
+    margin: 0 0 0.3rem;
+    font-size: 1rem;
+    font-weight: 800;
+    color: theme.$ink;
+  }
+
+  .meta {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+}
+
+.request-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.reject-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1 1 260px;
+
+  input {
+    padding: 0.6rem 0.85rem;
+    border: 1px solid theme.$line;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+
+    &:focus {
+      border-color: theme.$accent;
+    }
+  }
+}
+
+.reject-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }

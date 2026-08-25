@@ -57,6 +57,14 @@
           <a class="account-item" routerLink="/web/profil" (click)="accountMenuOpen = false">
             <i class="pi pi-user"></i> Mon profil
           </a>
+          <!-- Un administrateur a déjà son groupe ; inutile de lui proposer d'en demander un. -->
+          <a
+            class="account-item"
+            *ngIf="!auth.canAdminister()"
+            routerLink="/web/creer-un-groupe"
+            (click)="accountMenuOpen = false">
+            <i class="pi pi-sitemap"></i> Créer ma communauté
+          </a>
           <button type="button" class="account-item" (click)="signOut()">
             <i class="pi pi-sign-out"></i> Se déconnecter
           </button>

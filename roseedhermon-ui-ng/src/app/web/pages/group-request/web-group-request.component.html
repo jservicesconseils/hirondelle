@@ -1,0 +1,89 @@
+<app-public-header></app-public-header>
+
+<main class="page">
+  <header class="head">
+    <div class="shell">
+      <span class="eyebrow">
+        <span class="eyebrow-bar"></span>
+        Communauté
+      </span>
+      <h1>Créer ma communauté</h1>
+      <p class="lead">
+        Ouvrez un groupe pour organiser des événements réservés aux personnes que vous y invitez.
+        Un super administrateur approuve chaque demande avant qu'elle ne devienne active.
+      </p>
+    </div>
+  </header>
+
+  <div class="shell body">
+    <p class="state" *ngIf="loading">Chargement…</p>
+
+    <ng-container *ngIf="!loading">
+      <!-- Déjà rattaché à un groupe -->
+      <div class="panel notice-panel" *ngIf="auth.user().groupId">
+        <i class="pi pi-check-circle"></i>
+        <p>Votre compte appartient déjà à un groupe — inutile d'en demander un autre.</p>
+      </div>
+
+      <ng-container *ngIf="!auth.user().groupId">
+        <!-- En attente -->
+        <div class="panel status-panel is-pending" *ngIf="request?.status === 'PENDING'">
+          <i class="pi pi-clock"></i>
+          <h2>Demande envoyée</h2>
+          <p>
+            <strong>{{ request?.name }}</strong> est en attente d'approbation par un super administrateur.
+            Vous serez averti — revenez consulter cette page plus tard.
+          </p>
+        </div>
+
+        <!-- Approuvée, mais la session n'a pas encore le nouveau rôle -->
+        <div class="panel status-panel is-approved" *ngIf="request?.status === 'APPROVED'">
+          <i class="pi pi-verified"></i>
+          <h2>Demande approuvée</h2>
+          <p>
+            <strong>{{ request?.name }}</strong> est maintenant active, et vous en êtes l'administrateur.
+            Reconnectez-vous pour que votre session en tienne compte.
+          </p>
+          <button type="button" class="submit" (click)="signOutAndReturn()">Se reconnecter</button>
+        </div>
+
+        <!-- Refusée -->
+        <div class="panel status-panel is-rejected" *ngIf="request?.status === 'REJECTED'">
+          <i class="pi pi-times-circle"></i>
+          <h2>Demande refusée</h2>
+          <p>
+            La demande pour <strong>{{ request?.name }}</strong> n'a pas été retenue.
+            <span *ngIf="request?.rejectionReason">Motif&nbsp;: {{ request?.rejectionReason }}</span>
+          </p>
+          <button type="button" class="submit" (click)="startOver()">Faire une nouvelle demande</button>
+        </div>
+
+        <!-- Formulaire -->
+        <form class="panel" (ngSubmit)="submit()" novalidate *ngIf="!request">
+          <label class="field">
+            <span>Nom de la communauté *</span>
+            <input type="text" name="name" [(ngModel)]="form.name" placeholder="Ex : Association Les Hirondelles" />
+          </label>
+
+          <label class="field">
+            <span>Type</span>
+            <input type="text" name="type" [(ngModel)]="form.type" placeholder="Association, club, famille…" />
+          </label>
+
+          <label class="field">
+            <span>Ville</span>
+            <input type="text" name="city" [(ngModel)]="form.city" />
+          </label>
+
+          <p class="error" *ngIf="error">{{ error }}</p>
+
+          <button type="submit" class="submit" [disabled]="!canSave">
+            {{ saving ? 'Envoi…' : 'Envoyer la demande' }}
+          </button>
+        </form>
+      </ng-container>
+    </ng-container>
+  </div>
+</main>
+
+<app-public-footer></app-public-footer>

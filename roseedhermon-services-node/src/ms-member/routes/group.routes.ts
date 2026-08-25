@@ -33,6 +33,55 @@ groupRouter.post(
   }),
 );
 
+/**
+ * Un membre sans groupe ouvre sa propre communauté. `requireRole` n'est pas
+ * de mise ici : c'est justement l'absence de rôle d'administration qui amène
+ * quelqu'un vers cette route, pas une condition qui l'y autoriserait.
+ */
+groupRouter.post(
+  '/request',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    if (req.auth?.groupId) {
+      res.status(409).json({ error: 'Ce compte appartient déjà à un groupe.' });
+      return;
+    }
+    const email = req.auth?.email;
+    if (!email) {
+      res.status(401).json({ error: 'Authentification requise.' });
+      return;
+    }
+    const created = await groupService.requestGroup(email, req.body ?? {});
+    res.status(201).json(groupToJson(created));
+  }),
+);
+
+// GET /api/v1/groups/my-request — déclaré avant /:id pour ne pas être capturé par celui-ci
+groupRouter.get(
+  '/my-request',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const email = req.auth?.email;
+    if (!email) {
+      res.status(401).json({ error: 'Authentification requise.' });
+      return;
+    }
+    const group = await groupService.getMyGroupRequest(email);
+    res.json(group ? groupToJson(group) : null);
+  }),
+);
+
+// GET /api/v1/groups/requests — déclaré avant /:id pour ne pas être capturé par celui-ci
+groupRouter.get(
+  '/requests',
+  requireAuth,
+  requireRole(ROLES.SUPER_ADMIN),
+  asyncHandler(async (_req, res) => {
+    const groups = await groupService.getPendingGroups();
+    res.json(groups.map(groupToJson));
+  }),
+);
+
 // POST /api/v1/groups — la création d'un groupe reste l'affaire du super administrateur.
 groupRouter.post(
   '/',
@@ -100,6 +149,41 @@ groupRouter.get(
         return { ...json, memberCount: json.id ? countByGroup.get(json.id) ?? 0 : 0 };
       }),
     });
+  }),
+);
+
+// POST /api/v1/groups/{id}/approve — le compte demandeur devient GROUP_ADMIN de ce groupe.
+groupRouter.post(
+  '/:id/approve',
+  requireAuth,
+  requireRole(ROLES.SUPER_ADMIN),
+  asyncHandler(async (req, res) => {
+    const email = req.auth?.email ?? 'inconnu';
+    const approved = await groupService.approveGroup(req.params.id, email);
+    res.json(groupToJson(approved));
+  }),
+);
+
+// POST /api/v1/groups/{id}/reject
+groupRouter.post(
+  '/:id/reject',
+  requireAuth,
+  requireRole(ROLES.SUPER_ADMIN),
+  asyncHandler(async (req, res) => {
+    const email = req.auth?.email ?? 'inconnu';
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() || null : null;
+    const rejected = await groupService.rejectGroup(req.params.id, email, reason);
+    res.json(groupToJson(rejected));
+  }),
+);
+
+// GET /api/v1/groups/{id}/stats — effectif et événements, pour le détail d'un groupe.
+groupRouter.get(
+  '/:id/stats',
+  requireAuth,
+  requireRole(ROLES.SUPER_ADMIN),
+  asyncHandler(async (req, res) => {
+    res.json(await groupService.getGroupStats(req.params.id));
   }),
 );
 

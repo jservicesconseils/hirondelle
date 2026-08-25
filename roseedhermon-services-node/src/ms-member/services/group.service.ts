@@ -1,6 +1,9 @@
+import mongoose from 'mongoose';
 import {
   forgetGroupFeatures,
+  promoteToGroupAdmin,
   runtimeError,
+  setAccountGroupId,
   springIdFilter,
   toSpringId,
   toStringOrNull,
@@ -46,8 +49,137 @@ export async function getGroupById(id: string): Promise<GroupDocument | null> {
   return GroupModel.findOne(springIdFilter(id)).exec();
 }
 
+/**
+ * Groupes utilisables : approuvés, ou antérieurs à cette fonctionnalité (donc
+ * sans statut — traités comme approuvés, voir `normalizeStatus`). Une demande
+ * `PENDING` ou `REJECTED` n'est pas une communauté, elle ne doit apparaître
+ * nulle part où elle serait prise pour une vraie — répertoire, tableau de
+ * bord, choix de groupe à l'inscription.
+ */
 export async function getAllGroups(): Promise<GroupDocument[]> {
-  return GroupModel.find().exec();
+  return GroupModel.find({ status: { $nin: ['PENDING', 'REJECTED'] } }).exec();
+}
+
+/** Demandes de création en attente, pour l'écran du super administrateur. */
+export async function getPendingGroups(): Promise<GroupDocument[]> {
+  return GroupModel.find({ status: 'PENDING' }).sort({ requestedAt: 1 }).exec();
+}
+
+/**
+ * La plus récente demande de ce compte, quel que soit son statut — pour que
+ * son propre écran sache s'il doit montrer le formulaire, une attente, ou un
+ * refus. `null` si le compte n'a jamais rien demandé.
+ */
+export async function getMyGroupRequest(email: string): Promise<GroupDocument | null> {
+  return GroupModel.findOne({ requestedByEmail: email.trim().toLowerCase() })
+    .sort({ requestedAt: -1 })
+    .exec();
+}
+
+/**
+ * Un membre sans groupe ouvre sa propre communauté. Elle reste invisible de
+ * tous — y compris de lui — tant qu'un super administrateur ne l'a pas
+ * approuvée : `getAllGroups` l'exclut explicitement.
+ */
+export async function requestGroup(requesterEmail: string, body: Record<string, unknown>): Promise<GroupDocument> {
+  const email = requesterEmail.trim().toLowerCase();
+
+  const alreadyPending = await GroupModel.findOne({ status: 'PENDING', requestedByEmail: email }).exec();
+  if (alreadyPending) throw runtimeError('Une demande est déjà en attente pour ce compte.');
+
+  const document = withoutNulls({ ...groupFromBody(body), _class: GROUP_CLASS });
+
+  return GroupModel.create({
+    _id: toSpringId(null),
+    ...document,
+    status: 'PENDING',
+    requestedByEmail: email,
+    requestedAt: new Date(),
+  });
+}
+
+/**
+ * Approuve la demande : le groupe devient une communauté normale, et son
+ * auteur en devient l'administrateur — dans Cognito (rôle, groupe
+ * d'appartenance) comme dans le jeton qu'il obtiendra à sa prochaine connexion.
+ */
+export async function approveGroup(id: string, decidedByEmail: string): Promise<GroupDocument> {
+  const group = await GroupModel.findOne(springIdFilter(id)).exec();
+  if (!group) throw runtimeError(`Group not found: ${id}`);
+
+  const requester = toStringOrNull(group.get('requestedByEmail'));
+  if (!requester) throw runtimeError("Ce groupe ne porte aucune demande à approuver.");
+
+  group.set('status', 'APPROVED');
+  group.set('decidedByEmail', decidedByEmail.trim().toLowerCase());
+  group.set('decidedAt', new Date());
+  await group.save();
+
+  const groupId = String(group._id);
+  await promoteToGroupAdmin(requester);
+  await setAccountGroupId(requester, groupId);
+  forgetGroupFeatures(groupId);
+
+  return group;
+}
+
+export async function rejectGroup(
+  id: string,
+  decidedByEmail: string,
+  reason: string | null,
+): Promise<GroupDocument> {
+  const group = await GroupModel.findOne(springIdFilter(id)).exec();
+  if (!group) throw runtimeError(`Group not found: ${id}`);
+
+  group.set('status', 'REJECTED');
+  group.set('decidedByEmail', decidedByEmail.trim().toLowerCase());
+  group.set('decidedAt', new Date());
+  if (reason) group.set('rejectionReason', reason);
+  await group.save();
+
+  return group;
+}
+
+export interface GroupStats {
+  memberCount: number;
+  eventsTotal: number;
+  eventsUpcoming: number;
+  eventsPast: number;
+}
+
+/** Les dates arrivent au format « JJ/MM/AAAA », comme ailleurs dans le projet. */
+function parseFrDate(value: unknown): Date | null {
+  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(value ?? '').trim());
+  if (!match) return null;
+  return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+}
+
+/**
+ * Chiffres d'un groupe pour l'écran du super administrateur.
+ *
+ * `event` n'a pas de modèle Mongoose ici — comme `featuresOfGroup`, la
+ * collection est interrogée directement par le pilote plutôt que
+ * d'enregistrer une seconde fois `EventModel`, propriété de ms-event.
+ */
+export async function getGroupStats(id: string): Promise<GroupStats> {
+  const [memberCount, events] = await Promise.all([
+    MemberModel.countDocuments({ groupId: id }).exec(),
+    mongoose.connection.collection('event').find({ groupId: id }, { projection: { date: 1 } }).toArray(),
+  ]);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let eventsUpcoming = 0;
+  let eventsPast = 0;
+
+  for (const event of events) {
+    const date = parseFrDate((event as { date?: unknown }).date);
+    if (date && date.getTime() >= today.getTime()) eventsUpcoming += 1;
+    else eventsPast += 1;
+  }
+
+  return { memberCount, eventsTotal: events.length, eventsUpcoming, eventsPast };
 }
 
 /**

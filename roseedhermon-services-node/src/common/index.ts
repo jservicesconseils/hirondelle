@@ -1,4 +1,5 @@
 export * from './bootstrap';
+export * from './cognito-admin';
 export * from './env';
 export * from './group-features';
 export * from './http';

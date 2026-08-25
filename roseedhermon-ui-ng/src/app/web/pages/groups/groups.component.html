@@ -46,6 +46,48 @@
 
   <div class="body">
 
+    <!-- Demandes de création ouvertes par des membres, en attente de décision -->
+    <section class="requests" *ngIf="requestsLoading || pendingRequests.length">
+      <h2><i class="pi pi-inbox"></i> Demandes de création en attente</h2>
+      <p class="load-state" *ngIf="requestsLoading">Chargement des demandes…</p>
+      <p class="decide-error" *ngIf="decideError">{{ decideError }}</p>
+
+      <div class="request-list" *ngIf="!requestsLoading">
+        <article class="request-card" *ngFor="let request of pendingRequests; trackBy: trackByRequest">
+          <div class="request-main">
+            <h3>{{ request.name || 'Sans nom' }}</h3>
+            <p class="meta" *ngIf="request.type">{{ request.type }}<span *ngIf="request.city"> · {{ request.city }}</span></p>
+            <p class="meta"><i class="pi pi-user"></i> {{ request.requestedByEmail }}</p>
+            <p class="meta" *ngIf="request.requestedAt">
+              <i class="pi pi-clock"></i> Demandé le {{ request.requestedAt | date: 'd MMMM y' }}
+            </p>
+          </div>
+
+          <div class="request-actions" *ngIf="rejectingId !== request.id">
+            <button type="button" class="btn-primary" [disabled]="!!decidingId" (click)="approve(request)">
+              <i class="pi pi-check"></i> Approuver
+            </button>
+            <button type="button" class="btn-ghost" [disabled]="!!decidingId" (click)="startReject(request)">
+              <i class="pi pi-times"></i> Refuser
+            </button>
+          </div>
+
+          <div class="reject-form" *ngIf="rejectingId === request.id">
+            <input
+              type="text"
+              placeholder="Motif du refus (facultatif)"
+              [(ngModel)]="rejectReason" />
+            <div class="reject-actions">
+              <button type="button" class="btn-ghost" (click)="cancelReject()">Annuler</button>
+              <button type="button" class="btn-primary" [disabled]="!!decidingId" (click)="confirmReject(request)">
+                Confirmer le refus
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <p class="load-state" *ngIf="loading">Chargement des groupes…</p>
     <p class="load-error" *ngIf="loadError">{{ loadError }}</p>
 
@@ -157,6 +199,29 @@
               <span class="avatar">{{ initialsOf(selectedGroup.name) }}</span>
               <h2>{{ selectedGroup.name }}</h2>
               <p>{{ selectedGroup.city || '—' }}<span *ngIf="selectedGroup.type"> · {{ selectedGroup.type }}</span></p>
+            </div>
+
+            <!-- Chiffres du groupe, réservés au super administrateur -->
+            <div class="drawer-stats" *ngIf="auth.isSuperAdmin()">
+              <p class="drawer-note" *ngIf="statsLoading">Chargement des statistiques…</p>
+              <div class="stats-grid" *ngIf="groupStats as s">
+                <div class="stat">
+                  <strong>{{ s.memberCount }}</strong>
+                  <span>Membres</span>
+                </div>
+                <div class="stat">
+                  <strong>{{ s.eventsUpcoming }}</strong>
+                  <span>Événements à venir</span>
+                </div>
+                <div class="stat">
+                  <strong>{{ s.eventsPast }}</strong>
+                  <span>Événements passés</span>
+                </div>
+                <div class="stat">
+                  <strong>{{ s.eventsTotal }}</strong>
+                  <span>Événements au total</span>
+                </div>
+              </div>
             </div>
 
             <p class="drawer-note" *ngIf="membersLoading">Chargement de l'annuaire…</p>

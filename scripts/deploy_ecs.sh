@@ -31,8 +31,18 @@ VPC_ID="${VPC_ID:-vpc-05ffbeb90d67b70ac}"
 PUBLIC_SUBNET_1_NAME="${PUBLIC_SUBNET_1_NAME:-hirondelle-vpc-subnet-public1-us-east-1a}"
 PUBLIC_SUBNET_2_NAME="${PUBLIC_SUBNET_2_NAME:-hirondelle-vpc-subnet-public2-us-east-1b}"
 
-# Existing ECS task execution role
+# Existing ECS task execution role (pulls the image, ships logs)
 ROLE_NAME="${ECS_TASK_EXECUTION_ROLE_NAME:-ecsTaskExecutionRole}"
+
+# ECS task role (the container's own AWS identity at runtime: SNS, Cognito
+# admin calls). Created if missing — unlike the execution role above, nothing
+# provisions this one outside of this script.
+TASK_ROLE_NAME="${ECS_TASK_ROLE_NAME:-hirondelle-backend-task-role}"
+
+# Needed to scope the Cognito admin permissions to this one pool. Optional:
+# the policy statement is skipped if unset, matching how the rest of this
+# script treats Cognito as optional.
+COGNITO_USER_POOL_ID="${COGNITO_USER_POOL_ID:-}"
 
 # ============================================================
 # Build image URI if not provided
@@ -235,7 +245,72 @@ echo "$ROLE_ARN"
 
 
 # ============================================================
-# 6bis. Ensure CloudWatch log group exists
+# 6bis. Ensure ECS Task Role exists (the container's own runtime identity)
+# ============================================================
+
+echo ""
+echo "Checking ECS Task Role..."
+
+if ! aws iam get-role --role-name "$TASK_ROLE_NAME" >/dev/null 2>&1; then
+
+  echo "Task role '$TASK_ROLE_NAME' not found, creating it..."
+
+  aws iam create-role \
+    --role-name "$TASK_ROLE_NAME" \
+    --assume-role-policy-document '{
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": { "Service": "ecs-tasks.amazonaws.com" },
+          "Action": "sts:AssumeRole"
+        }
+      ]
+    }' \
+    >/dev/null
+
+  # A brand-new role can take a few seconds to become usable elsewhere.
+  sleep 8
+fi
+
+TASK_ROLE_ARN=$(
+  aws iam get-role \
+    --role-name "$TASK_ROLE_NAME" \
+    --query "Role.Arn" \
+    --output text
+)
+
+echo "Task Role: $TASK_ROLE_ARN"
+
+echo "Updating task role permissions..."
+
+# sns:Publish has no per-resource ARN for SMS (it targets a phone number, not
+# a topic) — "*" is the normal scope for it. Cognito admin actions are scoped
+# to this one user pool, and skipped entirely if it isn't configured.
+TASK_ROLE_STATEMENTS='[
+  { "Effect": "Allow", "Action": "sns:Publish", "Resource": "*" }'
+
+if [ -n "$COGNITO_USER_POOL_ID" ]; then
+  TASK_ROLE_STATEMENTS="${TASK_ROLE_STATEMENTS},
+  {
+    \"Effect\": \"Allow\",
+    \"Action\": [\"cognito-idp:AdminAddUserToGroup\", \"cognito-idp:AdminUpdateUserAttributes\"],
+    \"Resource\": \"arn:aws:cognito-idp:${REGION}:${ACCOUNT_ID}:userpool/${COGNITO_USER_POOL_ID}\"
+  }"
+fi
+
+TASK_ROLE_STATEMENTS="${TASK_ROLE_STATEMENTS}
+]"
+
+aws iam put-role-policy \
+  --role-name "$TASK_ROLE_NAME" \
+  --policy-name "hirondelle-backend-runtime" \
+  --policy-document "{\"Version\":\"2012-10-17\",\"Statement\":${TASK_ROLE_STATEMENTS}}" \
+  >/dev/null
+
+
+# ============================================================
+# 6ter. Ensure CloudWatch log group exists
 # ============================================================
 
 LOG_GROUP="/ecs/${SERVICE_NAME}"
@@ -278,7 +353,8 @@ python3 - \
   "$CPU" \
   "$MEMORY" \
   "$LOG_GROUP" \
-  "$REGION" <<'PY'
+  "$REGION" \
+  "$TASK_ROLE_ARN" <<'PY'
 
 import json
 import os
@@ -292,8 +368,12 @@ cpu = sys.argv[5]
 memory = sys.argv[6]
 log_group = sys.argv[7]
 log_region = sys.argv[8]
+task_role_arn = sys.argv[9]
 
-environment = []
+# Always set: the SDK calls made from inside the container (SNS, Cognito
+# admin) need to know their region, and nothing else in this environment
+# supplies it.
+environment = [{"name": "AWS_REGION", "value": log_region}]
 
 for name in [
     "MONGODB_URI",
@@ -327,6 +407,7 @@ payload = {
     "memory": memory,
 
     "executionRoleArn": role_arn,
+    "taskRoleArn": task_role_arn,
 
     "containerDefinitions": [
         {

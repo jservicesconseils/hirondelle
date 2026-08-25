@@ -23,6 +23,7 @@ import { WebCreateEventComponent } from './app/web/pages/events/web-create-event
 import { WebMembersComponent } from './app/web/pages/members/web-members/web-members.component';
 import { WebMyEventsComponent } from './app/web/pages/events/web-my-events/web-my-events.component';
 import { WebProfileComponent } from './app/web/pages/profile/web-profile.component';
+import { WebGroupRequestComponent } from './app/web/pages/group-request/web-group-request.component';
 import { VisitorEventsComponent } from './app/web/pages/visitor-events/visitor-events';
 import { MobileEventsComponent } from './app/mobile/pages/events/mobile-events.component';
 import { MobileMembersComponent } from './app/mobile/pages/members/mobile-members.component';
@@ -59,6 +60,9 @@ export const appRoutes: Routes = [
     // sur cette même page, plutôt que deux pages qu'il aurait fallu deviner l'une de l'autre.
     { path: 'web/mes-evenements', component: WebMyEventsComponent, canActivate: [authGuard] },
     { path: 'web/profil', component: WebProfileComponent, canActivate: [authGuard] },
+    // Un compte sans groupe en demande un ; la page elle-même gère l'état
+    // (déjà rattaché, en attente, refusé, approuvé) plutôt qu'une garde de route.
+    { path: 'web/creer-un-groupe', component: WebGroupRequestComponent, canActivate: [authGuard] },
     { path: 'web/evenements/:id', component: WebEventDetailComponent },
     { path: 'web/evenements/:id/reservation', component: WebReservationComponent },
     { path: 'web/evenements/:id/billet', component: WebTicketComponent },

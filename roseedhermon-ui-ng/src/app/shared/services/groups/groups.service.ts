@@ -19,6 +19,14 @@ export interface GroupsOverview {
   groups: GroupWithCount[];
 }
 
+/** Chiffres d'un groupe, renvoyés par `/groups/{id}/stats`. */
+export interface GroupStats {
+  memberCount: number;
+  eventsTotal: number;
+  eventsUpcoming: number;
+  eventsPast: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class GroupService {
   private readonly baseUrl = `${environment.host}/api/v1/groups`;
@@ -54,5 +62,37 @@ export class GroupService {
   /** Réservé au super administrateur. */
   getOverview(): Observable<GroupsOverview> {
     return this.http.get<GroupsOverview>(`${this.baseUrl}/overview`);
+  }
+
+  // --- Demandes de création --------------------------------------------------------
+
+  /** Un membre sans groupe ouvre sa propre communauté. */
+  requestGroup(group: GroupEntity): Observable<GroupEntity> {
+    return this.http.post<GroupEntity>(`${this.baseUrl}/request`, group);
+  }
+
+  /** La demande la plus récente de la session, quel que soit son statut ; `null` s'il n'y en a aucune. */
+  getMyRequest(): Observable<GroupEntity | null> {
+    return this.http.get<GroupEntity | null>(`${this.baseUrl}/my-request`);
+  }
+
+  /** Réservé au super administrateur. */
+  getPendingRequests(): Observable<GroupEntity[]> {
+    return this.http.get<GroupEntity[]>(`${this.baseUrl}/requests`);
+  }
+
+  /** Réservé au super administrateur : le compte demandeur devient GROUP_ADMIN. */
+  approveGroup(id: string): Observable<GroupEntity> {
+    return this.http.post<GroupEntity>(`${this.baseUrl}/${id}/approve`, {});
+  }
+
+  /** Réservé au super administrateur. */
+  rejectGroup(id: string, reason?: string): Observable<GroupEntity> {
+    return this.http.post<GroupEntity>(`${this.baseUrl}/${id}/reject`, { reason: reason ?? null });
+  }
+
+  /** Réservé au super administrateur. */
+  getGroupStats(id: string): Observable<GroupStats> {
+    return this.http.get<GroupStats>(`${this.baseUrl}/${id}/stats`);
   }
 }

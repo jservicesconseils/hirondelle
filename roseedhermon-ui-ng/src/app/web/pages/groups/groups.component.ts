@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 import { GroupEntity } from '../../../shared/services/api/model/groupEntity';
 import { Member } from '../../../shared/services/api/model/member';
-import { GroupService, GroupWithCount, GroupsOverview } from '../../../shared/services/groups/groups.service';
+import { GroupService, GroupStats, GroupWithCount, GroupsOverview } from '../../../shared/services/groups/groups.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Feature, FEATURES } from '../../../core/auth/auth.model';
 
@@ -67,6 +67,18 @@ export class GroupsComponent implements OnInit {
   selectedGroup: GroupWithCount | null = null;
   groupMembers: Member[] = [];
   membersLoading = false;
+  groupStats: GroupStats | null = null;
+  statsLoading = false;
+
+  // --- Demandes de création en attente ------------------------------------------------
+  pendingRequests: GroupEntity[] = [];
+  requestsLoading = false;
+  decidingId: string | null = null;
+  decideError = '';
+
+  /** Id de la demande dont on saisit le motif de refus, ou `null`. */
+  rejectingId: string | null = null;
+  rejectReason = '';
 
   // Formulaire de création
   formVisible = false;
@@ -81,6 +93,7 @@ export class GroupsComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    if (this.auth.isSuperAdmin()) this.loadRequests();
   }
 
   get filteredGroups(): GroupWithCount[] {
@@ -179,6 +192,7 @@ export class GroupsComponent implements OnInit {
   openGroup(group: GroupWithCount): void {
     this.selectedGroup = group;
     this.groupMembers = [];
+    this.groupStats = null;
     if (!group.id) return;
 
     this.membersLoading = true;
@@ -192,11 +206,92 @@ export class GroupsComponent implements OnInit {
         this.membersLoading = false;
       }
     });
+
+    // Réservé au super administrateur : un administrateur de groupe n'a pas
+    // besoin qu'on le lui rappelle, il n'a que le sien.
+    if (!this.auth.isSuperAdmin()) return;
+    this.statsLoading = true;
+    this.groupService.getGroupStats(group.id).subscribe({
+      next: (stats) => {
+        this.groupStats = stats;
+        this.statsLoading = false;
+      },
+      error: () => {
+        this.groupStats = null;
+        this.statsLoading = false;
+      }
+    });
   }
 
   closeGroup(): void {
     this.selectedGroup = null;
     this.groupMembers = [];
+    this.groupStats = null;
+  }
+
+  // --- Demandes de création en attente ------------------------------------------------
+
+  loadRequests(): void {
+    this.requestsLoading = true;
+    this.groupService.getPendingRequests().subscribe({
+      next: (requests) => {
+        this.pendingRequests = requests;
+        this.requestsLoading = false;
+      },
+      error: () => {
+        this.requestsLoading = false;
+      }
+    });
+  }
+
+  approve(request: GroupEntity): void {
+    if (!request.id || this.decidingId) return;
+    this.decidingId = request.id;
+    this.decideError = '';
+
+    this.groupService.approveGroup(request.id).subscribe({
+      next: () => {
+        this.decidingId = null;
+        this.pendingRequests = this.pendingRequests.filter((entry) => entry.id !== request.id);
+        this.load();
+      },
+      error: (error) => {
+        this.decidingId = null;
+        this.decideError = `L'approbation a échoué (${error?.status || 'réseau'}).`;
+      }
+    });
+  }
+
+  startReject(request: GroupEntity): void {
+    this.rejectingId = request.id ?? null;
+    this.rejectReason = '';
+  }
+
+  cancelReject(): void {
+    this.rejectingId = null;
+    this.rejectReason = '';
+  }
+
+  confirmReject(request: GroupEntity): void {
+    if (!request.id || this.decidingId) return;
+    this.decidingId = request.id;
+    this.decideError = '';
+
+    this.groupService.rejectGroup(request.id, this.rejectReason.trim() || undefined).subscribe({
+      next: () => {
+        this.decidingId = null;
+        this.rejectingId = null;
+        this.pendingRequests = this.pendingRequests.filter((entry) => entry.id !== request.id);
+      },
+      error: (error) => {
+        this.decidingId = null;
+        this.decideError = `Le refus a échoué (${error?.status || 'réseau'}).`;
+      }
+    });
+  }
+
+  trackByRequest(_index: number, request: GroupEntity): string {
+    return request.id || String(_index);
   }
 
   // --- Création --------------------------------------------------------------------
