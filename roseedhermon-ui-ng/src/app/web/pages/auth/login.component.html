@@ -186,6 +186,15 @@
         </button>
       </form>
 
+      <div class="signup-cta" *ngIf="view === 'signin'">
+        <span class="signup-divider"><span>Vous n'avez pas de compte&nbsp;?</span></span>
+        <button type="button" class="signup-link" (click)="show('signup')">
+          <span>Créer un compte</span>
+          <i class="pi pi-arrow-right"></i>
+        </button>
+        <p class="signup-hint">Aucun groupe requis pour organiser votre propre événement.</p>
+      </div>
+
       <!-- Comptes de démonstration, en local seulement -->
       <section class="demo" *ngIf="!auth.configured && view === 'signin'">
         <button type="button" class="demo-toggle" (click)="demoOpen = !demoOpen" [class.is-open]="demoOpen">
@@ -221,12 +230,4 @@
     </section>
   </main>
 
-  <!-- Bandeau du bas, comme celui de la bannière d'accueil -->
-  <footer class="rail" *ngIf="view === 'signin'">
-    <p>
-      Vous n'avez pas de compte&nbsp;?
-      <button type="button" class="link" (click)="show('signup')">Créez-en un</button>
-      — aucun groupe requis pour organiser votre propre événement.
-    </p>
-  </footer>
 </div>
