@@ -213,11 +213,17 @@ export class AuthService {
    * exactement ce qu'il faut pour organiser un événement public par soi-même
    * (l'anniversaire d'un enfant, par exemple). Le serveur lui donnera le rôle
    * `MEMBER` par défaut, faute de groupe Cognito : voir `toRoles` côté serveur.
+   *
+   * `phoneNumber`, au format E.164, est posé sur le compte Cognito — utile le
+   * jour où le SMS sera activé — mais ne sert pas encore à retrouver le
+   * compte : c'est `registerAccountPhone` qui alimente cette recherche, dans
+   * notre propre base plutôt que dans Cognito.
    */
-  signUp(email: string, password: string): Promise<{ needsConfirmation: boolean }> {
+  signUp(email: string, password: string, phoneNumber?: string): Promise<{ needsConfirmation: boolean }> {
     if (!this.pool) return Promise.reject(new Error("Cognito n'est pas configuré."));
     const trimmed = email.trim();
     const attributes = [new CognitoUserAttribute({ Name: 'email', Value: trimmed })];
+    if (phoneNumber) attributes.push(new CognitoUserAttribute({ Name: 'phone_number', Value: phoneNumber }));
 
     return new Promise((resolve, reject) => {
       this.pool!.signUp(trimmed, password, attributes, [], (error, result) => {
@@ -228,6 +234,18 @@ export class AuthService {
         resolve({ needsConfirmation: !(result?.userConfirmed ?? false) });
       });
     });
+  }
+
+  /** Associe ce numéro au compte de la session, pour la connexion par téléphone. */
+  registerAccountPhone(phoneNumber: string): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${environment.host}/api/v1/auth/phone`, { phone: phoneNumber }));
+  }
+
+  /** Courriel du compte associé à ce numéro. Rejette si aucun ne correspond. */
+  lookupEmailByPhone(phoneNumber: string): Promise<string> {
+    return firstValueFrom(
+      this.http.get<{ email: string }>(`${environment.host}/api/v1/auth/phone/${encodeURIComponent(phoneNumber)}`)
+    ).then((response) => response.email);
   }
 
   /** Code à six chiffres envoyé par courriel à l'inscription. */

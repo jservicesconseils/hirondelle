@@ -82,8 +82,8 @@
       </ng-container>
 
       <form (ngSubmit)="submit()" novalidate>
-        <!-- Numéro, avant le courriel sur l'écran de connexion par téléphone -->
-        <label class="field" *ngIf="view === 'phone'">
+        <!-- Numéro : seul champ de la connexion par téléphone, et posé à l'inscription -->
+        <label class="field" *ngIf="view === 'phone' || view === 'signup'">
           <span>Téléphone</span>
           <input
             type="tel"
@@ -94,8 +94,9 @@
             placeholder="514 555-0123" />
         </label>
 
-        <!-- Connexion, demande de code et inscription partagent le champ courriel -->
-        <label class="field" *ngIf="view === 'signin' || view === 'forgot' || view === 'signup' || view === 'phone'">
+        <!-- Connexion, demande de code et inscription partagent le champ courriel —
+             pas la connexion par téléphone, qui le retrouve elle-même par le numéro -->
+        <label class="field" *ngIf="view === 'signin' || view === 'forgot' || view === 'signup'">
           <span>Courriel</span>
           <input
             type="email"

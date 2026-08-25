@@ -126,8 +126,8 @@ export class LoginComponent implements OnInit {
       return `Saisissez le code à six chiffres envoyé à ${this.email.trim()}.`;
     }
     if (this.view === 'phone') {
-      return "Indiquez votre téléphone et le courriel de votre compte. Le code de vérification " +
-        "part par courriel pour l'instant — le SMS suivra dès que le numéro sera activé.";
+      return "Indiquez le numéro de votre compte. Le code de vérification part par courriel pour " +
+        "l'instant — le SMS suivra dès que le numéro sera activé.";
     }
     if (this.view === 'phone-code') {
       return `Saisissez le code à six chiffres envoyé à ${this.email.trim()}.`;
@@ -292,8 +292,13 @@ export class LoginComponent implements OnInit {
 
   private async doSignUp(): Promise<void> {
     const email = this.email.trim();
+    const phone = toE164(this.phone.trim());
     if (!email) {
       this.error = 'Indiquez votre courriel.';
+      return;
+    }
+    if (!phone) {
+      this.error = 'Indiquez un numéro de téléphone valide.';
       return;
     }
     if (!this.auth.configured) {
@@ -302,7 +307,7 @@ export class LoginComponent implements OnInit {
     }
     if (!this.passwordsAgree()) return;
 
-    const { needsConfirmation } = await this.auth.signUp(email, this.newPassword);
+    const { needsConfirmation } = await this.auth.signUp(email, this.newPassword, phone);
     // Conservé pour la connexion automatique une fois le compte confirmé.
     this.password = this.newPassword;
 
@@ -348,14 +353,9 @@ export class LoginComponent implements OnInit {
    * enchaîne directement sur la connexion.
    */
   private async requestPhoneCode(): Promise<void> {
-    const email = this.email.trim();
-    const phone = this.phone.trim();
+    const phone = toE164(this.phone.trim());
     if (!phone) {
-      this.error = 'Indiquez votre numéro de téléphone.';
-      return;
-    }
-    if (!email) {
-      this.error = 'Indiquez le courriel de votre compte.';
+      this.error = 'Indiquez un numéro de téléphone valide.';
       return;
     }
     if (!this.auth.configured) {
@@ -363,10 +363,19 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    await this.auth.forgotPassword(email);
+    try {
+      // Cognito garde le courriel comme identifiant : ce détour retrouve celui
+      // du compte à partir du seul numéro que la personne a saisi.
+      this.email = await this.auth.lookupEmailByPhone(phone);
+    } catch {
+      this.error = "Aucun compte n'est rattaché à ce numéro. Créez-en un d'abord.";
+      return;
+    }
+
+    await this.auth.forgotPassword(this.email);
     this.code = '';
     this.show('phone-code');
-    this.notice = `Un code à six chiffres a été envoyé à ${email}.`;
+    this.notice = `Un code à six chiffres a été envoyé à ${this.email}.`;
   }
 
   private async confirmPhoneCode(): Promise<void> {
@@ -390,6 +399,11 @@ export class LoginComponent implements OnInit {
 
   private async signInAfterSignUp(): Promise<void> {
     const user = await this.auth.signIn(this.email.trim(), this.password, this.remember);
+
+    // Ce qui permettra la prochaine connexion par téléphone à retrouver ce compte.
+    const phone = toE164(this.phone.trim());
+    if (phone) this.auth.registerAccountPhone(phone).catch(() => undefined);
+
     this.leave(user);
   }
 
@@ -427,7 +441,7 @@ export class LoginComponent implements OnInit {
       this.error = 'Un compte existe déjà avec ce courriel. Connectez-vous plutôt.';
       return;
     }
-    if (code === 'UserNotFoundException' && (this.view === 'phone' || this.view === 'forgot')) {
+    if (code === 'UserNotFoundException' && this.view === 'forgot') {
       this.error = "Aucun compte n'est rattaché à ce courriel. Créez-en un d'abord.";
       return;
     }

@@ -17,6 +17,7 @@ app.get('/health', (_req, res) => {
       '/api/v1/members': config.memberTarget,
       '/api/v1/groups': config.memberTarget,
       '/api/v1/me': config.memberTarget,
+      '/api/v1/auth': config.memberTarget,
       '*': config.eventTarget,
     },
   });
@@ -29,7 +30,7 @@ const proxyOptions = {
   xfwd: true,
 } as const;
 
-const MEMBER_PREFIXES = ['/api/v1/members', '/api/v1/groups', '/api/v1/me'];
+const MEMBER_PREFIXES = ['/api/v1/members', '/api/v1/groups', '/api/v1/me', '/api/v1/auth'];
 
 /** `true` pour `/api/v1/members`, `/api/v1/members/...`, mais pas `/api/v1/membersXYZ`. */
 const isMemberPath = (pathname: string): boolean =>
