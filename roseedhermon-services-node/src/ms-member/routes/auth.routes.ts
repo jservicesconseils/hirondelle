@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { asyncHandler, requireAuth } from '../../common';
-import { findEmailByPhone, registerAccountPhone } from '../services/account-phone.service';
+import { findEmailByPhone, findPhoneByEmail, registerAccountPhone } from '../services/account-phone.service';
 
 /**
  * Résolution téléphone ↔ compte, montée sur `/api/v1/auth`.
@@ -11,7 +11,21 @@ import { findEmailByPhone, registerAccountPhone } from '../services/account-phon
  */
 export const authRouter = Router();
 
-/** Posé juste après l'inscription : la session porte déjà l'identité vérifiée. */
+/** Pour préremplir le profil : le numéro déjà enregistré, s'il y en a un. */
+authRouter.get(
+  '/phone',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const email = req.auth?.email;
+    if (!email) {
+      res.status(401).json({ error: 'Authentification requise.' });
+      return;
+    }
+    res.json({ phone: await findPhoneByEmail(email) });
+  }),
+);
+
+/** Posé à l'inscription, ou modifié depuis le profil : la session porte déjà l'identité vérifiée. */
 authRouter.post(
   '/phone',
   requireAuth,

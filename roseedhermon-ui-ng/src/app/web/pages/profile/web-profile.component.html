@@ -1,0 +1,47 @@
+<app-public-header></app-public-header>
+
+<main class="page">
+  <header class="head">
+    <div class="shell">
+      <span class="eyebrow">
+        <span class="eyebrow-bar"></span>
+        Mon compte
+      </span>
+      <h1>Mon profil</h1>
+      <p class="lead">Le courriel de connexion, et le téléphone utilisé pour la connexion rapide.</p>
+    </div>
+  </header>
+
+  <div class="shell body">
+    <p class="state" *ngIf="loading">Chargement de votre profil…</p>
+
+    <form class="panel" (ngSubmit)="save()" novalidate *ngIf="!loading">
+      <label class="field">
+        <span>Courriel</span>
+        <input type="email" [value]="auth.user().email" disabled />
+        <em class="hint">C'est votre identifiant de connexion — il ne se change pas ici.</em>
+      </label>
+
+      <label class="field">
+        <span>Téléphone</span>
+        <input
+          type="tel"
+          name="phone"
+          autocomplete="tel"
+          inputmode="tel"
+          [(ngModel)]="phone"
+          placeholder="514 555-0123" />
+        <em class="hint">Utilisé pour la connexion sans mot de passe, par le seul numéro.</em>
+      </label>
+
+      <p class="error" *ngIf="error">{{ error }}</p>
+      <p class="notice" *ngIf="notice"><i class="pi pi-check-circle"></i> {{ notice }}</p>
+
+      <button type="submit" class="submit" [disabled]="saving">
+        {{ saving ? 'Un instant…' : 'Enregistrer' }}
+      </button>
+    </form>
+  </div>
+</main>
+
+<app-public-footer></app-public-footer>

@@ -13,6 +13,7 @@ import { CurrentUser, ROLES } from '../../../core/auth/auth.model';
 import { MOCK_ACCOUNTS, MockAccount, MOCK_PASSWORD } from '../../../core/auth/mock-accounts';
 import { GroupEntity } from '../../../shared/services/api/model/groupEntity';
 import { MockDirectoryService } from '../../../core/auth/mock-directory.service';
+import { toE164 } from '../../../shared/utils/phone';
 
 /**
  * Les écrans de la page, qui se succèdent dans le même panneau : connexion,
@@ -480,17 +481,4 @@ export class LoginComponent implements OnInit {
  */
 function randomTempPassword(): string {
   return `Aa1!${crypto.randomUUID()}`;
-}
-
-/** Format E.164 attendu par Cognito ; `null` si le numéro reste inexploitable. */
-function toE164(value: string): string | null {
-  if (!value) return null;
-  if (value.startsWith('+')) {
-    const digits = value.slice(1).replace(/\D/g, '');
-    return digits.length >= 8 ? `+${digits}` : null;
-  }
-  const digits = value.replace(/\D/g, '');
-  if (digits.length < 8) return null;
-  // Dix chiffres : numéro nord-américain sans indicatif.
-  return digits.length === 10 ? `+1${digits}` : `+${digits}`;
 }

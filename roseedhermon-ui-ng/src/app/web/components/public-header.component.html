@@ -22,7 +22,9 @@
       <a class="nav-link" *ngIf="auth.isAuthenticated()" routerLink="/web/mes-evenements">Mes événements</a>
       <!-- L'annuaire n'existe que pour les groupes auxquels le module est attribué. -->
       <a class="nav-link" *ngIf="auth.canSeeMembers()" routerLink="/web/membres">Membres</a>
-      <a class="nav-link" *ngIf="auth.canAdminister()" [routerLink]="workspaceLink">Mon espace</a>
+      <!-- Un simple compte y voit ses événements organisés ; un administrateur, son espace. -->
+      <a class="nav-link" *ngIf="auth.isAuthenticated()" [routerLink]="workspaceLink">Mon espace</a>
+      <a class="nav-link" *ngIf="auth.isAuthenticated()" routerLink="/web/profil">Mon profil</a>
 
       <div class="topbar-actions-mobile">
         <a class="ghost" *ngIf="!auth.isAuthenticated()" routerLink="/login">Se connecter</a>

@@ -241,6 +241,13 @@ export class AuthService {
     return firstValueFrom(this.http.post<void>(`${environment.host}/api/v1/auth/phone`, { phone: phoneNumber }));
   }
 
+  /** Numéro déjà enregistré pour la session, ou `null` — pour préremplir le profil. */
+  getAccountPhone(): Promise<string | null> {
+    return firstValueFrom(this.http.get<{ phone: string | null }>(`${environment.host}/api/v1/auth/phone`)).then(
+      (response) => response.phone
+    );
+  }
+
   /** Courriel du compte associé à ce numéro. Rejette si aucun ne correspond. */
   lookupEmailByPhone(phoneNumber: string): Promise<string> {
     return firstValueFrom(
