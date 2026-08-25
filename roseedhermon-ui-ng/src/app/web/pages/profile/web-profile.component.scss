@@ -113,6 +113,47 @@
   }
 }
 
+/** Indicatif fixe devant le numéro : un seul cadre, le préfixe et le champ à l'intérieur. */
+.with-prefix {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid $line;
+  border-radius: 12px;
+  background: $cream;
+  overflow: hidden;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+
+  &:focus-within {
+    border-color: $accent;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(244, 85, 29, 0.14);
+  }
+
+  .prefix {
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    border-right: 1px solid $line;
+    background: rgba(16, 28, 48, 0.04);
+    color: $muted;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+
+    &:focus {
+      background: transparent;
+      box-shadow: none;
+    }
+  }
+}
+
 .hint {
   display: block;
   margin-top: 0.35rem;

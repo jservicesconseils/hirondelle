@@ -24,13 +24,16 @@
 
       <label class="field">
         <span>Téléphone</span>
-        <input
-          type="tel"
-          name="phone"
-          autocomplete="tel"
-          inputmode="tel"
-          [(ngModel)]="phone"
-          placeholder="514 555-0123" />
+        <span class="with-prefix">
+          <span class="prefix">+1</span>
+          <input
+            type="tel"
+            name="phone"
+            autocomplete="tel"
+            inputmode="tel"
+            [(ngModel)]="phone"
+            placeholder="514 555-0123" />
+        </span>
         <em class="hint">Utilisé pour la connexion sans mot de passe, par le seul numéro.</em>
       </label>
 
