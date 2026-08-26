@@ -532,6 +532,16 @@ export class MobileDashboardComponent implements OnInit {
     card.visual = card.visual === card.style.illustration ? null : card.style.illustration;
   }
 
+  /**
+   * Vraie photo déposée par l'organisateur, distincte de l'illustration de
+   * secours : ici, l'absence de photo affiche le fond clair et un pictogramme
+   * plutôt que l'illustration de la catégorie, pour ne pas occuper l'écran
+   * d'une couleur qui n'a de sens que sur une petite pastille.
+   */
+  hasPhoto(card: EventCard): boolean {
+    return !!card.event.files?.length;
+  }
+
   trackByCard(_index: number, card: EventCard): string {
     return card.id;
   }

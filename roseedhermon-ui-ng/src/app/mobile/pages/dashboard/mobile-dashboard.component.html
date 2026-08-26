@@ -72,12 +72,13 @@
 
       <!-- ---------- Le prochain, avec son compte à rebours ---------- -->
       <article class="next-card" *ngIf="next as event" (click)="open(event)">
-        <div class="next-visual" [style.background]="event.style.gradient">
-          <img *ngIf="event.visual" [src]="event.visual" [alt]="event.name" (error)="onVisualError(event)" />
-          <div class="next-veil"></div>
+        <div class="next-visual">
+          <img *ngIf="hasPhoto(event)" [src]="event.visual" [alt]="event.name" (error)="onVisualError(event)" />
+          <!-- Assombrit la photo pour la lisibilité des badges ; inutile sur le fond clair du repli. -->
+          <div class="next-veil" *ngIf="hasPhoto(event)"></div>
 
-          <!-- Pas de photo : un grand pictogramme de la catégorie occupe le dégradé. -->
-          <i class="next-watermark pi" *ngIf="!event.visual" [ngClass]="event.style.icon" aria-hidden="true"></i>
+          <!-- Pas de photo : un grand pictogramme de la catégorie occupe le fond clair. -->
+          <i class="next-watermark pi" *ngIf="!hasPhoto(event)" [ngClass]="event.style.icon" aria-hidden="true"></i>
 
           <span class="next-flag">{{ countdownLabel }}</span>
 
@@ -230,8 +231,8 @@
                  (click)="open(item.card)">
           <span class="rank" [class.is-first]="item.rank === 1">{{ item.rank }}</span>
 
-          <span class="wanted-visual" [style.background]="item.card.style.gradient">
-            <img *ngIf="item.card.visual" [src]="item.card.visual" [alt]="item.card.name"
+          <span class="wanted-visual">
+            <img *ngIf="hasPhoto(item.card)" [src]="item.card.visual" [alt]="item.card.name"
                  (error)="onVisualError(item.card)" />
           </span>
 
@@ -266,11 +267,11 @@
 -->
 <ng-template #poster let-card let-hero="hero">
   <article class="poster" [class.is-hero]="hero" (click)="open(card)">
-    <div class="poster-visual" [style.background]="card.style.gradient">
-      <img *ngIf="card.visual" [src]="card.visual" [alt]="card.name" (error)="onVisualError(card)" />
+    <div class="poster-visual">
+      <img *ngIf="hasPhoto(card)" [src]="card.visual" [alt]="card.name" (error)="onVisualError(card)" />
 
-      <!-- Pas de photo : un grand pictogramme de la catégorie occupe le dégradé. -->
-      <i class="poster-watermark pi" *ngIf="!card.visual" [ngClass]="card.style.icon" aria-hidden="true"></i>
+      <!-- Pas de photo : un grand pictogramme de la catégorie occupe le fond clair. -->
+      <i class="poster-watermark pi" *ngIf="!hasPhoto(card)" [ngClass]="card.style.icon" aria-hidden="true"></i>
 
       <span class="poster-tags">
         <span class="poster-badge" [style.background]="card.style.tint" [style.color]="card.style.color">

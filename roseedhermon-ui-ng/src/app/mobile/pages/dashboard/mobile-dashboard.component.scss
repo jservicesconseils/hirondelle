@@ -134,9 +134,15 @@
   &:active { transform: scale(0.995); }
 }
 
+/**
+ * Fond clair, commun à toutes les tuiles sans photo : un même bleu léger plutôt
+ * que la couleur de la catégorie, qui reste réservée aux petites pastilles
+ * (badge, filtre, accent) où elle sert à distinguer, pas à occuper l'écran.
+ */
 .next-visual {
   position: relative;
   height: 168px;
+  background: linear-gradient(135deg, theme.$sky 0%, #dce7fb 55%, #eef1fb 100%);
 
   img {
     width: 100%;
@@ -159,7 +165,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 4.5rem;
-  color: rgba(255, 255, 255, 0.28);
+  color: rgba(43, 95, 184, 0.16);
 }
 
 .next-flag {
@@ -730,6 +736,7 @@
   width: 46px;
   height: 46px;
   border-radius: 13px;
+  background: linear-gradient(135deg, theme.$sky 0%, #dce7fb 100%);
   overflow: hidden;
 
   img {
@@ -893,6 +900,7 @@
 .poster-visual {
   position: relative;
   height: 250px;
+  background: linear-gradient(135deg, theme.$sky 0%, #dce7fb 55%, #eef1fb 100%);
 
   img {
     width: 100%;
@@ -909,7 +917,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 4rem;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(43, 95, 184, 0.14);
 }
 
 .poster-tags {
