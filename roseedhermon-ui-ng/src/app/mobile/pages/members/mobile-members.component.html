@@ -76,19 +76,10 @@
 
       <div class="member-grid" *ngIf="shownRows.length">
         <article class="member-card" *ngFor="let row of shownRows; trackBy: trackByRow">
-          <div class="card-top">
-            <span class="avatar" [style.background]="row.photo ? null : row.color">
-              <img *ngIf="row.photo" [src]="row.photo" [alt]="row.fullName" />
-              <ng-container *ngIf="!row.photo">{{ row.initials }}</ng-container>
-            </span>
-
-            <button type="button" class="add-btn" (click)="saveToContacts(row)"
-                    [attr.aria-label]="'Ajouter ' + row.fullName + ' aux contacts'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </button>
-          </div>
+          <span class="avatar" [style.background]="row.photo ? null : row.color">
+            <img *ngIf="row.photo" [src]="row.photo" [alt]="row.fullName" />
+            <ng-container *ngIf="!row.photo">{{ row.initials }}</ng-container>
+          </span>
 
           <strong class="name">{{ row.fullName }}</strong>
           <span class="role" *ngIf="row.role">{{ row.role }}</span>

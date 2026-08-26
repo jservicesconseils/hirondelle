@@ -189,29 +189,6 @@ export class MobileMembersComponent implements OnInit {
     window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, '_blank');
   }
 
-  /** Ajoute la fiche aux contacts du téléphone, via une carte vCard standard. */
-  saveToContacts(row: MemberRow): void {
-    const lines = [
-      'BEGIN:VCARD',
-      'VERSION:3.0',
-      `N:${row.member.lastName || ''};${row.member.firstName || ''};;;`,
-      `FN:${row.fullName}`,
-      row.role ? `TITLE:${row.role}` : '',
-      row.phone ? `TEL;TYPE=CELL:${row.phone}` : '',
-      row.email ? `EMAIL:${row.email}` : '',
-      row.address ? `ADR;TYPE=HOME:;;${row.address};;;;` : '',
-      'END:VCARD'
-    ].filter(Boolean);
-
-    const blob = new Blob([lines.join('\n')], { type: 'text/vcard' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${row.fullName || 'contact'}.vcf`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
   // --- Construction ------------------------------------------------------------------
 
   private toRow(member: Member, index: number): MemberRow {

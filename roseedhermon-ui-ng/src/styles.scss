@@ -14,6 +14,17 @@ html, body, app-root {
   overflow-y: auto;
 }
 
+/**
+ * Sans cette redéfinition, WebKit/macOS lisse le texte avec l'anti-crénelage par
+ * défaut (sous-pixel) — plus lourd, plus flou que le rendu en niveaux de gris
+ * qu'utilisent la plupart des interfaces soignées.
+ */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
 body {
   overflow-y: scroll !important;
 }

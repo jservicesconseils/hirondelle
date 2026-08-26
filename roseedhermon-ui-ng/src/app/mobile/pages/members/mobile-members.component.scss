@@ -307,20 +307,13 @@
   &:active { transform: scale(0.99); }
 }
 
-.card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 0.6rem;
-}
-
 /** Pastille colorée : les initiales quand aucune photo n'est jointe. */
 .avatar {
-  flex: 0 0 52px;
   display: grid;
   place-items: center;
   width: 52px;
   height: 52px;
+  margin-bottom: 0.6rem;
   border-radius: 50%;
   background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
   color: #fff;
@@ -335,22 +328,6 @@
     object-fit: cover;
     display: block;
   }
-}
-
-/** Ajoute la fiche aux contacts du téléphone (carte vCard). */
-.add-btn {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid theme.$line;
-  border-radius: 50%;
-  background: #fff;
-  color: theme.$muted;
-
-  svg { width: 14px; height: 14px; }
-
-  &:active { background: theme.$sky; color: theme.$blue-deep; }
 }
 
 .name {
