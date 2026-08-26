@@ -14,6 +14,7 @@ interface MemberRow {
   color: string;
   photo: string;
   role: string;
+  subgroup: string;
   phone: string;
   city: string;
   address: string;
@@ -101,15 +102,16 @@ export class MobileMembersComponent implements OnInit {
   // --- Sous-groupes --------------------------------------------------------------------
 
   /**
-   * Un sous-groupe par fonction distincte (ex. Pasteur, Diacre, Administrateur) —
-   * reprise de ce que chaque fiche porte déjà comme fonction, pas une catégorie
-   * ajoutée pour l'occasion. Sans fonction renseignée sur aucune fiche, seul
-   * l'onglet « Tous » reste.
+   * Un onglet par sous-groupe distinct (ex. Pasteur, Diacre, Administrateur) —
+   * reprise de ce que chaque fiche porte déjà comme sous-groupe (import ou fiche
+   * manuelle), jamais une catégorie ajoutée pour l'occasion. Distinct de la
+   * profession, qui reste affichée sur la fiche mais ne sert plus à grouper.
+   * Sans sous-groupe renseigné sur aucune fiche, seul l'onglet « Tous » reste.
    */
   private buildSubgroups(): void {
     const counts = new Map<string, number>();
     this.rows.forEach((row) => {
-      if (row.role) counts.set(row.role, (counts.get(row.role) ?? 0) + 1);
+      if (row.subgroup) counts.set(row.subgroup, (counts.get(row.subgroup) ?? 0) + 1);
     });
 
     this.subgroups = [...counts.entries()]
@@ -129,7 +131,7 @@ export class MobileMembersComponent implements OnInit {
     const term = this.searchTerm.trim().toLowerCase();
 
     this.filteredRows = this.rows.filter((row) => {
-      if (this.activeSubgroup && row.role !== this.activeSubgroup) return false;
+      if (this.activeSubgroup && row.subgroup !== this.activeSubgroup) return false;
       if (term && !row.search.includes(term)) return false;
       return true;
     });
@@ -223,11 +225,12 @@ export class MobileMembersComponent implements OnInit {
       color: AVATAR_COLORS[index % AVATAR_COLORS.length],
       photo: (member.photo || '').trim(),
       role: (member.profession || '').trim(),
+      subgroup: (member.subgroup || '').trim(),
       phone: (member.phoneNumber || '').trim(),
       city: (member.city || '').trim(),
       address: (member.address || '').trim(),
       email: (member.email || '').trim(),
-      search: [fullName, member.profession, member.phoneNumber, member.city, member.email]
+      search: [fullName, member.profession, member.subgroup, member.phoneNumber, member.city, member.email]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()

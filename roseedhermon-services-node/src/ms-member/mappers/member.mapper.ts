@@ -8,6 +8,8 @@ export interface MemberInput {
   gender: string | null;
   birthDate: Date | null;
   profession: string | null;
+  /** Sous-groupe au sein de la communauté (ex. Pasteur, Diacre, Administrateur). */
+  subgroup: string | null;
   phoneNumber: string | null;
   email: string | null;
   address: string | null;
@@ -36,6 +38,7 @@ export function memberToJson(doc: MemberDocument) {
     gender: doc.gender ?? null,
     birthDate: formatLocalDate(doc.birthDate),
     profession: doc.profession ?? null,
+    subgroup: doc.subgroup ?? null,
     phoneNumber: doc.phoneNumber ?? null,
     email: doc.email ?? null,
     address: doc.address ?? null,
@@ -56,6 +59,7 @@ export function memberFromBody(body: Record<string, unknown>): MemberInput {
     gender: toStringOrNull(body.gender),
     birthDate: parseLocalDate(body.birthDate),
     profession: toStringOrNull(body.profession),
+    subgroup: toStringOrNull(body.subgroup),
     phoneNumber: toStringOrNull(body.phoneNumber),
     email: toStringOrNull(body.email),
     address: toStringOrNull(body.address),

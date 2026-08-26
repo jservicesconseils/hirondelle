@@ -24,6 +24,9 @@ const memberSchema = new Schema(
     gender: { type: String },
     birthDate: { type: Date },
     profession: { type: String },
+    // Sous-groupe au sein de la communauté (ex. Pasteur, Diacre, Administrateur) —
+    // distinct de `profession`, qui est le métier de la personne dans la vie civile.
+    subgroup: { type: String },
     phoneNumber: { type: String },
     email: { type: String },
     address: { type: String },

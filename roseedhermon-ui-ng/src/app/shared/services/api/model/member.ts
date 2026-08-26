@@ -16,6 +16,8 @@ export interface Member {
     gender?: Member.GenderEnum;
     birthDate?: string;
     profession?: string;
+    /** Sous-groupe au sein de la communauté (ex. Pasteur, Diacre, Administrateur). */
+    subgroup?: string;
     phoneNumber?: string;
     email?: string;
     address?: string;
