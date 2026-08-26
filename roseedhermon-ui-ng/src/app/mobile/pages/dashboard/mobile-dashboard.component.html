@@ -156,16 +156,18 @@
 
       <p class="state" *ngIf="!matchCount">{{ emptyMessage }}</p>
 
-      <!-- ---------- À l'affiche ---------- -->
-      <section class="block" *ngIf="featured.length">
+      <!-- ---------- À l'affiche : une grande carte, puis une petite grille ---------- -->
+      <section class="block" *ngIf="featuredHero as hero">
         <div class="block-head">
           <h2>À l'affiche</h2>
           <button type="button" class="link" (click)="goToEvents()">Voir plus</button>
         </div>
 
-        <div class="carousel">
-          <ng-container *ngFor="let card of featured; trackBy: trackByCard">
-            <ng-container *ngTemplateOutlet="poster; context: { $implicit: card }"></ng-container>
+        <ng-container *ngTemplateOutlet="poster; context: { $implicit: hero, hero: true }"></ng-container>
+
+        <div class="feature-grid" *ngIf="featuredRest.length">
+          <ng-container *ngFor="let card of featuredRest; trackBy: trackByCard">
+            <ng-container *ngTemplateOutlet="featureTile; context: { $implicit: card }"></ng-container>
           </ng-container>
         </div>
       </section>
@@ -246,8 +248,8 @@
   image, deux boutons ronds dans les coins, et la carte blanche des informations
   qui remonte par-dessus le bas de l'image.
 -->
-<ng-template #poster let-card>
-  <article class="poster" (click)="open(card)">
+<ng-template #poster let-card let-hero="hero">
+  <article class="poster" [class.is-hero]="hero" (click)="open(card)">
     <div class="poster-visual" [style.background]="card.style.gradient">
       <img *ngIf="card.visual" [src]="card.visual" [alt]="card.name" (error)="onVisualError(card)" />
 
@@ -277,5 +279,22 @@
         <span class="poster-price" *ngIf="card.price" [class.is-free]="card.free">{{ card.price }}</span>
       </div>
     </div>
+  </article>
+</ng-template>
+
+<!--
+  Petite tuile de la grille sous la grande carte « à l'affiche » : pas d'image,
+  juste un repère de couleur, le nom et l'essentiel de la date/du lieu.
+-->
+<ng-template #featureTile let-card>
+  <article class="feature-tile" (click)="open(card)">
+    <span class="feature-tile-accent" [style.background]="card.style.color"></span>
+    <strong>{{ card.name }}</strong>
+    <span class="feature-tile-meta">
+      <ng-container *ngIf="card.longDate">{{ card.longDate }}</ng-container>
+      <ng-container *ngIf="card.longDate && card.place"> · </ng-container>
+      <ng-container *ngIf="card.place">{{ card.place }}</ng-container>
+      <ng-container *ngIf="!card.longDate && !card.place">Détails à préciser</ng-container>
+    </span>
   </article>
 </ng-template>

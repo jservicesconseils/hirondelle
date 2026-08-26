@@ -124,6 +124,10 @@ export class MobileDashboardComponent implements OnInit {
    * détruirait et se reconstruirait en boucle.
    */
   featured: EventCard[] = [];
+  /** Le premier de « à l'affiche », mis en avant dans une grande carte. */
+  featuredHero: EventCard | null = null;
+  /** Le reste de « à l'affiche », en petite grille sous la grande carte. */
+  featuredRest: EventCard[] = [];
   /** Ceux qu'organise la communauté de la personne connectée. */
   forYou: EventCard[] = [];
   monthGroups: MonthGroup[] = [];
@@ -440,6 +444,8 @@ export class MobileDashboardComponent implements OnInit {
     });
 
     this.featured = matching.slice(0, FEATURED);
+    this.featuredHero = this.featured[0] ?? null;
+    this.featuredRest = this.featured.slice(1);
 
     /**
      * « Pour vous » n'est pas une recommandation devinée : ce sont les
