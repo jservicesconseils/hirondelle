@@ -197,6 +197,9 @@ const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
 
     .hero-text h1 {
       margin: 0 0 10px;
+      // Une règle globale fixe la couleur des h1 : sans cette redéfinition, ici plus
+      // spécifique, elle l'emporterait sur le blanc hérité du bandeau.
+      color: #fff;
       font-size: 30px;
       font-weight: 800;
       line-height: 1.1;
