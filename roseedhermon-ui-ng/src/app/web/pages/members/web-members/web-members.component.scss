@@ -168,31 +168,40 @@
 
 // ---------------------------------------------------------------- fiches
 
+// Deux fiches par ligne — au-delà, la troisième colonne dépasserait ce qu'une
+// carte de contact doit rester lisible (avatar + quelques lignes de texte).
 .member-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.25rem;
 }
 
+// En ligne, avatar à gauche et informations à droite : la grammaire d'une
+// carte de contact LinkedIn plutôt qu'une fiche profil centrée.
 .member-card {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1.9rem 1.4rem 1.6rem;
+  align-items: flex-start;
+  gap: 1.1rem;
+  padding: 1.4rem 1.5rem;
   border: 1px solid $line;
   border-radius: 20px;
   background: #fff;
-  text-align: center;
+  text-align: left;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 38px rgba(16, 28, 48, 0.12);
   }
+}
+
+.member-body {
+  flex: 1 1 auto;
+  min-width: 0;
 
   h3 {
-    margin: 0.9rem 0 0.4rem;
-    font-size: 1.06rem;
+    margin: 0 0 0.35rem;
+    font-size: 1.04rem;
     font-weight: 800;
     line-height: 1.3;
     color: $ink;
@@ -203,11 +212,12 @@
 .member-avatar {
   display: grid;
   place-items: center;
-  width: 72px;
-  height: 72px;
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   color: #fff;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 800;
   overflow: hidden;
 
@@ -237,29 +247,28 @@
 }
 
 .member-job {
-  margin: 0.8rem 0 0;
+  margin: 0.6rem 0 0;
   color: $muted;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   line-height: 1.45;
 }
 
 .member-meta {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
   width: 100%;
-  margin: 1.1rem 0 0;
-  padding: 1rem 0 0;
+  margin: 0.9rem 0 0;
+  padding: 0.8rem 0 0;
   border-top: 1px solid $line;
   list-style: none;
 
   li {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 0.45rem;
     color: $muted;
-    font-size: 0.85rem;
+    font-size: 0.83rem;
     // Un courriel long ne doit pas élargir la fiche.
     overflow-wrap: anywhere;
   }
@@ -267,7 +276,7 @@
   i {
     flex: 0 0 auto;
     color: $accent;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
   }
 }
 
@@ -313,5 +322,9 @@
 
   .search {
     max-width: none;
+  }
+
+  .member-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

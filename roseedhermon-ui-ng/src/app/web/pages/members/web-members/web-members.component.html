@@ -50,6 +50,7 @@
       Aucun membre ne correspond à cette recherche.
     </p>
 
+    <!-- Deux fiches par ligne, chacune en ligne (avatar à gauche, infos à droite) — dans l'esprit d'une carte de contact LinkedIn. -->
     <div class="member-grid" *ngIf="shown.length">
       <article class="member-card" *ngFor="let card of shown">
         <span class="member-avatar" [style.background]="card.color">
@@ -57,16 +58,18 @@
           <ng-container *ngIf="!card.photo">{{ card.initials }}</ng-container>
         </span>
 
-        <h3>{{ card.name }}</h3>
-        <span class="member-role" [class.is-admin]="card.role !== 'Membre'">{{ card.role }}</span>
+        <div class="member-body">
+          <h3>{{ card.name }}</h3>
+          <span class="member-role" [class.is-admin]="card.role !== 'Membre'">{{ card.role }}</span>
 
-        <p class="member-job" *ngIf="card.profession">{{ card.profession }}</p>
+          <p class="member-job" *ngIf="card.profession">{{ card.profession }}</p>
 
-        <ul class="member-meta">
-          <li *ngIf="card.city"><i class="pi pi-map-marker"></i> {{ card.city }}</li>
-          <li *ngIf="card.email"><i class="pi pi-envelope"></i> {{ card.email }}</li>
-          <li *ngIf="card.phoneNumber"><i class="pi pi-phone"></i> {{ card.phoneNumber }}</li>
-        </ul>
+          <ul class="member-meta">
+            <li *ngIf="card.city"><i class="pi pi-map-marker"></i> {{ card.city }}</li>
+            <li *ngIf="card.email"><i class="pi pi-envelope"></i> {{ card.email }}</li>
+            <li *ngIf="card.phoneNumber"><i class="pi pi-phone"></i> {{ card.phoneNumber }}</li>
+          </ul>
+        </div>
       </article>
     </div>
 
