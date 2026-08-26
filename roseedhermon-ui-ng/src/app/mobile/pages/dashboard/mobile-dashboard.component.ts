@@ -143,6 +143,8 @@ export class MobileDashboardComponent implements OnInit {
   myTickets: MyTicket[] = [];
   /** Classement par nombre de personnes intéressées. */
   wanted: Wanted[] = [];
+  /** Tout événement ayant au moins une personne intéressée — pour le repère « Populaire ». */
+  popularEventIds = new Set<string>();
 
   // --- Communauté ---
   faces: Face[] = [];
@@ -401,6 +403,8 @@ export class MobileDashboardComponent implements OnInit {
   }
 
   private buildWanted(counts: Record<string, number>): void {
+    this.popularEventIds = new Set(Object.keys(counts).filter((id) => counts[id] > 0));
+
     const ranked = this.upcoming
       .map((card) => ({ card, interested: counts[card.id] ?? 0 }))
       .filter((entry) => entry.interested > 0)

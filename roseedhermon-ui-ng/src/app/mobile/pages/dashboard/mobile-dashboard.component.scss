@@ -136,7 +136,7 @@
 
 .next-visual {
   position: relative;
-  height: 132px;
+  height: 168px;
 
   img {
     width: 100%;
@@ -152,16 +152,46 @@
   background: linear-gradient(180deg, rgba(6, 18, 40, 0.1) 0%, rgba(6, 18, 40, 0.5) 100%);
 }
 
-/** Le décompte, détaché en pastille ronde à cheval sur le visuel et le corps. */
+/** Pas de photo : un grand pictogramme, à peine visible, occupe le dégradé. */
+.next-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4.5rem;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.next-flag {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  z-index: 1;
+  max-width: calc(100% - 5.5rem);
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: theme.$blue-deep;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(6, 18, 40, 0.18);
+}
+
+/** Le décompte, en pastille ronde posée dans le coin du visuel. */
 .next-countdown {
   position: absolute;
-  right: 1rem;
-  bottom: -1.5rem;
+  top: 0.85rem;
+  right: 0.85rem;
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 74px;
-  height: 74px;
+  width: 62px;
+  height: 62px;
   border: 3px solid #fff;
   border-radius: 50%;
   background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
@@ -169,14 +199,27 @@
   line-height: 1;
   box-shadow: 0 8px 20px rgba(22, 52, 107, 0.45);
 
+  // Point d'accent, purement décoratif — la charte de cette page n'y met que ça.
+  &::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: theme.$accent;
+  }
+
   strong {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 800;
     letter-spacing: -0.03em;
   }
 
   small {
-    font-size: 0.62rem;
+    font-size: 0.56rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -185,30 +228,37 @@
 }
 
 .next-body {
-  // Le rembourrage droit dégage la pastille du décompte.
-  padding: 0.95rem 6rem 1.05rem 1.1rem;
+  padding: 0.95rem 1.1rem 1.05rem;
 }
 
-.next-flag {
-  display: inline-block;
-  padding: 0.24rem 0.65rem;
-  border-radius: 999px;
-  background: theme.$sky;
-  color: theme.$blue-deep;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+.next-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0 0 0.5rem;
 }
 
 .next-name {
   display: block;
-  margin: 0.5rem 0 0.5rem;
   font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.3;
   color: theme.$ink;
+}
+
+/** Catégorie de l'événement, reprise du référentiel — même donnée que la bande de catégories. */
+.next-category {
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: theme.$sky;
+  color: theme.$blue-deep;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .next-meta {
@@ -232,12 +282,16 @@
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
-  // Reprend toute la largeur, sous la pastille du décompte.
-  margin: 0.9rem -4.9rem 0 0;
+  margin: 0.9rem 0 0;
 }
 
 .next-cta {
+  position: relative;
   flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 0.7rem 1.1rem;
   border: 0;
   border-radius: 999px;
@@ -248,7 +302,22 @@
   font-weight: 800;
   box-shadow: 0 8px 18px rgba(22, 52, 107, 0.3);
 
+  i { font-size: 0.8rem; }
+
   &:active { background: theme.$blue-deep; }
+
+  // Point d'accent, purement décoratif.
+  &::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: theme.$accent;
+  }
 }
 
 /* ---------- Chiffres ---------- */
@@ -298,7 +367,7 @@
   align-items: center;
   gap: 0.5rem;
   margin: -3rem 1.15rem 0;
-  padding: 0.15rem 0.9rem;
+  padding: 0.15rem 0.35rem 0.15rem 0.9rem;
   border-radius: 18px;
   background: #fff;
   box-shadow: 0 14px 32px rgba(16, 28, 48, 0.16);
@@ -322,13 +391,19 @@
   }
 }
 
-.search-icon {
+/** Loupe posée dans un carré plein plutôt qu'une simple icône, comme le modèle. */
+.search-btn {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  color: #9aa8b9;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(22, 52, 107, 0.3);
 
-  svg { width: 20px; height: 20px; }
+  svg { width: 17px; height: 17px; }
 }
 
 .clear {
@@ -365,17 +440,34 @@
 
 .block-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 0.75rem;
 
   h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 auto;
+    min-width: 0;
     margin: 0;
     font-size: 1.05rem;
     font-weight: 800;
     letter-spacing: -0.01em;
     color: theme.$ink;
+    white-space: nowrap;
+
+    // Ligne pointillée qui file jusqu'au bord — ou jusqu'au lien « Voir plus ».
+    &::after {
+      content: '';
+      flex: 1 1 auto;
+      height: 1px;
+      margin-left: 0.2rem;
+      background-image: linear-gradient(90deg, theme.$line 0, theme.$line 4px, transparent 4px, transparent 8px);
+      background-size: 8px 1px;
+      background-repeat: repeat-x;
+    }
   }
 
   // Le mois reste visible pendant qu'on parcourt ses événements.
@@ -385,6 +477,32 @@
     z-index: 3;
     padding: 0.5rem 0;
     background: theme.$cream;
+  }
+}
+
+/** Barre verticale devant chaque titre de section — le repère qui les relie toutes. */
+.head-accent {
+  flex: 0 0 auto;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: theme.$blue;
+
+  // « À l'affiche » porte les deux couleurs de la charte, comme le modèle.
+  &.is-two-tone {
+    position: relative;
+    margin-right: 0.35rem;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 0;
+      width: 3px;
+      height: 14px;
+      border-radius: 2px;
+      background: theme.$accent;
+    }
   }
 }
 
@@ -398,6 +516,10 @@
 }
 
 .link {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   border: 0;
   background: none;
   padding: 0;
@@ -405,6 +527,9 @@
   font-family: inherit;
   font-size: 0.84rem;
   font-weight: 800;
+  white-space: nowrap;
+
+  i { font-size: 0.7rem; }
 }
 
 /* ========== Bande d'agenda ========== */
@@ -777,19 +902,60 @@
   }
 }
 
-/** Pastille de catégorie, dans sa couleur du référentiel. */
-.poster-badge {
+/** Pas de photo : un grand pictogramme, à peine visible, occupe le dégradé. */
+.poster-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4rem;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.poster-tags {
   position: absolute;
   top: 0.85rem;
   left: 0.85rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/** Pastille de catégorie, dans sa couleur du référentiel. */
+.poster-badge {
   display: grid;
   place-items: center;
+  flex: 0 0 auto;
   width: 36px;
   height: 36px;
   border-radius: 50%;
   box-shadow: 0 4px 14px rgba(16, 28, 48, 0.24);
 
   i { font-size: 0.95rem; }
+}
+
+/** Vrai signal : construit à partir du nombre réel de personnes intéressées. */
+.poster-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: theme.$blue-deep;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(6, 18, 40, 0.16);
+
+  &.is-popular {
+    background: theme.$accent-soft;
+    color: theme.$accent-dark;
+  }
+
+  i { font-size: 0.62rem; }
 }
 
 .poster-heart {
@@ -856,15 +1022,31 @@
   white-space: nowrap;
 }
 
-/** Le tarif, en gras et en couleur : l'information que l'œil cherche en dernier. */
+/** Le tarif, en pastille : l'information que l'œil cherche en dernier, mais qui doit se voir. */
 .poster-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   flex: 0 0 auto;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  background: theme.$sky;
   color: theme.$blue-deep;
-  font-size: 1.02rem;
+  font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: -0.01em;
 
-  &.is-free { color: theme.$green; }
+  &.is-free {
+    background: linear-gradient(90deg, theme.$green, theme.$accent);
+    color: #fff;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+  }
 }
 
 /**
@@ -904,11 +1086,24 @@
   }
 }
 
+.feature-tile-accent-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
 .feature-tile-accent {
   display: block;
   width: 20px;
   height: 3px;
   border-radius: 999px;
+  opacity: 0.55;
+}
+
+.feature-tile-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
 }
 
 .feature-tile-meta {
@@ -929,22 +1124,46 @@
  * bande ne s'affiche pas si l'on n'a rien de vrai à y mettre.
  */
 .social {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 0.7rem 0.95rem;
+  padding: 0.7rem 0.95rem 0.7rem 0.75rem;
   margin-bottom: 1.5rem;
   border: 1px solid theme.$line;
-  border-radius: 999px;
+  border-radius: 20px;
   background: #fff;
   box-shadow: 0 8px 20px rgba(16, 28, 48, 0.06);
+  overflow: hidden;
+
+  // Point d'accent, purement décoratif — le même repère que les titres de section.
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0.6rem;
+    right: 0.7rem;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: theme.$accent;
+    opacity: 0.7;
+  }
+}
+
+/** Reprend le repère bleu des titres de section, posé contre le bord de la carte. */
+.social-accent {
+  flex: 0 0 auto;
+  width: 3px;
+  height: 34px;
+  border-radius: 2px;
+  background: theme.$blue;
 }
 
 /** Les pastilles se chevauchent : c'est ce recouvrement qui fait la « pile ». */
 .faces {
   display: flex;
   flex: 0 0 auto;
-  padding-left: 0.5rem;
+  padding-left: 0.35rem;
 }
 
 .face {

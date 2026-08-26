@@ -61,6 +61,9 @@ import { AuthService } from '../../core/auth/auth.service';
         <span>Profil</span>
       </button>
     </nav>
+
+    <!-- Purement décoratif : un repère de bas d'écran, comme le modèle. -->
+    <span class="handle"></span>
   `,
   styles: [`
     /* Dernier élément de la colonne de la coquille mobile : aucun positionnement
@@ -118,40 +121,51 @@ import { AuthService } from '../../core/auth/auth.service';
     }
 
     /**
-     * Onglet courant : pastille blanche, icône et libellé sur une même ligne.
-     * Le blanc sur le bleu profond se distingue à la volée, là où une pastille
-     * bleue sur bleu demanderait un effort.
+     * Onglet courant : pastille bleu vif, icône et libellé sur une même ligne.
+     * Le bleu vif sur le rail bleu profond se distingue à la volée, comme le
+     * modèle — sans recourir au blanc, réservé aux cartes du contenu.
      */
     .nav-item.active {
       flex: 0 0 auto;
       flex-direction: row;
       gap: 7px;
       padding: 10px 16px;
-      background: #fff;
-      color: #16346b;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+      background: #2b5fb8;
+      color: #fff;
+      box-shadow: 0 4px 14px -2px rgba(43, 95, 184, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
     }
 
     .nav-item.active span {
       font-size: 14px;
       font-weight: 800;
-      color: #16346b;
+      color: #fff;
     }
 
-    /* Un filet orange sous la pastille : l'accent de la charte, sans la dominer. */
+    /* Un point orange sous la pastille : l'accent de la charte, sans la dominer. */
     .nav-item.active::after {
       content: '';
       position: absolute;
       left: 50%;
-      bottom: 3px;
-      width: 16px;
-      height: 3px;
-      border-radius: 2px;
+      bottom: -7px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
       background: #f4551d;
       transform: translateX(-50%);
     }
 
     .nav-item { position: relative; }
+
+    /* Purement décoratif : le repère de bas d'écran qu'on trouve sous les barres
+       flottantes des applications mobiles. */
+    .handle {
+      display: block;
+      width: 32px;
+      height: 4px;
+      margin: 10px auto 0;
+      border-radius: 999px;
+      background: rgba(15, 45, 92, 0.16);
+    }
 
     @media (max-width: 360px) {
       .nav-item.active span { font-size: 13px; }

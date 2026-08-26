@@ -26,7 +26,7 @@
   <!-- Recherche flottante, à cheval sur le bandeau -->
   <div class="search">
     <input type="search"
-           placeholder="Rechercher un événement"
+           placeholder="Rechercher un événement, un lieu…"
            [(ngModel)]="query"
            (ngModelChange)="rebuild()"
            name="query"
@@ -36,7 +36,7 @@
         <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
       </svg>
     </button>
-    <span class="search-icon" *ngIf="!filtering">
+    <span class="search-btn" *ngIf="!filtering">
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z" />
       </svg>
@@ -54,6 +54,7 @@
            Visages, effectif et villes viennent de l'annuaire réel. La bande
            disparaît si le module Membres n'est pas ouvert au groupe. -->
       <div class="social" *ngIf="faces.length">
+        <span class="social-accent"></span>
         <div class="faces">
           <!-- Initiales uniquement : les photos des fiches ne sont pas affichées ici. -->
           <span class="face" *ngFor="let face of faces; trackBy: trackByFace"
@@ -75,6 +76,11 @@
           <img *ngIf="event.visual" [src]="event.visual" [alt]="event.name" (error)="onVisualError(event)" />
           <div class="next-veil"></div>
 
+          <!-- Pas de photo : un grand pictogramme de la catégorie occupe le dégradé. -->
+          <i class="next-watermark pi" *ngIf="!event.visual" [ngClass]="event.style.icon" aria-hidden="true"></i>
+
+          <span class="next-flag">{{ countdownLabel }}</span>
+
           <span class="next-countdown">
             <strong>{{ countdownDays }}</strong>
             <small>{{ countdownDays === 1 ? 'jour' : 'jours' }}</small>
@@ -82,8 +88,10 @@
         </div>
 
         <div class="next-body">
-          <span class="next-flag">{{ countdownLabel }}</span>
-          <strong class="next-name">{{ event.name }}</strong>
+          <div class="next-title-row">
+            <strong class="next-name">{{ event.name }}</strong>
+            <span class="next-category" *ngIf="event.category">{{ event.category }}</span>
+          </div>
 
           <p class="next-meta" *ngIf="event.longDate">
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -99,7 +107,9 @@
           </p>
 
           <div class="next-actions" (click)="$event.stopPropagation()">
-            <button type="button" class="next-cta" (click)="reserve(event)">Réserver ma place</button>
+            <button type="button" class="next-cta" (click)="reserve(event)">
+              Réserver ma place <i class="pi pi-arrow-up-right"></i>
+            </button>
             <app-interest-button [eventId]="event.id" variant="icon"></app-interest-button>
           </div>
         </div>
@@ -108,7 +118,7 @@
       <!-- ---------- Catégories, en cartes ---------- -->
       <section class="block" *ngIf="categories.length > 1">
         <div class="block-head">
-          <h2>Catégorie</h2>
+          <h2><span class="head-accent"></span>Catégorie</h2>
           <button type="button" class="link" *ngIf="category" (click)="pickCategory(category)">Tout voir</button>
         </div>
 
@@ -130,7 +140,7 @@
       <!-- ---------- Bande d'agenda : quinze jours d'un coup d'œil ---------- -->
       <section class="block" *ngIf="stripHasEvents">
         <div class="block-head">
-          <h2>Quinze prochains jours</h2>
+          <h2><span class="head-accent"></span>Quinze prochains jours</h2>
           <button type="button" class="link" *ngIf="day" (click)="day = ''; rebuild()">Tout voir</button>
         </div>
 
@@ -159,8 +169,10 @@
       <!-- ---------- À l'affiche : une grande carte, puis une petite grille ---------- -->
       <section class="block" *ngIf="featuredHero as hero">
         <div class="block-head">
-          <h2>À l'affiche</h2>
-          <button type="button" class="link" (click)="goToEvents()">Voir plus</button>
+          <h2><span class="head-accent is-two-tone"></span>À l'affiche</h2>
+          <button type="button" class="link" (click)="goToEvents()">
+            Voir plus <i class="pi pi-arrow-right"></i>
+          </button>
         </div>
 
         <ng-container *ngTemplateOutlet="poster; context: { $implicit: hero, hero: true }"></ng-container>
@@ -175,8 +187,10 @@
       <!-- ---------- Pour vous : ce qu'organise votre communauté ---------- -->
       <section class="block" *ngIf="forYou.length">
         <div class="block-head">
-          <h2>Pour vous</h2>
-          <button type="button" class="link" (click)="goToEvents()">Voir plus</button>
+          <h2><span class="head-accent"></span>Pour vous</h2>
+          <button type="button" class="link" (click)="goToEvents()">
+            Voir plus <i class="pi pi-arrow-right"></i>
+          </button>
         </div>
 
         <div class="carousel">
@@ -205,8 +219,10 @@
            que personne ne s'est manifesté : un classement de zéros n'apprend rien. -->
       <section class="block" *ngIf="wanted.length">
         <div class="block-head">
-          <h2>Les plus demandés</h2>
-          <button type="button" class="link" (click)="goToEvents()">Voir plus</button>
+          <h2><span class="head-accent"></span>Les plus demandés</h2>
+          <button type="button" class="link" (click)="goToEvents()">
+            Voir plus <i class="pi pi-arrow-right"></i>
+          </button>
         </div>
 
         <article class="wanted"
@@ -253,8 +269,17 @@
     <div class="poster-visual" [style.background]="card.style.gradient">
       <img *ngIf="card.visual" [src]="card.visual" [alt]="card.name" (error)="onVisualError(card)" />
 
-      <span class="poster-badge" [style.background]="card.style.tint" [style.color]="card.style.color">
-        <i class="pi" [ngClass]="card.style.icon"></i>
+      <!-- Pas de photo : un grand pictogramme de la catégorie occupe le dégradé. -->
+      <i class="poster-watermark pi" *ngIf="!card.visual" [ngClass]="card.style.icon" aria-hidden="true"></i>
+
+      <span class="poster-tags">
+        <span class="poster-badge" [style.background]="card.style.tint" [style.color]="card.style.color">
+          <i class="pi" [ngClass]="card.style.icon"></i>
+        </span>
+        <!-- Vrai signal : au moins une personne s'est déjà dite intéressée. -->
+        <span class="poster-tag is-popular" *ngIf="hero && popularEventIds.has(card.id)">
+          <i class="pi pi-bolt"></i> Populaire
+        </span>
       </span>
 
       <span class="poster-heart">
@@ -276,7 +301,9 @@
         </span>
 
         <!-- Le tarif n'apparaît que s'il est fixé : pas de « N/A » à sa place -->
-        <span class="poster-price" *ngIf="card.price" [class.is-free]="card.free">{{ card.price }}</span>
+        <span class="poster-price" *ngIf="card.price" [class.is-free]="card.free">
+          <i class="dot" *ngIf="card.free"></i>{{ card.price }}
+        </span>
       </div>
     </div>
   </article>
@@ -288,7 +315,10 @@
 -->
 <ng-template #featureTile let-card>
   <article class="feature-tile" (click)="open(card)">
-    <span class="feature-tile-accent" [style.background]="card.style.color"></span>
+    <span class="feature-tile-accent-row">
+      <span class="feature-tile-accent" [style.background]="card.style.color"></span>
+      <i class="feature-tile-dot" [style.background]="card.style.color"></i>
+    </span>
     <strong>{{ card.name }}</strong>
     <span class="feature-tile-meta">
       <ng-container *ngIf="card.longDate">{{ card.longDate }}</ng-container>
