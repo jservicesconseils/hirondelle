@@ -76,6 +76,8 @@
 
       <div class="member-grid" *ngIf="shownRows.length">
         <article class="member-card" *ngFor="let row of shownRows; trackBy: trackByRow">
+          <span class="card-header"></span>
+
           <span class="avatar" [style.background]="row.photo ? null : row.color">
             <img *ngIf="row.photo" [src]="row.photo" [alt]="row.fullName" />
             <ng-container *ngIf="!row.photo">{{ row.initials }}</ng-container>

@@ -296,24 +296,40 @@
 }
 
 .member-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   padding: 0.9rem;
   border: 1px solid theme.$line;
   border-radius: 20px;
   background: #fff;
+  // Rogne le bandeau d'en-tête aux mêmes coins arrondis que la carte.
+  overflow: hidden;
   box-shadow: 0 8px 20px rgba(16, 28, 48, 0.06);
 
   &:active { transform: scale(0.99); }
 }
 
+/** Bandeau clair en haut de la carte : l'avatar vient le chevaucher, comme le modèle. */
+.card-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 58px;
+  background: linear-gradient(120deg, theme.$sky 0%, rgba(242, 246, 253, 0) 100%);
+}
+
 /** Pastille colorée : les initiales quand aucune photo n'est jointe. */
 .avatar {
+  position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
   width: 52px;
   height: 52px;
   margin-bottom: 0.6rem;
+  border: 3px solid #fff;
   border-radius: 50%;
   background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
   color: #fff;
@@ -410,13 +426,11 @@
   /* Appel : la couleur de la marque. */
   &.call {
     background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
-    box-shadow: 0 6px 14px rgba(43, 95, 184, 0.32);
   }
 
   /* WhatsApp garde son vert : on le reconnaît à sa couleur, pas à sa forme. */
   &.whatsapp {
     background: linear-gradient(135deg, #1faa59 0%, #128c4a 100%);
-    box-shadow: 0 6px 14px rgba(18, 140, 74, 0.3);
   }
 }
 
