@@ -16,28 +16,50 @@
       <ul class="hero-stats" *ngIf="!loading && !loadError && rows.length">
         <li><strong>{{ rows.length }}</strong><span>Membres</span></li>
         <li *ngIf="cityCount"><strong>{{ cityCount }}</strong><span>{{ cityCount > 1 ? 'Villes' : 'Ville' }}</span></li>
-        <li *ngIf="reachableCount"><strong>{{ reachableCount }}</strong><span>Joignables</span></li>
+        <li class="reachable" *ngIf="reachableCount"><strong><i class="dot"></i>{{ reachableCount }}</strong><span>Joignables</span></li>
       </ul>
     </div>
   </header>
 
-  <div class="search">
-    <input type="search"
-           placeholder="Rechercher un membre"
-           [(ngModel)]="searchTerm"
-           (ngModelChange)="applyFilter()"
-           name="query"
-           autocomplete="off" />
-    <button type="button" class="clear" *ngIf="searchTerm" (click)="clearSearch()" aria-label="Effacer">
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+  <div class="search-row">
+    <div class="search">
+      <input type="search"
+             placeholder="Rechercher un membre"
+             [(ngModel)]="searchTerm"
+             (ngModelChange)="applyFilter()"
+             name="query"
+             autocomplete="off" />
+      <button type="button" class="clear" *ngIf="searchTerm" (click)="clearSearch()" aria-label="Effacer">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+        </svg>
+      </button>
+      <span class="search-icon" *ngIf="!searchTerm">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z" />
+        </svg>
+      </span>
+    </div>
+
+    <!-- Repart d'un annuaire non filtré : recherche vidée, sous-groupe désélectionné. -->
+    <button type="button" class="filter-btn" (click)="resetFilters()" aria-label="Réinitialiser les filtres">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M4 6h16M7 12h10M10 18h4" />
       </svg>
     </button>
-    <span class="search-icon" *ngIf="!searchTerm">
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z" />
-      </svg>
-    </span>
+  </div>
+
+  <!-- Sous-groupes réels de l'annuaire : une fonction distincte par onglet, jamais une catégorie inventée. -->
+  <div class="tabs" *ngIf="subgroups.length">
+    <button type="button" class="tab" [class.is-active]="!activeSubgroup" (click)="pickSubgroup('')">
+      Tous <em>{{ rows.length }}</em>
+    </button>
+    <button type="button" class="tab"
+            *ngFor="let group of subgroups; trackBy: trackBySubgroup"
+            [class.is-active]="activeSubgroup === group.name"
+            (click)="pickSubgroup(group.name)">
+      {{ group.name }} <em>{{ group.count }}</em>
+    </button>
   </div>
 
   <main class="body">
@@ -46,44 +68,40 @@
     <p class="state is-error" *ngIf="loadError">{{ loadError }}</p>
 
     <ng-container *ngIf="!loading && !loadError">
+      <p class="results-count" *ngIf="filteredRows.length">{{ filteredRows.length }} résultat{{ filteredRows.length > 1 ? 's' : '' }}</p>
+
       <p class="state" *ngIf="!filteredRows.length">
-        {{ rows.length ? 'Aucun membre ne correspond à la recherche.' : 'Aucun membre enregistré.' }}
+        {{ rows.length ? 'Aucun membre ne correspond à cette recherche.' : 'Aucun membre enregistré.' }}
       </p>
 
-      <!-- Classement par lettre : l'intitulé reste visible pendant qu'on le parcourt -->
-      <section class="letter-block" *ngFor="let group of groups; trackBy: trackByGroup">
-        <div class="letter-head">
-          <span class="letter">{{ group.letter }}</span>
-          <span class="letter-rule"></span>
-          <span class="letter-count">{{ group.rows.length }}</span>
-        </div>
-
-        <article class="member-row" *ngFor="let row of group.rows; trackBy: trackByRow">
-          <!-- Initiales uniquement : les photos des fiches ne sont pas affichées ici. -->
-          <span class="avatar">{{ row.initials }}</span>
-
-          <div class="member-body">
-            <strong>{{ row.fullName }}</strong>
-
-            <span class="role" *ngIf="row.role">{{ row.role }}</span>
-
-            <span class="line" *ngIf="row.city">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
-              </svg>
-              {{ row.city }}
+      <div class="member-grid" *ngIf="shownRows.length">
+        <article class="member-card" *ngFor="let row of shownRows; trackBy: trackByRow">
+          <div class="card-top">
+            <span class="avatar" [style.background]="row.photo ? null : row.color">
+              <img *ngIf="row.photo" [src]="row.photo" [alt]="row.fullName" />
+              <ng-container *ngIf="!row.photo">{{ row.initials }}</ng-container>
             </span>
 
-            <span class="line" *ngIf="!row.city && row.email">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
+            <button type="button" class="add-btn" (click)="saveToContacts(row)"
+                    [attr.aria-label]="'Ajouter ' + row.fullName + ' aux contacts'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M12 5v14M5 12h14" />
               </svg>
-              {{ row.email }}
-            </span>
+            </button>
           </div>
 
-          <!-- Les deux actions n'existent que si un numéro est renseigné -->
-          <div class="member-actions" *ngIf="row.phone">
+          <strong class="name">{{ row.fullName }}</strong>
+          <span class="role" *ngIf="row.role">{{ row.role }}</span>
+
+          <span class="line" *ngIf="row.city">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
+            </svg>
+            {{ row.city }}
+          </span>
+          <span class="line sub" *ngIf="row.address">{{ row.address }}</span>
+
+          <div class="card-actions" *ngIf="row.phone">
             <button type="button" class="act call" (click)="call(row)"
                     [attr.aria-label]="'Appeler ' + row.fullName">
               <svg viewBox="0 0 24 24" fill="currentColor">
@@ -98,9 +116,11 @@
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M12.05 21.785h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884" />
               </svg>
             </button>
+
+            <button type="button" class="msg-btn" (click)="openWhatsApp(row)">Message</button>
           </div>
         </article>
-      </section>
+      </div>
 
       <!-- Chargement progressif : on n'affiche la suite que sur demande -->
       <div class="load-more" *ngIf="filteredRows.length">

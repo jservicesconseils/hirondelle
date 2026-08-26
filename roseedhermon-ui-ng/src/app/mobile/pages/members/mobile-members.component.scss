@@ -1,5 +1,5 @@
 // Annuaire mobile, sur la charte des pages publiques : frange bleue courbée,
-// recherche à cheval, fiches blanches classées par lettre.
+// recherche à cheval, sous-groupes réels en onglets, fiches en grille.
 @use '../../../web/styles/public-theme' as theme;
 
 :host {
@@ -109,21 +109,44 @@
     color: rgba(255, 255, 255, 0.72);
     font-size: 0.72rem;
   }
+
+  // Effectif joignable : un vrai décompte (fiches avec numéro), pas une présence en direct.
+  &.reachable strong {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3ddc84;
+    box-shadow: 0 0 0 3px rgba(61, 220, 132, 0.25);
+  }
 }
 
 /* ========== Recherche ========== */
+
+.search-row {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: -3rem 1.15rem 0;
+}
 
 /**
  * À cheval sur le bord de la frange : la valeur se règle au centre de l'arc,
  * mais se juge à ses extrémités, où la courbe est déjà remontée.
  */
 .search {
-  position: relative;
-  z-index: 2;
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: -3rem 1.15rem 0;
   padding: 0.15rem 0.9rem;
   border-radius: 18px;
   background: #fff;
@@ -171,10 +194,79 @@
   svg { width: 16px; height: 16px; }
 }
 
+/** Réglages : un carré plein assorti au rail de navigation, à côté de la recherche. */
+.filter-btn {
+  flex: 0 0 52px;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$ink 100%);
+  color: #fff;
+  box-shadow: 0 14px 32px rgba(16, 28, 48, 0.2);
+
+  svg { width: 19px; height: 19px; }
+
+  &:active { transform: scale(0.96); }
+}
+
+/* ========== Sous-groupes ========== */
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0.1rem 1.15rem 0.3rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.95rem;
+  border: 1px solid theme.$line;
+  border-radius: 999px;
+  background: #fff;
+  color: theme.$ink;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  em {
+    padding: 0.02rem 0.4rem;
+    border-radius: 999px;
+    background: theme.$sky;
+    color: theme.$blue-deep;
+    font-size: 0.72rem;
+    font-style: normal;
+    font-weight: 800;
+  }
+
+  &.is-active {
+    border-color: theme.$blue;
+    background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(43, 95, 184, 0.3);
+
+    em {
+      background: rgba(255, 255, 255, 0.22);
+      color: #fff;
+    }
+  }
+}
+
 /* ========== Corps ========== */
 
 .body {
-  padding: 1.5rem 1.15rem 0;
+  padding: 1.3rem 1.15rem 0;
 }
 
 .state {
@@ -187,76 +279,52 @@
   &.is-error { color: #b00020; font-weight: 600; }
 }
 
-/* ========== Classement par lettre ========== */
-
-.letter-block { margin-bottom: 1.2rem; }
-
-/**
- * L'intitulé de lettre reste collé en haut pendant qu'on parcourt son groupe :
- * on sait toujours où l'on est dans l'alphabet.
- */
-.letter-head {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.45rem 0 0.6rem;
-  background: theme.$cream;
-}
-
-.letter {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
-  background: theme.$blue-deep;
-  color: #fff;
-  font-size: 0.86rem;
-  font-weight: 800;
-}
-
-.letter-rule {
-  flex: 1 1 auto;
-  height: 1px;
-  background: theme.$line;
-}
-
-.letter-count {
+.results-count {
+  margin: 0 0 0.8rem;
   color: theme.$muted;
-  font-size: 0.76rem;
-  font-weight: 800;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: right;
 }
 
-/* ========== Fiche ========== */
+/* ========== Grille de fiches ========== */
 
-.member-row {
+.member-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.member-card {
   display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 0.7rem 0.85rem;
-  margin-bottom: 0.5rem;
+  flex-direction: column;
+  padding: 0.9rem;
   border: 1px solid theme.$line;
-  border-radius: 18px;
+  border-radius: 20px;
   background: #fff;
-  box-shadow: 0 6px 16px rgba(16, 28, 48, 0.05);
+  box-shadow: 0 8px 20px rgba(16, 28, 48, 0.06);
 
-  &:active { transform: scale(0.995); }
+  &:active { transform: scale(0.99); }
 }
 
-/** Pastille bleue : les initiales quand aucune photo n'est jointe. */
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+/** Pastille colorée : les initiales quand aucune photo n'est jointe. */
 .avatar {
-  flex: 0 0 46px;
+  flex: 0 0 52px;
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
   color: #fff;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   overflow: hidden;
@@ -269,29 +337,40 @@
   }
 }
 
-.member-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
-  min-width: 0;
-  flex: 1 1 auto;
+/** Ajoute la fiche aux contacts du téléphone (carte vCard). */
+.add-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid theme.$line;
+  border-radius: 50%;
+  background: #fff;
+  color: theme.$muted;
 
-  strong {
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: theme.$ink;
-    line-height: 1.3;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  svg { width: 14px; height: 14px; }
+
+  &:active { background: theme.$sky; color: theme.$blue-deep; }
 }
 
-/** Le métier, en pastille bleu clair : c'est ce qui distingue deux homonymes. */
+.name {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: theme.$ink;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/** Le sous-groupe (fonction), en pastille bleu clair. */
 .role {
   align-self: flex-start;
   max-width: 100%;
-  padding: 0.14rem 0.55rem;
+  margin-bottom: 0.5rem;
+  padding: 0.16rem 0.6rem;
   border-radius: 999px;
   background: theme.$sky;
   color: theme.$blue-deep;
@@ -306,38 +385,48 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  margin-bottom: 0.2rem;
   color: theme.$muted;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 
   svg {
     flex: 0 0 auto;
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
     color: theme.$blue;
+  }
+
+  &.sub {
+    padding-left: 1.05rem;
+    font-size: 0.72rem;
   }
 }
 
-/* ========== Actions ========== */
+/* ========== Actions de la fiche ========== */
 
-.member-actions {
+.card-actions {
   display: flex;
-  flex: 0 0 auto;
+  align-items: center;
   gap: 0.4rem;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid theme.$line;
 }
 
 .act {
+  flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border: 0;
   border-radius: 50%;
   color: #fff;
 
-  svg { width: 18px; height: 18px; }
+  svg { width: 16px; height: 16px; }
 
   &:active { transform: scale(0.94); }
 
@@ -354,10 +443,32 @@
   }
 }
 
+.msg-btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.4rem;
+  border: 1px solid theme.$line;
+  border-radius: 999px;
+  background: #fff;
+  color: theme.$blue-deep;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:active { background: theme.$sky; }
+}
+
+@media (max-width: 360px) {
+  .member-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* ========== Chargement progressif ========== */
 
 .load-more {
-  margin-top: 0.6rem;
+  margin-top: 1rem;
   text-align: center;
 
   button {

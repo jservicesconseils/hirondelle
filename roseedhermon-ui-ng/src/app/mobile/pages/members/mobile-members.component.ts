@@ -11,20 +11,24 @@ interface MemberRow {
   member: Member;
   fullName: string;
   initials: string;
+  color: string;
+  photo: string;
   role: string;
   phone: string;
   city: string;
+  address: string;
   email: string;
-  /** Lettre de classement, tirée du nom de famille quand il existe. */
-  letter: string;
   search: string;
 }
 
-/** Les fiches d'une même lettre, sous son intitulé. */
-interface LetterGroup {
-  letter: string;
-  rows: MemberRow[];
+/** Un sous-groupe réel, tiré des fonctions déjà renseignées sur les fiches — jamais inventé. */
+interface Subgroup {
+  name: string;
+  count: number;
 }
+
+/** Teintes des initiales, quand aucune photo n'est déposée sur la fiche. */
+const AVATAR_COLORS = ['#dc4a22', '#6d3be4', '#0e8f72', '#2360d4', '#c07a06', '#c42e6b'];
 
 @Component({
   selector: 'app-mobile-members',
@@ -36,13 +40,17 @@ interface LetterGroup {
 export class MobileMembersComponent implements OnInit {
   rows: MemberRow[] = [];
   filteredRows: MemberRow[] = [];
+
   /**
-   * Groupes visibles, recalculés à la demande et non à chaque cycle de détection.
+   * Sous-groupes réellement présents dans l'annuaire, avec leur effectif.
    *
-   * Un accesseur qui reconstruirait ces objets à chaque lecture ferait recréer
-   * toutes les vues de `*ngFor`, qui suivent l'identité des objets.
+   * Recalculés à la demande et non à chaque cycle de détection : un accesseur
+   * qui reconstruirait ce tableau à chaque lecture ferait recréer toutes les
+   * vues de `*ngFor`, qui suivent l'identité des objets.
    */
-  groups: LetterGroup[] = [];
+  subgroups: Subgroup[] = [];
+  /** `''` = tous les sous-groupes confondus. */
+  activeSubgroup = '';
 
   searchTerm = '';
   loading = true;
@@ -61,7 +69,8 @@ export class MobileMembersComponent implements OnInit {
     this.memberService.getMembers().subscribe({
       next: (members: Member[] | any) => {
         const list: Member[] = Array.isArray(members) ? members : (members?.content ?? members?.data ?? []);
-        this.rows = list.map((member) => this.toRow(member)).sort(byName);
+        this.rows = list.map((member, index) => this.toRow(member, index)).sort(byName);
+        this.buildSubgroups();
         this.applyFilter();
         this.loading = false;
       },
@@ -76,7 +85,7 @@ export class MobileMembersComponent implements OnInit {
   // --- Entête ------------------------------------------------------------------------
 
   get groupName(): string {
-    return this.auth.user().group?.name?.trim() || "Hirondelle";
+    return this.auth.user().group?.name?.trim() || 'Hirondelle';
   }
 
   /** Villes distinctes, comptées sur les fiches réellement chargées. */
@@ -89,33 +98,44 @@ export class MobileMembersComponent implements OnInit {
     return this.rows.filter((row) => row.phone).length;
   }
 
+  // --- Sous-groupes --------------------------------------------------------------------
+
+  /**
+   * Un sous-groupe par fonction distincte (ex. Pasteur, Diacre, Administrateur) —
+   * reprise de ce que chaque fiche porte déjà comme fonction, pas une catégorie
+   * ajoutée pour l'occasion. Sans fonction renseignée sur aucune fiche, seul
+   * l'onglet « Tous » reste.
+   */
+  private buildSubgroups(): void {
+    const counts = new Map<string, number>();
+    this.rows.forEach((row) => {
+      if (row.role) counts.set(row.role, (counts.get(row.role) ?? 0) + 1);
+    });
+
+    this.subgroups = [...counts.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0], 'fr', { sensitivity: 'base' }))
+      .map(([name, count]) => ({ name, count }));
+  }
+
+  pickSubgroup(name: string): void {
+    // Un second appui retire le filtre : pas de bouton « Tous » à aller chercher.
+    this.activeSubgroup = this.activeSubgroup === name ? '' : name;
+    this.applyFilter();
+  }
+
   // --- Filtrage et pagination --------------------------------------------------------
 
   applyFilter(): void {
     const term = this.searchTerm.trim().toLowerCase();
-    this.filteredRows = term ? this.rows.filter((row) => row.search.includes(term)) : this.rows;
-    // Une nouvelle recherche repart de la première page.
-    this.visibleCount = this.pageSize;
-    this.rebuild();
-  }
 
-  /** Reconstruit les groupes de lettres sur la tranche visible. */
-  private rebuild(): void {
-    const visible = this.filteredRows.slice(0, this.visibleCount);
-    const groups: LetterGroup[] = [];
-    const index = new Map<string, LetterGroup>();
-
-    visible.forEach((row) => {
-      let group = index.get(row.letter);
-      if (!group) {
-        group = { letter: row.letter, rows: [] };
-        index.set(row.letter, group);
-        groups.push(group);
-      }
-      group.rows.push(row);
+    this.filteredRows = this.rows.filter((row) => {
+      if (this.activeSubgroup && row.role !== this.activeSubgroup) return false;
+      if (term && !row.search.includes(term)) return false;
+      return true;
     });
 
-    this.groups = groups;
+    // Un nouveau filtre repart de la première page.
+    this.visibleCount = this.pageSize;
   }
 
   get remainingCount(): number {
@@ -126,9 +146,12 @@ export class MobileMembersComponent implements OnInit {
     return Math.min(this.visibleCount, this.filteredRows.length);
   }
 
+  get shownRows(): MemberRow[] {
+    return this.filteredRows.slice(0, this.visibleCount);
+  }
+
   loadMore(): void {
     this.visibleCount += this.pageSize;
-    this.rebuild();
   }
 
   clearSearch(): void {
@@ -136,8 +159,15 @@ export class MobileMembersComponent implements OnInit {
     this.applyFilter();
   }
 
-  trackByGroup(_index: number, group: LetterGroup): string {
-    return group.letter;
+  /** Le bouton réglages, à côté de la recherche : repart d'un annuaire non filtré. */
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.activeSubgroup = '';
+    this.applyFilter();
+  }
+
+  trackBySubgroup(_index: number, group: Subgroup): string {
+    return group.name;
   }
 
   trackByRow(_index: number, row: MemberRow): string {
@@ -157,45 +187,52 @@ export class MobileMembersComponent implements OnInit {
     window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, '_blank');
   }
 
+  /** Ajoute la fiche aux contacts du téléphone, via une carte vCard standard. */
+  saveToContacts(row: MemberRow): void {
+    const lines = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `N:${row.member.lastName || ''};${row.member.firstName || ''};;;`,
+      `FN:${row.fullName}`,
+      row.role ? `TITLE:${row.role}` : '',
+      row.phone ? `TEL;TYPE=CELL:${row.phone}` : '',
+      row.email ? `EMAIL:${row.email}` : '',
+      row.address ? `ADR;TYPE=HOME:;;${row.address};;;;` : '',
+      'END:VCARD'
+    ].filter(Boolean);
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/vcard' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${row.fullName || 'contact'}.vcf`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   // --- Construction ------------------------------------------------------------------
 
-  private toRow(member: Member): MemberRow {
+  private toRow(member: Member, index: number): MemberRow {
     const fullName = `${member.firstName || ''} ${member.lastName || ''}`.trim() || 'Sans nom';
-    const lastName = (member.lastName || '').trim();
 
     return {
       member,
       fullName,
       initials:
         `${(member.firstName || '').charAt(0)}${(member.lastName || '').charAt(0)}`.toUpperCase() || '?',
+      color: AVATAR_COLORS[index % AVATAR_COLORS.length],
+      photo: (member.photo || '').trim(),
       role: (member.profession || '').trim(),
       phone: (member.phoneNumber || '').trim(),
       city: (member.city || '').trim(),
+      address: (member.address || '').trim(),
       email: (member.email || '').trim(),
-      // Classement sur le nom de famille, comme un annuaire ; le prénom à défaut.
-      letter: firstLetter(lastName || fullName),
       search: [fullName, member.profession, member.phoneNumber, member.city, member.email]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
     };
   }
-}
-
-/* ---------- Utilitaires ---------- */
-
-/**
- * Première lettre de classement, accents retirés : « Émile » se range sous E,
- * et non dans une catégorie à part.
- */
-function firstLetter(value: string): string {
-  const clean = value
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .trim()
-    .toUpperCase();
-  const letter = clean.charAt(0);
-  return /[A-Z]/.test(letter) ? letter : '#';
 }
 
 /** Tri d'annuaire : nom de famille, puis prénom, sans tenir compte des accents. */
