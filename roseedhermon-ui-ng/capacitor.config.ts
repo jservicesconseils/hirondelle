@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.roseedhermon.app',
-  appName: 'Roseed Hermon',
+  appName: 'Hirondelle',
   webDir: 'dist/sakai-ng/browser',
   server: {
     androidScheme: 'https'
