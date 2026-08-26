@@ -18,6 +18,12 @@
       <button type="button" (click)="goTo('categories')">Catégories</button>
       <button type="button" (click)="goTo('organiser')">Organiser</button>
       <button type="button" (click)="goTo('apropos')">À propos</button>
+      <!--
+        Ces trois entrées, propres à la session, ont leur place dans le menu du
+        compte en desktop (voir .account-dropdown) : la barre garde ses seuls
+        liens marketing. La classe `.nav-link` les cache donc au-delà de 940px ;
+        elles réapparaissent dans le menu mobile déplié, où l'espace ne manque pas.
+      -->
       <!-- Agenda personnel : dès qu'une session est ouverte, quel que soit le rôle. -->
       <a class="nav-link" *ngIf="auth.isAuthenticated()" routerLink="/web/mes-evenements">Mes événements</a>
       <!-- L'annuaire n'existe que pour les groupes auxquels le module est attribué. -->
@@ -44,16 +50,40 @@
           type="button"
           class="account-trigger"
           (click)="toggleAccountMenu()"
-          [attr.aria-expanded]="accountMenuOpen">
+          [attr.aria-expanded]="accountMenuOpen"
+          title="Mon compte">
           <span class="account-avatar">{{ initials }}</span>
-          <span class="account-text">
-            <strong>{{ userName }}</strong>
-            <small>{{ roleLabel }}</small>
-          </span>
           <i class="pi" [ngClass]="accountMenuOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
         </button>
 
         <div class="account-dropdown" *ngIf="accountMenuOpen">
+          <div class="account-identity">
+            <strong>{{ userName }}</strong>
+            <small>{{ roleLabel }}</small>
+          </div>
+
+          <!-- Repris de la barre de navigation : ces entrées propres à la session
+               vivent désormais ici en desktop, pour désencombrer la barre. -->
+          <a
+            class="account-item"
+            *ngIf="auth.canAdminister()"
+            routerLink="/app/dashboard"
+            (click)="accountMenuOpen = false">
+            <i class="pi pi-th-large"></i> Mon espace
+          </a>
+          <a class="account-item" routerLink="/web/mes-evenements" (click)="accountMenuOpen = false">
+            <i class="pi pi-calendar"></i> Mes événements
+          </a>
+          <a
+            class="account-item"
+            *ngIf="auth.canSeeMembers()"
+            routerLink="/web/membres"
+            (click)="accountMenuOpen = false">
+            <i class="pi pi-users"></i> Membres
+          </a>
+
+          <div class="account-divider"></div>
+
           <a class="account-item" routerLink="/web/profil" (click)="accountMenuOpen = false">
             <i class="pi pi-user"></i> Mon profil
           </a>
