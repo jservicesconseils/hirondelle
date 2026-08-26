@@ -9,35 +9,101 @@
       </svg>
     </span>
 
-    <h1>{{ challenge ? 'Nouveau mot de passe' : 'Bienvenue' }}</h1>
-    <p>
-      {{ challenge
-        ? 'Remplacez le mot de passe reçu par texto.'
-        : 'Connectez-vous pour retrouver votre groupe, vos événements et vos billets.' }}
-    </p>
+    <h1>{{ title }}</h1>
+    <p>{{ lead }}</p>
   </header>
 
   <!-- Feuille blanche -->
   <section class="sheet">
     <form (ngSubmit)="submit()" novalidate>
       <ng-container *ngIf="!challenge">
-        <label class="field">
+        <!-- Deux façons de créer un compte, ou de se connecter au sien -->
+        <div class="method-toggle" *ngIf="view === 'signup'">
+          <button
+            type="button"
+            [class.is-active]="signupMethod === 'phone'"
+            (click)="chooseSignupMethod('phone')">
+            <i class="pi pi-mobile"></i> Par téléphone
+          </button>
+          <button
+            type="button"
+            [class.is-active]="signupMethod === 'email'"
+            (click)="chooseSignupMethod('email')">
+            <i class="pi pi-envelope"></i> Par courriel
+          </button>
+        </div>
+
+        <p class="method-hint" *ngIf="view === 'signup' && signupMethod === 'phone'">
+          Aucun mot de passe à choisir&nbsp;: un code à six chiffres, envoyé par courriel, suffira
+          à vous connecter la prochaine fois.
+        </p>
+
+        <!-- Numéro : seul champ de l'inscription par téléphone -->
+        <label class="field" *ngIf="view === 'signup' && signupMethod === 'phone'">
+          <span>Téléphone</span>
+          <span class="with-prefix">
+            <span class="prefix">+1</span>
+            <input
+              type="tel"
+              name="phone"
+              autocomplete="tel"
+              inputmode="tel"
+              [(ngModel)]="phone"
+              placeholder="514 555-0123" />
+          </span>
+        </label>
+
+        <!-- Courriel : connexion, inscription (les deux méthodes) -->
+        <label class="field" *ngIf="view === 'signin' || view === 'signup'">
           <span>Courriel</span>
-          <input type="email" name="email" inputmode="email" autocomplete="username" [(ngModel)]="email"
+          <input
+            type="email"
+            name="email"
+            inputmode="email"
+            autocomplete="username"
+            [(ngModel)]="email"
             placeholder="vous@exemple.ca" />
         </label>
 
-        <label class="field">
+        <label class="field" *ngIf="view === 'signin'">
           <span>Mot de passe</span>
           <input type="password" name="password" autocomplete="current-password" [(ngModel)]="password" />
         </label>
 
-        <label class="field" *ngIf="!auth.configured && needsGroup">
+        <label class="field" *ngIf="view === 'signin' && !auth.configured && needsGroup">
           <span>Votre groupe</span>
           <select name="groupId" [(ngModel)]="groupId">
             <option value="" disabled>Choisissez un groupe</option>
             <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
           </select>
+        </label>
+
+        <!-- Mot de passe : uniquement l'inscription par courriel -->
+        <ng-container *ngIf="view === 'signup' && signupMethod === 'email'">
+          <label class="field">
+            <span>Mot de passe</span>
+            <input type="password" name="newPassword" autocomplete="new-password" [(ngModel)]="newPassword" />
+            <em class="hint">Huit caractères au minimum.</em>
+          </label>
+
+          <label class="field">
+            <span>Confirmation</span>
+            <input type="password" name="confirmation" autocomplete="new-password" [(ngModel)]="confirmation" />
+          </label>
+        </ng-container>
+
+        <!-- Code reçu par courriel, à la confirmation d'une inscription -->
+        <label class="field" *ngIf="view === 'confirm'">
+          <span>Code de vérification</span>
+          <input
+            type="text"
+            name="code"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            class="code-input"
+            [(ngModel)]="code"
+            placeholder="••••••" />
         </label>
       </ng-container>
 
@@ -54,18 +120,37 @@
       </ng-container>
 
       <p class="error" *ngIf="error">{{ error }}</p>
+      <p class="notice" *ngIf="notice"><i class="pi pi-check-circle"></i> {{ notice }}</p>
 
-      <button type="submit" class="submit" [disabled]="busy">
-        {{ busy ? 'Vérification…' : (challenge ? 'Enregistrer' : 'Se connecter') }}
+      <button type="submit" class="submit" [disabled]="busy">{{ submitLabel }}</button>
+
+      <button type="button" class="link centered" *ngIf="view === 'confirm'" (click)="resendCode()" [disabled]="busy">
+        Je n'ai rien reçu — renvoyer le code
+      </button>
+
+      <button
+        type="button"
+        class="link centered"
+        *ngIf="!challenge && (view === 'signup' || view === 'confirm')"
+        (click)="show('signin')">
+        Revenir à la connexion
       </button>
     </form>
 
-    <button type="button" class="ghost" (click)="browse()">
+    <div class="signup-cta" *ngIf="view === 'signin' && !challenge">
+      <span class="signup-divider"><span>Vous n'avez pas de compte&nbsp;?</span></span>
+      <button type="button" class="signup-link" (click)="show('signup')">
+        <span>Créer un compte</span>
+        <i class="pi pi-arrow-right"></i>
+      </button>
+    </div>
+
+    <button type="button" class="ghost" *ngIf="view === 'signin' && !challenge" (click)="browse()">
       Parcourir sans compte
     </button>
 
     <!-- Comptes de démonstration, en local seulement -->
-    <div class="demo" *ngIf="!auth.configured">
+    <div class="demo" *ngIf="!auth.configured && view === 'signin' && !challenge">
       <button type="button" class="demo-toggle" (click)="demoOpen = !demoOpen">
         <i class="pi pi-wrench"></i>
         Comptes de test
