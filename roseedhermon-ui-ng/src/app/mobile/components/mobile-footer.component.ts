@@ -146,10 +146,10 @@ import { AuthService } from '../../core/auth/auth.service';
       content: '';
       position: absolute;
       left: 50%;
-      bottom: -7px;
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
+      bottom: -6px;
+      width: 16px;
+      height: 3px;
+      border-radius: 2px;
       background: #f4551d;
       transform: translateX(-50%);
     }
