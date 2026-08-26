@@ -310,14 +310,14 @@
   &:active { transform: scale(0.99); }
 }
 
-/** Bandeau clair en haut de la carte : l'avatar vient le chevaucher, comme le modèle. */
+/** Bandeau en haut de la carte : l'avatar vient le chevaucher, comme le modèle. */
 .card-header {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 58px;
-  background: linear-gradient(120deg, theme.$sky 0%, rgba(242, 246, 253, 0) 100%);
+  background: linear-gradient(135deg, #dde9fc 0%, #eef3fc 55%, #ffffff 100%);
 }
 
 /** Pastille colorée : les initiales quand aucune photo n'est jointe. */
