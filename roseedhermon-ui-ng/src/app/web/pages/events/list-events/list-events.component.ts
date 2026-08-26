@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { Subject } from 'rxjs';
@@ -49,7 +50,7 @@ const PAGE_SIZE = 6;
     CreateEventComponent
   ]
 })
-export class ListEventsComponent implements OnInit, OnDestroy {
+export class ListEventsComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('createEvent') createEventComponent!: CreateEventComponent;
 
   eventList: EventDTO[] = [];
@@ -83,7 +84,9 @@ export class ListEventsComponent implements OnInit, OnDestroy {
   constructor(
     private eventService: EventService,
     private groupService: GroupService,
-    public auth: AuthService
+    public auth: AuthService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     this.filterSubject.pipe(
       debounceTime(300),
@@ -94,6 +97,18 @@ export class ListEventsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadEvents();
     this.loadGroups();
+  }
+
+  /**
+   * Un lien « Créer un événement » d'une autre page arrive ici avec `?create` :
+   * ouvre l'assistant directement, sans faire deviner où cliquer. Le paramètre
+   * est aussitôt retiré de l'URL pour qu'un rechargement ne le rouvre pas.
+   */
+  ngAfterViewInit(): void {
+    if (this.route.snapshot.queryParamMap.has('create')) {
+      Promise.resolve().then(() => this.showCreateEventDialog());
+      this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+    }
   }
 
   ngOnDestroy(): void {

@@ -127,7 +127,7 @@
 
       <div class="state empty" *ngIf="!organisedLoading && !organised.length">
         <p>Vous n'avez encore créé aucun événement.</p>
-        <a class="cta-create" routerLink="/web/creer-un-evenement">
+        <a class="cta-create" routerLink="/web/events" [queryParams]="{ create: 1 }">
           <i class="pi pi-plus"></i> Créer un événement
         </a>
       </div>

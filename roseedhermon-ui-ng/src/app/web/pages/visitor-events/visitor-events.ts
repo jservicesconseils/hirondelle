@@ -83,7 +83,8 @@ import { DropdownModule } from 'primeng/dropdown';
                         </div>
                     </div>
                     <div class="header-actions">
-                        <button pButton type="button" label="Créer un événement" icon="pi pi-plus" class="p-button-primary"></button>
+                        <button pButton type="button" label="Créer un événement" icon="pi pi-plus" class="p-button-primary"
+                                routerLink="/web/events" [queryParams]="{ create: 1 }"></button>
                         <button pButton type="button" label="Se connecter" icon="pi pi-sign-in" class="p-button-outlined"></button>
                     </div>
                 </div>

@@ -19,7 +19,6 @@ import { HomeComponent } from './app/web/pages/home/home.component';
 import { WebEventDetailComponent } from './app/web/pages/events/web-event-detail/web-event-detail.component';
 import { WebReservationComponent } from './app/web/pages/events/web-reservation/web-reservation.component';
 import { WebTicketComponent } from './app/web/pages/events/web-ticket/web-ticket.component';
-import { WebCreateEventComponent } from './app/web/pages/events/web-create-event/web-create-event.component';
 import { WebMembersComponent } from './app/web/pages/members/web-members/web-members.component';
 import { WebMyEventsComponent } from './app/web/pages/events/web-my-events/web-my-events.component';
 import { WebProfileComponent } from './app/web/pages/profile/web-profile.component';
@@ -45,9 +44,6 @@ export const appRoutes: Routes = [
     // Routes web
     { path: 'web', component: HomeComponent },
     { path: 'web/decouvrir', component: VisitorEventsComponent },
-    // Un événement a besoin d'un auteur : sans session, personne ne pourrait ensuite
-    // en consulter les statistiques (voir `administers` côté serveur).
-    { path: 'web/creer-un-evenement', component: WebCreateEventComponent, canActivate: [authGuard] },
     // L'annuaire n'est visible que connecté, et seulement si le groupe gère ses
     // membres. Le serveur applique les deux mêmes règles.
     { path: 'web/membres', component: WebMembersComponent, canActivate: [authGuard, membersGuard] },

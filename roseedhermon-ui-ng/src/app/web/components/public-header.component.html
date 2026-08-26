@@ -48,7 +48,7 @@
           <a class="ghost" routerLink="/web/profil">Mon profil</a>
           <button type="button" class="ghost" (click)="signOut()">Se déconnecter</button>
         </ng-container>
-        <a class="cta" routerLink="/web/creer-un-evenement">Créer un événement</a>
+        <a class="cta" routerLink="/web/events" [queryParams]="{ create: 1 }">Créer un événement</a>
       </div>
     </nav>
 
@@ -107,7 +107,7 @@
         </div>
       </div>
 
-      <a class="cta" routerLink="/web/creer-un-evenement">
+      <a class="cta" routerLink="/web/events" [queryParams]="{ create: 1 }">
         Créer un événement
         <i class="pi pi-arrow-up-right"></i>
       </a>
