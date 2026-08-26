@@ -99,6 +99,13 @@
   .nav-link {
     display: none;
   }
+
+  // « Mon espace » reste au contraire dans la barre, au même titre que les
+  // liens marketing : c'est lui qui absorbe « Mes événements » et « Membres ».
+  .nav-link--primary {
+    display: inline-flex;
+    align-items: center;
+  }
 }
 
 .topbar-actions {

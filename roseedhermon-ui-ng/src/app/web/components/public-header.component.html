@@ -18,18 +18,29 @@
       <button type="button" (click)="goTo('categories')">Catégories</button>
       <button type="button" (click)="goTo('organiser')">Organiser</button>
       <button type="button" (click)="goTo('apropos')">À propos</button>
+      <!-- Un administrateur (groupe ou super) a sa place dans la barre, au même
+           titre que les liens marketing : son tableau de bord réunit déjà
+           « Mes événements » et « Membres », inutile de les répéter ici. -->
+      <a class="nav-link nav-link--primary" *ngIf="auth.canAdminister()" routerLink="/app/dashboard">Mon espace</a>
       <!--
-        Ces trois entrées, propres à la session, ont leur place dans le menu du
-        compte en desktop (voir .account-dropdown) : la barre garde ses seuls
-        liens marketing. La classe `.nav-link` les cache donc au-delà de 940px ;
-        elles réapparaissent dans le menu mobile déplié, où l'espace ne manque pas.
+        Ces deux entrées ne concernent que les comptes sans Mon espace ; elles
+        vivent dans le menu du compte en desktop (voir .account-dropdown) et
+        réapparaissent ici dans le menu mobile déplié, où l'espace ne manque pas.
       -->
-      <!-- Agenda personnel : dès qu'une session est ouverte, quel que soit le rôle. -->
-      <a class="nav-link" *ngIf="auth.isAuthenticated()" routerLink="/web/mes-evenements">Mes événements</a>
+      <!-- Agenda personnel : dès qu'une session est ouverte, si elle n'administre pas déjà. -->
+      <a
+        class="nav-link"
+        *ngIf="auth.isAuthenticated() && !auth.canAdminister()"
+        routerLink="/web/mes-evenements">
+        Mes événements
+      </a>
       <!-- L'annuaire n'existe que pour les groupes auxquels le module est attribué. -->
-      <a class="nav-link" *ngIf="auth.canSeeMembers()" routerLink="/web/membres">Membres</a>
-      <!-- Un simple compte trouve désormais ce qu'il a organisé dans « Mes événements ». -->
-      <a class="nav-link" *ngIf="auth.canAdminister()" routerLink="/app/dashboard">Mon espace</a>
+      <a
+        class="nav-link"
+        *ngIf="auth.canSeeMembers() && !auth.canAdminister()"
+        routerLink="/web/membres">
+        Membres
+      </a>
 
       <div class="topbar-actions-mobile">
         <a class="ghost" *ngIf="!auth.isAuthenticated()" routerLink="/login">Se connecter</a>
@@ -62,27 +73,22 @@
             <small>{{ roleLabel }}</small>
           </div>
 
-          <!-- Repris de la barre de navigation : ces entrées propres à la session
-               vivent désormais ici en desktop, pour désencombrer la barre. -->
-          <a
-            class="account-item"
-            *ngIf="auth.canAdminister()"
-            routerLink="/app/dashboard"
-            (click)="accountMenuOpen = false">
-            <i class="pi pi-th-large"></i> Mon espace
-          </a>
-          <a class="account-item" routerLink="/web/mes-evenements" (click)="accountMenuOpen = false">
-            <i class="pi pi-calendar"></i> Mes événements
-          </a>
-          <a
-            class="account-item"
-            *ngIf="auth.canSeeMembers()"
-            routerLink="/web/membres"
-            (click)="accountMenuOpen = false">
-            <i class="pi pi-users"></i> Membres
-          </a>
+          <!-- Un administrateur retrouve déjà ces deux entrées dans Mon espace
+               (visible dans la barre) ; inutile de les répéter ici pour lui. -->
+          <ng-container *ngIf="!auth.canAdminister()">
+            <a class="account-item" routerLink="/web/mes-evenements" (click)="accountMenuOpen = false">
+              <i class="pi pi-calendar"></i> Mes événements
+            </a>
+            <a
+              class="account-item"
+              *ngIf="auth.canSeeMembers()"
+              routerLink="/web/membres"
+              (click)="accountMenuOpen = false">
+              <i class="pi pi-users"></i> Membres
+            </a>
 
-          <div class="account-divider"></div>
+            <div class="account-divider"></div>
+          </ng-container>
 
           <a class="account-item" routerLink="/web/profil" (click)="accountMenuOpen = false">
             <i class="pi pi-user"></i> Mon profil
