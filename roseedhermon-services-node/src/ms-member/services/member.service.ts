@@ -80,3 +80,13 @@ export async function updateMember(id: string, body: Record<string, unknown>): P
 export async function deleteMember(id: string): Promise<void> {
   await MemberModel.findOneAndDelete(springIdFilter(id)).exec();
 }
+
+/**
+ * Vide l'annuaire d'un coup. Sans `groupId`, toutes les fiches partent ; avec,
+ * seules celles du groupe visé. Renvoie le nombre de fiches effacées.
+ */
+export async function deleteAllMembers(groupId?: string | null): Promise<number> {
+  const filter = groupId ? { groupId } : {};
+  const result = await MemberModel.deleteMany(filter).exec();
+  return result.deletedCount ?? 0;
+}
