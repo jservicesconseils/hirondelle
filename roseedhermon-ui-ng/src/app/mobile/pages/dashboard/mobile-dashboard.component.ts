@@ -15,8 +15,6 @@ import {
   toEventCard
 } from '../../../shared/utils/event-presentation';
 import { AuthService } from '../../../core/auth/auth.service';
-import { MemberService } from '../../../shared/services/members/members.service';
-import { Member } from '../../../shared/services/api/model/member';
 import { TicketStoreService } from '../../services/ticket-store.service';
 import { RegistrationService } from '../../../shared/services/events/registrations.service';
 import { EventInterestService } from '../../../shared/services/events/event-interest.service';
@@ -92,11 +90,8 @@ const MONTH_NAMES = [
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Visages montrés dans la pile ; au-delà, c'est le compte qui parle. */
+/** Pastilles montrées dans la pile ; au-delà, c'est le compte qui parle. */
 const FACES = 4;
-
-/** Teintes des initiales, reprises du référentiel des catégories. */
-const FACE_COLORS = ['#dc4a22', '#6d3be4', '#0e8f72', '#2360d4', '#c07a06', '#c42e6b'];
 
 @Component({
   selector: 'app-mobile-dashboard',
@@ -146,10 +141,10 @@ export class MobileDashboardComponent implements OnInit {
   /** Tout événement ayant au moins une personne intéressée — pour le repère « Populaire ». */
   popularEventIds = new Set<string>();
 
-  // --- Communauté ---
+  // --- Aperçu des événements, dans la bande sous la recherche ---
   faces: Face[] = [];
-  memberCount = 0;
-  memberCityCount = 0;
+  eventCount = 0;
+  eventCityCount = 0;
 
   /** Le tout prochain événement, celui du compte à rebours. */
   next: EventCard | null = null;
@@ -160,7 +155,6 @@ export class MobileDashboardComponent implements OnInit {
     private eventService: EventService,
     private images: EventImageService,
     private auth: AuthService,
-    private memberService: MemberService,
     private tickets: TicketStoreService,
     private registrations: RegistrationService,
     private interest: EventInterestService,
@@ -185,46 +179,34 @@ export class MobileDashboardComponent implements OnInit {
   }
 
   /**
-   * Effectif de la communauté, pour la bande de présentation.
+   * Aperçu des événements à venir, dans la bande sous la recherche.
    *
-   * Demandé seulement si le module Membres est ouvert au groupe : sans lui, le
-   * serveur refuserait, et il n'y a de toute façon pas d'annuaire à résumer. Un
-   * échec reste sans conséquence — la bande ne s'affiche simplement pas.
+   * Construit à partir des cartes déjà chargées : aucun appel séparé, et rien
+   * qui dépende d'un module optionnel comme l'annuaire des membres.
    */
-  private loadCommunity(): void {
-    if (!this.auth.canSeeMembers()) return;
-
-    this.memberService.getMembers().subscribe({
-      next: (members: Member[]) => this.buildCommunity(members || []),
-      error: () => undefined
-    });
-  }
-
-  private buildCommunity(members: Member[]): void {
-    this.memberCount = members.length;
-    this.memberCityCount = new Set(
-      members.map((member) => (member.city || '').trim()).filter(Boolean)
+  private buildEventOverview(): void {
+    const upcoming = this.upcoming;
+    this.eventCount = upcoming.length;
+    this.eventCityCount = new Set(
+      upcoming.map((card) => (card.city || '').trim()).filter(Boolean)
     ).size;
 
-    // Initiales seulement : les photos des fiches ne sont pas affichées ici.
-    this.faces = members
-      .slice(0, FACES)
-      .map((member, index) => ({
-        id: member.id ?? `face-${index}`,
-        initials:
-          `${member.firstName?.charAt(0) ?? ''}${member.lastName?.charAt(0) ?? ''}`.toUpperCase() || '?',
-        color: FACE_COLORS[index % FACE_COLORS.length]
-      }));
+    this.faces = upcoming.slice(0, FACES).map((card, index) => ({
+      id: card.id || `event-${index}`,
+      initials: card.initial,
+      color: card.style.color
+    }));
   }
 
-  /** Nombre restant après les visages montrés, ou zéro. */
+  /** Nombre restant après les pastilles montrées, ou zéro. */
   get facesOverflow(): number {
-    return Math.max(0, this.memberCount - this.faces.length);
+    return Math.max(0, this.eventCount - this.faces.length);
   }
 
   get communityLabel(): string {
     const group = this.auth.user().group?.name?.trim();
-    return group ? `${this.memberCount} membres · ${group}` : `${this.memberCount} membres`;
+    const count = `${this.eventCount} événement${this.eventCount > 1 ? 's' : ''} à venir`;
+    return group ? `${count} · ${group}` : count;
   }
 
   private receive(events: EventDTO[]): void {
@@ -237,7 +219,7 @@ export class MobileDashboardComponent implements OnInit {
     this.buildDayStrip();
     this.buildMyTickets();
     this.rebuild();
-    this.loadCommunity();
+    this.buildEventOverview();
     this.loadWanted();
     this.loading = false;
   }

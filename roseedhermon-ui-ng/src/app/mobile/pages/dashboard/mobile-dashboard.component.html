@@ -50,13 +50,12 @@
 
     <ng-container *ngIf="!loading && !loadError">
 
-      <!-- ---------- La communauté en un coup d'œil ----------
-           Visages, effectif et villes viennent de l'annuaire réel. La bande
-           disparaît si le module Membres n'est pas ouvert au groupe. -->
+      <!-- ---------- Les événements en un coup d'œil ----------
+           Pastilles, effectif et villes viennent des événements à venir réels. -->
       <div class="social" *ngIf="faces.length">
         <span class="social-accent"></span>
         <div class="faces">
-          <!-- Initiales uniquement : les photos des fiches ne sont pas affichées ici. -->
+          <!-- Initiale de l'événement, dans la couleur de sa catégorie. -->
           <span class="face" *ngFor="let face of faces; trackBy: trackByFace"
                 [style.background]="face.color">{{ face.initials }}</span>
           <span class="face more" *ngIf="facesOverflow">+{{ facesOverflow }}</span>
@@ -64,8 +63,8 @@
 
         <div class="social-text">
           <strong>{{ communityLabel }}</strong>
-          <span *ngIf="memberCityCount">
-            Présents dans {{ memberCityCount }} ville{{ memberCityCount > 1 ? 's' : '' }}
+          <span *ngIf="eventCityCount">
+            Dans {{ eventCityCount }} ville{{ eventCityCount > 1 ? 's' : '' }}
           </span>
         </div>
       </div>
