@@ -25,7 +25,15 @@ export class EventImageService {
       return useOnlineFallback ? this.getOnlineFallbackImage() : this.getLocalFallbackImage();
     }
 
-    // Priorité 1: Image principale (mainPhotoId)
+    // Priorité 1: la photo marquée « Principale » dans l'assistant de création —
+    // c'est ce drapeau que `setMainPhoto` met à jour, pas `event.mainPhotoId`
+    // (qui ne sert qu'à l'ancien flux de création avec photos groupées).
+    const flaggedMain = event.files.find((file: EventFileDTO) => file.isMainPhoto === true);
+    if (flaggedMain?.fileName) {
+      return `${this.baseUrl}/${event.id}/${flaggedMain.fileName}`;
+    }
+
+    // Priorité 2: mainPhotoId, pour les événements créés par l'ancien flux groupé.
     if (event.mainPhotoId) {
       const mainPhoto = event.files.find((file: EventFileDTO) => file.id === event.mainPhotoId);
       if (mainPhoto) {
@@ -33,15 +41,15 @@ export class EventImageService {
       }
     }
 
-    // Priorité 2: Première image disponible
-    const firstImage = event.files.find((file: EventFileDTO) => 
+    // Priorité 3: aucune photo marquée principale — la première image disponible.
+    const firstImage = event.files.find((file: EventFileDTO) =>
       file.fileName && this.isImageFile(file.fileName)
     );
     if (firstImage) {
       return `${this.baseUrl}/${event.id}/${firstImage.fileName}`;
     }
 
-    // Priorité 3: Fallback local ou en ligne
+    // Priorité 4: Fallback local ou en ligne
     return useOnlineFallback ? this.getOnlineFallbackImage() : this.getLocalFallbackImage();
   }
 

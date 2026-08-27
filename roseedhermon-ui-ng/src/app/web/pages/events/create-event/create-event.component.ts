@@ -731,6 +731,7 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
 
           if (uploadedCount === totalFiles) {
             this.isUploading = false;
+            this.ensureMainPhotoAssigned();
             this.messageService.add({
               severity: 'success',
               summary: 'Succès',
@@ -1131,7 +1132,8 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
 
           if (uploadedCount === totalFiles) {
             this.isUploading = false;
-            
+            this.ensureMainPhotoAssigned();
+
             // Nettoyer les photos en attente
             this.clearPendingPhotos();
             
@@ -1264,7 +1266,10 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
         
         // Retirer aussi de la liste des photos de présentation si c'en est une
         this.presentationPhotos = this.presentationPhotos.filter(p => p.id !== file.id);
-        
+        // Une photo restante reprend le rôle de principale : l'événement doit
+        // toujours en avoir une tant qu'il en reste au moins une.
+        this.ensureMainPhotoAssigned();
+
         this.messageService.add({
           severity: 'success',
           summary: 'Succès',
@@ -1286,6 +1291,18 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
     if (this.mainPresentationPhoto) {
       this.removeFile(this.mainPresentationPhoto);
     }
+  }
+
+  /**
+   * Garantit qu'une photo de présentation est toujours marquée principale :
+   * sans elle, `EventImageService` retombe sur la première image disponible,
+   * dont l'ordre n'est pas garanti — un choix silencieux vaut mieux qu'aucun.
+   * N'intervient jamais si l'organisateur en a déjà choisi une.
+   */
+  private ensureMainPhotoAssigned(): void {
+    if (this.mainPresentationPhoto || this.presentationPhotos.some(p => p.isMainPhoto)) return;
+    const first = this.presentationPhotos[0];
+    if (first) this.setMainPhoto(first);
   }
 
   setMainPhoto(file: EventFileDTO) {
@@ -1458,6 +1475,14 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
     if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
     if (size < 1024 * 1024 * 1024) return (size / (1024 * 1024)).toFixed(1) + ' MB';
     return (size / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+  }
+
+  /** Date d'ajout du fichier, affichée à côté de son nom dans les étapes Photo et Documents. */
+  getFileDateDisplay(file: EventFileDTO): string {
+    if (!file.uploadDate) return '';
+    const date = new Date(file.uploadDate);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   getFilePreviewUrl(file: EventFileDTO): string {

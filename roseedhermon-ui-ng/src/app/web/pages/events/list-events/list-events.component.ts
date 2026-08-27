@@ -13,7 +13,6 @@ import { EventService } from '../../../../shared/services/events/events.service'
 import { GroupEntity } from '../../../../shared/services/api/model/groupEntity';
 import { GroupService } from '../../../../shared/services/groups/groups.service';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { DetailEventComponent } from '../detail-event/detail-event.component';
 import { CreateEventComponent } from '../create-event/create-event.component';
 
 /** Valeur du filtre pour les événements qui n'appartiennent à aucun groupe. */
@@ -46,7 +45,6 @@ const PAGE_SIZE = 6;
     FormsModule,
     ButtonModule,
     DialogModule,
-    DetailEventComponent,
     CreateEventComponent
   ]
 })
@@ -56,8 +54,6 @@ export class ListEventsComponent implements OnInit, AfterViewInit, OnDestroy {
   eventList: EventDTO[] = [];
   rows: EventRow[] = [];
   filteredRows: EventRow[] = [];
-
-  selectedEvent: EventDTO | null = null;
 
   // Barre d'outils
   globalSearch = '';
@@ -329,12 +325,9 @@ export class ListEventsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // --- Actions -------------------------------------------------------------------
 
+  /** « Voir » un événement, en admin, ouvre directement le formulaire en mode édition. */
   openEvent(row: EventRow) {
-    this.selectedEvent = row.event;
-  }
-
-  onCloseDetail() {
-    this.selectedEvent = null;
+    this.onEditEvent(row.event);
   }
 
   showCreateEventDialog(): void {

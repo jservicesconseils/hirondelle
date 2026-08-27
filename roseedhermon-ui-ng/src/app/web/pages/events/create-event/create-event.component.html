@@ -267,7 +267,7 @@
                             <img *ngIf="getFilePreviewUrl(photo)" [src]="getFilePreviewUrl(photo)" [alt]="photo.fileName" />
                             <div class="media-info">
                                 <strong>{{ photo.fileName }}</strong>
-                                <span>{{ getFileSizeDisplay(photo.fileSize || 0) }}</span>
+                                <span>{{ getFileSizeDisplay(photo.fileSize || 0) }}<ng-container *ngIf="getFileDateDisplay(photo)"> • Ajoutée le {{ getFileDateDisplay(photo) }}</ng-container></span>
                             </div>
                             <div class="media-actions">
                                 <button type="button"
@@ -309,7 +309,7 @@
                             <span class="media-icon"><i [class]="getFileTypeIcon(file.fileType || 'OTHER')"></i></span>
                             <div class="media-info">
                                 <strong>{{ file.fileName }}</strong>
-                                <span>{{ getFileSizeDisplay(file.fileSize || 0) }}</span>
+                                <span>{{ getFileSizeDisplay(file.fileSize || 0) }}<ng-container *ngIf="getFileDateDisplay(file)"> • Ajouté le {{ getFileDateDisplay(file) }}</ng-container></span>
                             </div>
                             <div class="media-actions">
                                 <button type="button" class="chip danger" (click)="removeFile(file)">

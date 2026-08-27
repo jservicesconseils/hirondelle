@@ -230,42 +230,6 @@
   </div>
 </div>
 
-<!--
-  Détail d'un événement, en modale plutôt qu'en tiroir : le tableau garde toute
-  sa largeur, et le bandeau reprend celui de l'assistant de création.
--->
-<p-dialog
-  *ngIf="selectedEvent"
-  [visible]="true"
-  [modal]="true"
-  [style]="{width: 'min(820px, 94vw)'}"
-  [breakpoints]="{'960px': '96vw'}"
-  [draggable]="false"
-  [resizable]="false"
-  [closable]="false"
-  [dismissableMask]="true"
-  (onHide)="onCloseDetail()"
-  styleClass="detail-dialog">
-  <ng-template pTemplate="header">
-    <div class="modal-header-band">
-      <span class="header-icon"><i class="pi pi-calendar"></i></span>
-      <div class="header-text">
-        <strong>{{ selectedEvent.name || 'Événement' }}</strong>
-        <small>{{ selectedEvent.date || 'Date à définir' }}<span *ngIf="selectedEvent.location?.city"> • {{ selectedEvent.location?.city }}</span></small>
-      </div>
-      <button type="button" class="header-close" (click)="onCloseDetail()" aria-label="Fermer">
-        <i class="pi pi-times"></i>
-      </button>
-    </div>
-  </ng-template>
-
-  <app-detail-event
-    [event]="selectedEvent"
-    (close)="onCloseDetail()"
-    (editEvent)="onEditEvent($event)"
-  ></app-detail-event>
-</p-dialog>
-
 <app-create-event #createEvent (close)="loadEvents()"></app-create-event>
 
 <app-create-event
