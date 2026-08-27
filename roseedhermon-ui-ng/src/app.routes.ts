@@ -62,7 +62,10 @@ export const appRoutes: Routes = [
     { path: 'web/evenements/:id', component: WebEventDetailComponent },
     { path: 'web/evenements/:id/reservation', component: WebReservationComponent },
     { path: 'web/evenements/:id/billet', component: WebTicketComponent },
-    { path: 'web/events', component: ListEventsComponent },
+    // Le bouton « Créer un événement » de l'en-tête public y renvoie même sans
+    // session ouverte : sans cette garde, la modale de création s'ouvrait pour
+    // n'importe quel visiteur.
+    { path: 'web/events', component: ListEventsComponent, canActivate: [eventsGuard] },
     { path: 'login', component: LoginComponent },
     // Retour de Google : Cognito y renvoie le navigateur avec son code.
     { path: 'auth/callback', component: OauthCallbackComponent },
