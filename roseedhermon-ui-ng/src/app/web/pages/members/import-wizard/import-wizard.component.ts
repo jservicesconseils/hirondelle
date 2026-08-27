@@ -14,7 +14,7 @@ export const MEMBER_FIELDS: { value: string; label: string }[] = [
   { value: 'gender', label: 'Genre' },
   { value: 'birthDate', label: 'Date de naissance' },
   { value: 'profession', label: 'Profession' },
-  { value: 'subgroup', label: 'Sous-groupe' },
+  { value: 'subgroup', label: 'Groupe' },
   { value: 'phoneNumber', label: 'Téléphone' },
   { value: 'email', label: 'Email' },
   { value: 'city', label: 'Ville' },

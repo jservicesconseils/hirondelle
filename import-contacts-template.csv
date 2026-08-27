@@ -1,8 +1,13 @@
-firstName,lastName,gender,birthDate,profession,phoneNumber,email,city
-Thomas,Richard,Male,1983-12-18,Chef de projet,0634567890,thomas.richard@example.com,Lille
-Camille,Moreau,Female,1994-06-10,Enseignante,0623456789,camille.moreau@example.com,Rennes
-Antoine,Simon,Male,1991-10-05,Analyste,0611122233,antoine.simon@example.com,Strasbourg
-Julie,Lefebvre,Female,1989-04-22,Consultante,0677788899,julie.lefebvre@example.com,Nice
-David,Roux,Male,1986-08-14,Technicien,0665544332,david.roux@example.com,Grenoble
-Laura,Fournier,Female,1993-02-17,Avocate,0644556677,laura.fournier@example.com,Dijon
-Nicolas,Girard,Male,1987-11-09,Médecin,0688997766,nicolas.girard@example.com,Montpellier
+firstName,lastName,gender,birthDate,profession,groupe,phoneNumber,email,address,city
+Etienne,Moreau,Male,1978-04-02,Pasteur,Pasteur,5145551010,etienne.moreau@example.com,100 rue Principale,Montreal
+Nadine,Kalonji,Female,1982-11-19,Pasteure associee,Pasteur Associe,5145551011,nadine.kalonji@example.com,200 rue de l'Eglise,Montreal
+Marcel,Ilunga,Male,1975-06-23,Diacre,Diacre,5145551012,marcel.ilunga@example.com,300 rue des Cedres,Laval
+Rachel,Tshibangu,Female,1980-02-14,Diacre,Diacre,5145551013,rachel.tshibangu@example.com,15 boul. des Sources,Longueuil
+Georges,Nkemba,Male,1970-09-30,Administrateur,Administrateur,5145551014,georges.nkemba@example.com,45 rue Victoria,Pierrefonds
+Sylvie,Kabengele,Female,1985-01-08,Tresoriere,Tresorier,5145551015,sylvie.kabengele@example.com,88 rue Lafontaine,Montreal
+Antoine,Bakala,Male,1990-12-05,Surveillant ecole du dimanche,Surveillant Ecole du Dimanche,5145551016,antoine.bakala@example.com,12 rue Bayne,Lasalle
+Cecile,Mwamba,Female,1993-07-17,Enseignante,Enseignant Ecole du Dimanche,5145551017,cecile.mwamba@example.com,67 rue Aeterna,Saint-Leonard
+Daniel,Kifu,Male,1995-03-21,Etudiant,Membre,5145551018,daniel.kifu@example.com,9225 rue Bayne,Lasalle
+Josee,Mampuya,Female,1988-05-09,Comptable,Membre,5145551019,josee.mampuya@example.com,226 boul. Laurette Theoret,Sainte-Marthe-sur-le-Lac
+Thomas,Kanku,Male,1983-12-18,Chef de projet,Membre,5145551020,thomas.kanku@example.com,54 rue Sherbrooke,Montreal
+Marie,Lelo,Female,1994-06-10,Infirmiere,Membre,5145551021,marie.lelo@example.com,320 rue Notre-Dame,Repentigny

@@ -1,7 +1,0 @@
-firstName,lastName,gender,birthDate,profession,subgroup,phoneNumber,email,city
-Jean,Dupont,Male,1990-05-15,Developpeur,,0612345678,jean.dupont@example.com,Paris
-Marie,Durand,Female,1985-11-20,Graphic Designer,,0678901234,marie.durand@example.com,Lyon
-Paul,Martin,Male,1975-03-10,Pasteur,Pasteur,0611223344,paul.martin@example.com,Marseille
-Sophie,Bernard,Female,1980-07-22,Enseignante,Diacre,0622334455,sophie.bernard@example.com,Toulouse
-Luc,Petit,Male,1988-01-30,Comptable,Administrateur,0633445566,luc.petit@example.com,Nice
-Camille,Rousseau,Female,1992-09-05,Infirmiere,Diacre,0644556677,camille.rousseau@example.com,Nantes
