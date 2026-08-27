@@ -33,14 +33,6 @@ export class MemberService {
     return this.httpClient.delete<Member>(deleteEndPoint);
   }
 
-  /** Vide l'annuaire. Sans `groupId`, tout part ; avec, seulement ce groupe (super admin). */
-  deleteAllMembers(groupId?: string){
-    const endpoint = groupId
-      ? `${this.apiUrl}?groupId=${encodeURIComponent(groupId)}`
-      : this.apiUrl;
-    return this.httpClient.delete<{ deleted: number }>(endpoint);
-  }
-
   updateMember(member:Member):Observable<Member>{
     const updateEndpoint = this.apiUrl + `/${member.id}` 
     return this.httpClient.put<Member>(updateEndpoint, member);

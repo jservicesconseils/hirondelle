@@ -125,26 +125,6 @@ memberRouter.put(
   }),
 );
 
-/**
- * Vide l'annuaire d'un coup — réservé au super administrateur.
- *
- * Sans `?groupId=`, toutes les fiches sont supprimées ; avec, seules celles du
- * groupe visé (`resolveScopeGroupId` borne déjà la portée à ce que l'appelant a
- * le droit de viser). Action irréversible : le client demande une confirmation
- * explicite avant d'appeler.
- */
-memberRouter.delete(
-  '/',
-  requireAuth,
-  requireRole(ROLES.SUPER_ADMIN),
-  directoryOnly,
-  asyncHandler(async (req, res) => {
-    const groupId = resolveScopeGroupId(req);
-    const deleted = await memberService.deleteAllMembers(groupId);
-    return res.json({ deleted });
-  }),
-);
-
 // DELETE /api/v1/members/{id}
 memberRouter.delete(
   '/:id',
