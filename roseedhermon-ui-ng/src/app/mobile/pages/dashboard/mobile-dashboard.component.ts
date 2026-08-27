@@ -255,6 +255,9 @@ export class MobileDashboardComponent implements OnInit {
     return firstName ? `Bonjour ${firstName},` : 'Bonjour,';
   }
 
+  /** Ligne fine au-dessus du nom, dans le bandeau. */
+  readonly slogan = 'Votre communauté, à un geste près';
+
   /**
    * Nom affiché en gros sous le salut.
    *
