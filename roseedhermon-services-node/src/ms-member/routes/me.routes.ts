@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ALL_FEATURES, asyncHandler, featuresOfGroup, isSuperAdmin, requireAuth } from '../../common';
+import { ALL_FEATURES, asyncHandler, featuresOfGroup, isSuperAdmin, requireAuth, toStringOrNull } from '../../common';
 import { memberToJson } from '../mappers/member.mapper';
 import { groupToJson } from '../mappers/group.mapper';
 import * as memberService from '../services/member.service';
@@ -43,5 +43,39 @@ meRouter.get(
       member: profile,
       features,
     });
+  }),
+);
+
+/**
+ * Prénom et nom de la personne connectée.
+ *
+ * Un compte n'a pas forcément de fiche membre — un super administrateur en
+ * particulier, qui n'appartient à aucun groupe. Sans elle, l'application
+ * retombe sur le préfixe du courriel faute d'autre identité disponible : cette
+ * route permet à chacun de fixer son propre nom, qu'une fiche existe déjà ou non.
+ */
+meRouter.put(
+  '/name',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const email = req.auth?.email ?? null;
+    if (email === null) {
+      res.status(400).json({ error: 'Aucun courriel associé à la session.' });
+      return;
+    }
+
+    const firstName = toStringOrNull((req.body as Record<string, unknown> | undefined)?.firstName);
+    const lastName = toStringOrNull((req.body as Record<string, unknown> | undefined)?.lastName);
+    if (firstName === null && lastName === null) {
+      res.status(400).json({ error: 'Indiquez un prénom ou un nom.' });
+      return;
+    }
+
+    const existing = await memberService.findMemberByEmail(email);
+    const saved = existing
+      ? await memberService.updateMember(String(existing._id), { ...memberToJson(existing), firstName, lastName })
+      : await memberService.addMember({ email, firstName, lastName });
+
+    res.json(memberToJson(saved));
   }),
 );

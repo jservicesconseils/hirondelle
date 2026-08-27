@@ -8,7 +8,7 @@
         Mon compte
       </span>
       <h1>Mon profil</h1>
-      <p class="lead">Le courriel de connexion, et le téléphone utilisé pour la connexion rapide.</p>
+      <p class="lead">Votre nom, le courriel de connexion, et le téléphone utilisé pour la connexion rapide.</p>
     </div>
   </header>
 
@@ -16,6 +16,17 @@
     <p class="state" *ngIf="loading">Chargement de votre profil…</p>
 
     <form class="panel" (ngSubmit)="save()" novalidate *ngIf="!loading">
+      <label class="field">
+        <span>Prénom</span>
+        <input type="text" name="firstName" autocomplete="given-name" [(ngModel)]="firstName" placeholder="Votre prénom" />
+      </label>
+
+      <label class="field">
+        <span>Nom</span>
+        <input type="text" name="lastName" autocomplete="family-name" [(ngModel)]="lastName" placeholder="Votre nom" />
+        <em class="hint">Affiché à votre place dans l'application, à la place de votre courriel.</em>
+      </label>
+
       <label class="field">
         <span>Courriel</span>
         <input type="email" [value]="auth.user().email" disabled />

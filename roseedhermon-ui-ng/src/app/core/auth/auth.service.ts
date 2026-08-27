@@ -441,6 +441,20 @@ export class AuthService {
     return firstValueFrom(this.fetchCurrentUser());
   }
 
+  /**
+   * Prénom et nom de la personne connectée.
+   *
+   * Un compte sans fiche membre — un super administrateur, par exemple — n'a
+   * sinon aucune identité affichable et retombe sur le préfixe du courriel.
+   * Le backend crée la fiche si elle n'existe pas encore.
+   */
+  async updateName(firstName: string, lastName: string): Promise<void> {
+    await firstValueFrom(
+      this.http.put(`${environment.host}/api/v1/me/name`, { firstName, lastName })
+    );
+    await this.loadCurrentUser();
+  }
+
   fetchCurrentUser(): Observable<CurrentUser> {
     return this.http.get<CurrentUser>(`${environment.host}/api/v1/me`).pipe(
       tap((profile) => this.user.set({ ...ANONYMOUS, ...profile })),

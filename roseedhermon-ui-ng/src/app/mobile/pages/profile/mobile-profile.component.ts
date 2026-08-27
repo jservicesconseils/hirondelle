@@ -450,12 +450,31 @@ export class MobileProfileComponent implements OnInit {
     input.value = '';
   }
 
-  save(): void {
+  async save(): Promise<void> {
     if (!this.canSave) return;
 
     this.saving = true;
     this.savedMessage = '';
     this.saveError = '';
+
+    /**
+     * Le prénom et le nom passent d'abord par `/api/v1/me/name`, qui les
+     * rattache au courriel de connexion côté serveur — le champ « Courriel »
+     * de ce formulaire est libre et peut ne pas correspondre, ou rester vide
+     * sur une fiche qui n'existe pas encore. Sans ce lien garanti, l'en-tête
+     * de l'application (et tout ce qui affiche le nom de la personne
+     * connectée) continuerait de retomber sur le préfixe du courriel.
+     *
+     * Attendu avant la suite quand la fiche n'existe pas encore : sinon
+     * `/me/name` et `createMember` en créeraient chacun une, en double.
+     */
+    try {
+      await this.auth.updateName((this.form.firstName || '').trim(), (this.form.lastName || '').trim());
+      const linkedId = this.auth.user().member?.id;
+      if (!this.member?.id && linkedId) this.member = { ...this.member, id: linkedId };
+    } catch (error) {
+      console.warn("Le nom n'a pas pu être synchronisé avec le compte", error);
+    }
 
     // On repart de la fiche d'origine pour ne perdre aucun champ non affiché.
     const payload = { ...(this.member || {}), ...this.form } as Member;

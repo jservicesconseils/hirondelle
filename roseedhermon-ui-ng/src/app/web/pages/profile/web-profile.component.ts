@@ -21,6 +21,8 @@ import { PublicFooterComponent } from '../../components/public-footer.component'
   styleUrls: ['./web-profile.component.scss']
 })
 export class WebProfileComponent implements OnInit {
+  firstName = '';
+  lastName = '';
   phone = '';
 
   loading = true;
@@ -31,6 +33,10 @@ export class WebProfileComponent implements OnInit {
   constructor(public auth: AuthService) {}
 
   ngOnInit(): void {
+    const member = this.auth.user().member;
+    this.firstName = member?.firstName ?? '';
+    this.lastName = member?.lastName ?? '';
+
     this.auth
       .getAccountPhone()
       .then((phone) => {
@@ -45,8 +51,17 @@ export class WebProfileComponent implements OnInit {
   async save(): Promise<void> {
     if (this.saving) return;
 
-    const e164 = toE164(this.phone.trim());
-    if (!e164) {
+    const firstName = this.firstName.trim();
+    const lastName = this.lastName.trim();
+    if (!firstName && !lastName) {
+      this.error = 'Indiquez au moins un prénom ou un nom.';
+      this.notice = '';
+      return;
+    }
+
+    const phoneEntered = this.phone.trim();
+    const e164 = phoneEntered ? toE164(phoneEntered) : null;
+    if (phoneEntered && !e164) {
       this.error = 'Indiquez un numéro de téléphone valide.';
       this.notice = '';
       return;
@@ -57,11 +72,16 @@ export class WebProfileComponent implements OnInit {
     this.notice = '';
 
     try {
-      await this.auth.registerAccountPhone(e164);
-      // Accessoire : le profil reste enregistré même si Cognito refuse l'attribut.
-      await this.auth.updatePhoneNumber(e164).catch(() => undefined);
-      this.phone = e164;
-      this.notice = 'Numéro enregistré.';
+      await this.auth.updateName(firstName, lastName);
+
+      if (e164) {
+        await this.auth.registerAccountPhone(e164);
+        // Accessoire : le profil reste enregistré même si Cognito refuse l'attribut.
+        await this.auth.updatePhoneNumber(e164).catch(() => undefined);
+        this.phone = e164;
+      }
+
+      this.notice = 'Profil enregistré.';
     } catch (error) {
       this.error = (error as Error)?.message || "L'enregistrement a échoué.";
     } finally {
