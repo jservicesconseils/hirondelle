@@ -41,8 +41,8 @@ const MAX_PHOTO_BYTES = 1_500_000;
             <input type="file" accept="image/*" (change)="onPhotoSelected($event)" hidden />
           </label>
 
-          <h1>{{ displayName }}</h1>
-          <p *ngIf="form.profession">{{ form.profession }}</p>
+          <h1>Mon profil</h1>
+          <p>Gérez vos infos personnelles</p>
           <p class="photo-error" *ngIf="photoError">{{ photoError }}</p>
         </header>
 
@@ -71,7 +71,10 @@ const MAX_PHOTO_BYTES = 1_500_000;
                 <button type="button"
                         *ngFor="let option of genders"
                         [class.on]="form.gender === option"
-                        (click)="form.gender = option">{{ option }}</button>
+                        (click)="form.gender = option">
+                  <span class="chip-dot" *ngIf="form.gender === option"></span>
+                  {{ option }}
+                </button>
               </div>
             </label>
 
@@ -100,7 +103,7 @@ const MAX_PHOTO_BYTES = 1_500_000;
           </section>
 
           <section class="card">
-            <h2 class="card-title green">
+            <h2 class="card-title coral">
               <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" /></svg></span>
               Adresse
             </h2>
@@ -117,7 +120,7 @@ const MAX_PHOTO_BYTES = 1_500_000;
           </section>
 
           <section class="card">
-            <h2 class="card-title orange">
+            <h2 class="card-title green">
               <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-4V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm-6 0h-4V4h4v2z" /></svg></span>
               Activité
             </h2>
@@ -133,6 +136,7 @@ const MAX_PHOTO_BYTES = 1_500_000;
 
           <div class="save-bar">
             <button type="submit" class="save" [disabled]="saving || !canSave">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
               {{ saving ? 'Enregistrement…' : 'Enregistrer mes informations' }}
             </button>
           </div>
@@ -158,16 +162,18 @@ const MAX_PHOTO_BYTES = 1_500_000;
 
     .hero {
       position: relative;
+      min-height: 200px;
+      box-sizing: border-box;
       padding: 34px 24px 30px;
       text-align: center;
       color: #fff;
-      background: linear-gradient(125deg, #ff8a3d 0%, #f4553f 38%, #d9418f 72%, #8b46e0 100%);
-      border-radius: 0 0 34px 34px;
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+      border-radius: 0 0 32px 32px;
     }
 
 
-    .hero h1 { margin: 14px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -0.01em; }
-    .hero p { margin: 4px 0 0; font-size: 15px; color: rgba(255, 255, 255, 0.92); }
+    .hero h1 { margin: 14px 0 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; color: #fff; }
+    .hero p { margin: 4px 0 0; font-size: 14px; color: rgba(255, 255, 255, 0.8); }
     .hero .photo-error { margin-top: 8px; font-size: 13px; color: #ffe0d6; font-weight: 600; }
 
     .switch {
@@ -194,11 +200,11 @@ const MAX_PHOTO_BYTES = 1_500_000;
 
     .avatar-ring {
       display: inline-flex;
-      width: 108px;
-      height: 108px;
+      width: 88px;
+      height: 88px;
       border-radius: 50%;
       padding: 4px;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.9);
       align-items: center;
       justify-content: center;
     }
@@ -213,8 +219,8 @@ const MAX_PHOTO_BYTES = 1_500_000;
       align-items: center;
       justify-content: center;
       background: #fff;
-      color: #f4553f;
-      font-size: 34px;
+      color: #2563eb;
+      font-size: 28px;
       font-weight: 800;
       box-sizing: border-box;
     }
@@ -223,29 +229,32 @@ const MAX_PHOTO_BYTES = 1_500_000;
       position: absolute;
       right: 2px;
       bottom: 2px;
-      width: 34px;
-      height: 34px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: #fff;
-      color: #8b46e0;
+      background: #f4551d;
+      color: #fff;
+      border: 2px solid #fff;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(30, 20, 60, 0.28);
+      box-shadow: 0 4px 12px rgba(244, 85, 29, 0.4);
     }
 
-    .avatar-edit svg { width: 18px; height: 18px; }
+    .avatar-edit svg { width: 15px; height: 15px; }
 
     /* ---------- Formulaire ---------- */
 
-    .profile-form { padding: 18px; }
+    /* Les cartes remontent par-dessus le bas du bandeau : c'est ce chevauchement
+       qui donne la profondeur du modèle. */
+    .profile-form { margin-top: -32px; padding: 0 18px 18px; position: relative; }
 
     .card {
       background: #fff;
-      border-radius: 22px;
+      border-radius: 20px;
       padding: 16px;
       margin-bottom: 14px;
-      box-shadow: 0 6px 20px rgba(30, 25, 45, 0.06);
+      box-shadow: 0 12px 28px rgba(16, 28, 48, 0.08);
     }
 
     .card-title {
@@ -269,9 +278,9 @@ const MAX_PHOTO_BYTES = 1_500_000;
 
     .card-title .dot svg { width: 18px; height: 18px; }
     .card-title.violet .dot { background: linear-gradient(135deg, #a86bf0 0%, #7b3fd4 100%); }
-    .card-title.blue .dot { background: linear-gradient(135deg, #4aa8ff 0%, #1877d6 100%); }
+    .card-title.blue .dot { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+    .card-title.coral .dot { background: linear-gradient(135deg, #ff7a4d 0%, #f4551d 100%); }
     .card-title.green .dot { background: linear-gradient(135deg, #43cd80 0%, #17a05c 100%); }
-    .card-title.orange .dot { background: linear-gradient(135deg, #ff9f45 0%, #f4552e 100%); }
 
     .field { display: block; margin-bottom: 12px; }
     .field:last-child { margin-bottom: 0; }
@@ -286,19 +295,19 @@ const MAX_PHOTO_BYTES = 1_500_000;
 
     .field input {
       width: 100%;
-      height: 50px;
-      padding: 0 15px;
+      height: 44px;
+      padding: 0 14px;
       border: 1px solid #e6e9ee;
-      border-radius: 14px;
-      background: #fbfcfd;
+      border-radius: 12px;
+      background: #f9fafb;
       font: inherit;
-      font-size: 16px;
+      font-size: 15px;
       color: #1a1c22;
       outline: none;
       box-sizing: border-box;
     }
 
-    .field input:focus { border-color: #8b46e0; background: #fff; box-shadow: 0 0 0 3px rgba(139, 70, 224, 0.14); }
+    .field input:focus { border-color: #2563eb; background: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14); }
 
     .field .error { display: block; margin-top: 5px; font-size: 13px; font-style: normal; color: #c0392b; }
 
@@ -309,10 +318,14 @@ const MAX_PHOTO_BYTES = 1_500_000;
 
     .chip-choice button {
       flex: 1 1 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       height: 44px;
       border: 1px solid #e6e9ee;
-      border-radius: 14px;
-      background: #fbfcfd;
+      border-radius: 12px;
+      background: #f9fafb;
       font: inherit;
       font-size: 15px;
       font-weight: 600;
@@ -322,8 +335,15 @@ const MAX_PHOTO_BYTES = 1_500_000;
 
     .chip-choice button.on {
       border-color: transparent;
-      background: linear-gradient(135deg, #a86bf0 0%, #7b3fd4 100%);
+      background: #2563eb;
       color: #fff;
+    }
+
+    .chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #f4551d;
     }
 
     .feedback { margin: 4px 0 12px; text-align: center; font-size: 14px; font-weight: 600; }
@@ -339,18 +359,24 @@ const MAX_PHOTO_BYTES = 1_500_000;
     }
 
     .save {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       width: 100%;
-      height: 56px;
+      height: 52px;
       border: none;
-      border-radius: 28px;
-      background: linear-gradient(135deg, #ff8a3d 0%, #f4553f 40%, #d9418f 100%);
+      border-radius: 14px;
+      background: #f4551d;
       color: #fff;
       font: inherit;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 12px 26px rgba(217, 65, 143, 0.32);
+      box-shadow: 0 12px 26px rgba(244, 85, 29, 0.35);
     }
+
+    .save svg { width: 19px; height: 19px; flex-shrink: 0; }
 
     .save:disabled { opacity: 0.6; cursor: default; box-shadow: none; }
   `]
@@ -498,10 +524,5 @@ export class MobileProfileComponent implements OnInit {
         this.saveError = `L'enregistrement a échoué (${error?.status || 'réseau'}).`;
       }
     });
-  }
-
-  get displayName(): string {
-    const name = `${this.form.firstName || ''} ${this.form.lastName || ''}`.trim();
-    return name || 'Mon profil';
   }
 }
