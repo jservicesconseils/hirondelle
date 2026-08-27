@@ -48,6 +48,31 @@
           <p class="prose">{{ event.description }}</p>
         </article>
 
+        <article class="panel" *ngIf="gallery.length">
+          <h2>Photos</h2>
+          <div class="gallery">
+            <a class="gallery-item" *ngFor="let photo of gallery" [href]="photo" target="_blank" rel="noopener">
+              <img [src]="photo" alt="Photo de l'événement" loading="lazy" />
+            </a>
+          </div>
+        </article>
+
+        <article class="panel" *ngIf="documents.length">
+          <h2>Documents</h2>
+          <ul class="documents">
+            <li *ngFor="let document of documents">
+              <a class="document" [href]="document.url" target="_blank" rel="noopener">
+                <i class="pi pi-file"></i>
+                <div class="document-info">
+                  <strong>{{ document.name }}</strong>
+                  <small *ngIf="document.meta">{{ document.meta }}</small>
+                </div>
+                <i class="pi pi-external-link document-open"></i>
+              </a>
+            </li>
+          </ul>
+        </article>
+
         <article class="panel" *ngIf="presenters.length">
           <h2>Intervenants</h2>
           <ul class="presenters">

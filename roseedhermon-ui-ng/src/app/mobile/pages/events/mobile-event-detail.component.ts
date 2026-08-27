@@ -955,7 +955,7 @@ export class MobileEventDetailComponent implements OnInit {
           .filter((file) => !isImage(file.fileName))
           .map((file) => ({
             name: file.fileName || 'Document',
-            meta: [formatSize(file.fileSize), this.extensionOf(file.fileName || '')].filter(Boolean).join(' · '),
+            meta: [formatSize(file.fileSize), formatUploadDate(file.uploadDate)].filter(Boolean).join(' · '),
             url: this.fileUrl(eventId, file)
           }));
       },
@@ -985,6 +985,13 @@ function formatSize(bytes?: number): string {
   if (bytes < 1024) return `${bytes} o`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+}
+
+function formatUploadDate(value?: string | null): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function parseFrDate(value?: string): Date | null {
