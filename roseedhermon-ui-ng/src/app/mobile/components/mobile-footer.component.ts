@@ -83,7 +83,10 @@ import { AuthService } from '../../core/auth/auth.service';
       justify-content: space-between;
       gap: 4px;
       padding: 7px;
-      background: linear-gradient(135deg, #16346b 0%, #1b3f7d 55%, #14243c 100%);
+      background: rgba(15, 45, 92, 0.95);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 26px;
       box-shadow: 0 14px 34px rgba(16, 28, 48, 0.35);
       font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -130,9 +133,9 @@ import { AuthService } from '../../core/auth/auth.service';
       flex-direction: row;
       gap: 7px;
       padding: 10px 16px;
-      background: #2b5fb8;
+      background: #2563eb;
       color: #fff;
-      box-shadow: 0 4px 14px -2px rgba(43, 95, 184, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+      box-shadow: 0 4px 14px -2px rgba(37, 99, 235, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
     }
 
     .nav-item.active span {

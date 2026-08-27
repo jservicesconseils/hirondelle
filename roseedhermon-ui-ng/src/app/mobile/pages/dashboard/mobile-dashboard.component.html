@@ -80,7 +80,18 @@
           <!-- Pas de photo : un grand pictogramme de la catégorie occupe le fond clair. -->
           <i class="next-watermark pi" *ngIf="!hasPhoto(event)" [ngClass]="event.style.icon" aria-hidden="true"></i>
 
-          <span class="next-flag">{{ countdownLabel }}</span>
+          <!-- Filigrane purement décoratif : n'affirme rien, ne remplace aucune donnée. -->
+          <span class="next-spark one" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0l2.4 9.6L24 12l-9.6 2.4L12 24l-2.4-9.6L0 12l9.6-2.4z" /></svg>
+          </span>
+          <span class="next-spark two" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0l2.4 9.6L24 12l-9.6 2.4L12 24l-2.4-9.6L0 12l9.6-2.4z" /></svg>
+          </span>
+          <span class="next-spark accent" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0l2.4 9.6L24 12l-9.6 2.4L12 24l-2.4-9.6L0 12l9.6-2.4z" /></svg>
+          </span>
+
+          <span class="next-flag"><i class="flag-dot"></i>{{ countdownLabel }}</span>
 
           <span class="next-countdown">
             <strong>{{ countdownDays }}</strong>
@@ -110,8 +121,9 @@
           <div class="next-actions" (click)="$event.stopPropagation()">
             <button type="button" class="next-cta" (click)="reserve(event)">
               Réserver ma place <i class="pi pi-arrow-up-right"></i>
+              <span class="cta-fire">🔥</span>
             </button>
-            <app-interest-button [eventId]="event.id" variant="icon"></app-interest-button>
+            <app-interest-button [eventId]="event.id" variant="square"></app-interest-button>
           </div>
         </div>
       </article>
@@ -119,7 +131,7 @@
       <!-- ---------- Catégories, en cartes ---------- -->
       <section class="block" *ngIf="categories.length > 1">
         <div class="block-head">
-          <h2><span class="head-accent"></span>Catégorie</h2>
+          <h2><span class="head-accent"></span><span class="head-dot"></span>Catégorie</h2>
           <button type="button" class="link" *ngIf="category" (click)="pickCategory(category)">Tout voir</button>
         </div>
 
@@ -141,7 +153,7 @@
       <!-- ---------- Bande d'agenda : quinze jours d'un coup d'œil ---------- -->
       <section class="block" *ngIf="stripHasEvents">
         <div class="block-head">
-          <h2><span class="head-accent"></span>Quinze prochains jours</h2>
+          <h2><span class="head-accent"></span><span class="head-dot"></span>Quinze prochains jours</h2>
           <button type="button" class="link" *ngIf="day" (click)="day = ''; rebuild()">Tout voir</button>
         </div>
 
@@ -170,7 +182,7 @@
       <!-- ---------- À l'affiche : une grande carte, puis une petite grille ---------- -->
       <section class="block" *ngIf="featuredHero as hero">
         <div class="block-head">
-          <h2><span class="head-accent is-two-tone"></span>À l'affiche</h2>
+          <h2><span class="head-accent"></span><span class="head-dot"></span>À l'affiche</h2>
           <button type="button" class="link" (click)="goToEvents()">
             Voir plus <i class="pi pi-arrow-right"></i>
           </button>
@@ -188,7 +200,7 @@
       <!-- ---------- Pour vous : ce qu'organise votre communauté ---------- -->
       <section class="block" *ngIf="forYou.length">
         <div class="block-head">
-          <h2><span class="head-accent"></span>Pour vous</h2>
+          <h2><span class="head-accent"></span><span class="head-dot"></span>Pour vous</h2>
           <button type="button" class="link" (click)="goToEvents()">
             Voir plus <i class="pi pi-arrow-right"></i>
           </button>
@@ -220,7 +232,7 @@
            que personne ne s'est manifesté : un classement de zéros n'apprend rien. -->
       <section class="block" *ngIf="wanted.length">
         <div class="block-head">
-          <h2><span class="head-accent"></span>Les plus demandés</h2>
+          <h2><span class="head-accent"></span><span class="head-dot"></span>Les plus demandés</h2>
           <button type="button" class="link" (click)="goToEvents()">
             Voir plus <i class="pi pi-arrow-right"></i>
           </button>

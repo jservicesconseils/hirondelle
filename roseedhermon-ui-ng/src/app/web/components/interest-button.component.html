@@ -24,6 +24,19 @@
   <i class="pi" [ngClass]="interested() ? 'pi-heart-fill' : 'pi-heart'"></i>
 </button>
 
+<!-- ============ Bouton carré, à côté d'un appel à l'action ============ -->
+<button *ngIf="variant === 'square'"
+        type="button"
+        class="square"
+        [class.is-done]="interested()"
+        [disabled]="busy || interested()"
+        [attr.aria-pressed]="interested()"
+        [attr.aria-label]="interested() ? 'Votre intérêt est enregistré' : 'Je suis intéressé'"
+        [title]="interested() ? 'Votre intérêt est enregistré' : 'Je suis intéressé'"
+        (click)="onChipClick($event)">
+  <i class="pi" [ngClass]="interested() ? 'pi-heart-fill' : 'pi-heart'"></i>
+</button>
+
 <!-- ============ Bouton large, sur la fiche ============ -->
 <div *ngIf="variant === 'full'" class="full">
   <button type="button"

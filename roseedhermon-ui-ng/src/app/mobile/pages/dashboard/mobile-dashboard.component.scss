@@ -18,19 +18,18 @@
 /* ========== Bandeau ========== */
 
 /**
- * Frange bleue : plus haute qu'un simple bandeau, et terminée par un arc plutôt
- * que par une ligne droite.
- *
- * Le rayon horizontal en pourcentage et le rayon vertical en pixels donnent une
- * ellipse large et peu profonde — un arc qui traverse tout l'écran, là où un
- * rayon en pixels seul creuserait deux coins isolés. Le rembourrage bas laisse
- * la place à la recherche, qui vient se poser dans le creux.
+ * Frange bleue, hauteur fixe : la recherche flottante vient se poser sur son
+ * bord bas, qui n'a donc pas besoin d'un rembourrage variable pour l'accueillir.
  */
 .hero {
   position: relative;
-  padding: 2.3rem 1.15rem 4.6rem;
-  background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 62%, #3d78d6 100%);
-  border-radius: 0 0 50% 50% / 0 0 42px 42px;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 1.15rem;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2346a0 55%, #3b82f6 100%);
+  border-radius: 0 0 32px 32px;
   color: #fff;
   overflow: hidden;
 }
@@ -42,28 +41,22 @@
   pointer-events: none;
 
   &.one {
-    top: -60px;
-    right: -40px;
-    width: 190px;
-    height: 190px;
-    background: rgba(143, 184, 255, 0.4);
+    top: -50px;
+    right: -30px;
+    width: 160px;
+    height: 160px;
+    background: rgba(255, 255, 255, 0.08);
   }
 
   &.two {
-    bottom: -90px;
-    left: -50px;
-    width: 230px;
-    height: 230px;
-    background: rgba(61, 120, 214, 0.55);
+    bottom: -70px;
+    left: -40px;
+    width: 190px;
+    height: 190px;
+    background: rgba(147, 197, 253, 0.25);
   }
 
-  &.three {
-    top: 30px;
-    left: 45%;
-    width: 120px;
-    height: 120px;
-    background: rgba(255, 255, 255, 0.16);
-  }
+  &.three { display: none; }
 }
 
 .hero-inner {
@@ -79,11 +72,11 @@
   min-width: 0;
 
   h1 {
-    margin: 0.25rem 0 0;
-    font-size: 1.75rem;
+    margin: 2px 0 0;
+    font-size: 20px;
     font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1.15;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
     color: #fff;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -92,27 +85,29 @@
 }
 
 .hello {
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.88);
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.7);
 
-  .wave { font-size: 1rem; }
+  .wave { font-size: 0.85rem; }
 }
 
 .hero-avatar {
-  flex: 0 0 48px;
+  flex: 0 0 40px;
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  border: 2px solid rgba(255, 255, 255, 0.5);
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #fff;
   font-family: inherit;
-  font-size: 0.98rem;
+  font-size: 0.9rem;
   font-weight: 800;
 
-  svg { width: 24px; height: 24px; opacity: 0.9; }
+  svg { width: 20px; height: 20px; opacity: 0.9; }
 }
 
 /* ---------- Compte à rebours ---------- */
@@ -125,30 +120,58 @@
 .next-card {
   display: block;
   margin: 1.2rem 0 0;
-  border-radius: 22px;
+  border: 1px solid #e5e9f6;
+  border-radius: 24px;
   background: #fff;
-  box-shadow: 0 18px 38px rgba(6, 18, 40, 0.28);
+  box-shadow: 0 18px 38px rgba(6, 18, 40, 0.2);
   overflow: hidden;
   color: theme.$text;
 
   &:active { transform: scale(0.995); }
 }
 
+@keyframes softPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.85); }
+}
+
 /**
- * Fond clair, commun à toutes les tuiles sans photo : un même bleu léger plutôt
- * que la couleur de la catégorie, qui reste réservée aux petites pastilles
- * (badge, filtre, accent) où elle sert à distinguer, pas à occuper l'écran.
+ * Fond clair, commun à toutes les tuiles sans photo : un dégradé chaud, jamais
+ * la couleur de la catégorie, qui reste réservée aux petites pastilles (badge,
+ * filtre, accent) où elle sert à distinguer, pas à occuper l'écran.
  */
 .next-visual {
   position: relative;
-  height: 168px;
-  background: linear-gradient(135deg, theme.$sky 0%, #dce7fb 55%, #eef1fb 100%);
+  height: 188px;
+  background:
+    linear-gradient(135deg, rgba(30, 58, 138, 0.06) 0%, rgba(30, 58, 138, 0) 100%),
+    linear-gradient(150deg, #fbf6ef 0%, #f7ede2 55%, #f2e6da 100%);
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+  }
+}
+
+/** Filigrane décoratif : de petites étoiles, à peine visibles sur le dégradé chaud. */
+.next-spark {
+  position: absolute;
+  color: #fff;
+  opacity: 0.08;
+
+  svg { display: block; width: 100%; height: 100%; }
+
+  &.one { top: 14%; right: 22%; width: 26px; height: 26px; opacity: 0.1; }
+  &.two { top: 55%; left: 12%; width: 16px; height: 16px; opacity: 0.06; }
+  &.accent {
+    top: 20%;
+    left: 45%;
+    width: 14px;
+    height: 14px;
+    color: #f4551d;
+    opacity: 0.9;
   }
 }
 
@@ -165,7 +188,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 4.5rem;
-  color: rgba(43, 95, 184, 0.16);
+  color: rgba(30, 58, 138, 0.08);
 }
 
 .next-flag {
@@ -173,11 +196,14 @@
   top: 0.85rem;
   left: 0.85rem;
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   max-width: calc(100% - 5.5rem);
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  color: theme.$blue-deep;
+  background: #f4551d;
+  color: #fff;
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -185,7 +211,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(6, 18, 40, 0.18);
+  box-shadow: 0 4px 12px rgba(244, 85, 29, 0.35);
+
+  .flag-dot {
+    flex: 0 0 auto;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #fff;
+    animation: softPulse 1.8s ease-in-out infinite;
+  }
 }
 
 /** Le décompte, en pastille ronde posée dans le coin du visuel. */
@@ -196,14 +231,14 @@
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 62px;
-  height: 62px;
-  border: 3px solid #fff;
+  width: 60px;
+  height: 60px;
+  border: 4px solid #fff;
   border-radius: 50%;
-  background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
+  background: #2563eb;
   color: #fff;
   line-height: 1;
-  box-shadow: 0 8px 20px rgba(22, 52, 107, 0.45);
+  box-shadow: 0 0 0 2px rgba(244, 85, 29, 0.3), 0 8px 20px rgba(37, 99, 235, 0.4);
 
   // Point d'accent, purement décoratif — la charte de cette page n'y met que ça.
   &::after {
@@ -216,6 +251,7 @@
     border: 2px solid #fff;
     border-radius: 50%;
     background: theme.$accent;
+    animation: softPulse 1.8s ease-in-out infinite;
   }
 
   strong {
@@ -297,33 +333,41 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: 48px;
   gap: 0.4rem;
-  padding: 0.7rem 1.1rem;
-  border: 0;
-  border-radius: 999px;
-  background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
+  padding: 0 1.1rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: #fff;
   font-family: inherit;
   font-size: 0.88rem;
   font-weight: 800;
-  box-shadow: 0 8px 18px rgba(22, 52, 107, 0.3);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.3);
+  transition: border-color 0.16s ease;
 
   i { font-size: 0.8rem; }
 
-  &:active { background: theme.$blue-deep; }
-
-  // Point d'accent, purement décoratif.
-  &::after {
-    content: '';
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    width: 10px;
-    height: 10px;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    background: theme.$accent;
+  &:hover, &:active {
+    border-color: rgba(244, 85, 29, 0.3);
   }
+}
+
+/** Pastille « chaud » posée sur le coin du bouton — un clin d'œil, pas une donnée. */
+.cta-fire {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: linear-gradient(135deg, #f4551d 0%, #ff7a4d 100%);
+  font-size: 0.7rem;
+  line-height: 1;
+  box-shadow: 0 3px 8px rgba(244, 85, 29, 0.4);
 }
 
 /* ---------- Chiffres ---------- */
@@ -372,16 +416,18 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: -3rem 1.15rem 0;
+  height: 50px;
+  margin: -24px 1.15rem 0;
   padding: 0.15rem 0.35rem 0.15rem 0.9rem;
-  border-radius: 18px;
+  border-radius: 14px;
   background: #fff;
-  box-shadow: 0 14px 32px rgba(16, 28, 48, 0.16);
+  box-shadow: 0 12px 32px -10px rgba(30, 58, 138, 0.28);
 
   input {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 0.95rem 0;
+    height: 100%;
+    padding: 0;
     border: 0;
     background: none;
     color: theme.$text;
@@ -397,19 +443,26 @@
   }
 }
 
-/** Loupe posée dans un carré plein plutôt qu'une simple icône, comme le modèle. */
+/** Loupe posée dans un carré, qui s'anime au focus du champ. */
 .search-btn {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
   width: 36px;
   height: 36px;
-  border-radius: 11px;
-  background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
-  color: #fff;
-  box-shadow: 0 6px 14px rgba(22, 52, 107, 0.3);
+  border-radius: 10px;
+  background: #eff4ff;
+  border: 1px solid #dbe6ff;
+  color: #2563eb;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 
   svg { width: 17px; height: 17px; }
+}
+
+.search:focus-within .search-btn {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
 }
 
 .clear {
@@ -454,12 +507,12 @@
   h2 {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     flex: 1 1 auto;
     min-width: 0;
     margin: 0;
-    font-size: 1.05rem;
-    font-weight: 800;
+    font-size: 16px;
+    font-weight: 600;
     letter-spacing: -0.01em;
     color: theme.$ink;
     white-space: nowrap;
@@ -492,24 +545,16 @@
   width: 3px;
   height: 14px;
   border-radius: 2px;
-  background: theme.$blue;
+  background: #2563eb;
+}
 
-  // « À l'affiche » porte les deux couleurs de la charte, comme le modèle.
-  &.is-two-tone {
-    position: relative;
-    margin-right: 0.35rem;
-
-    &::after {
-      content: '';
-      position: absolute;
-      left: 6px;
-      top: 0;
-      width: 3px;
-      height: 14px;
-      border-radius: 2px;
-      background: theme.$accent;
-    }
-  }
+/** Point orange, juste après le trait : le même repère sur chaque section. */
+.head-dot {
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f4551d;
 }
 
 .count {
@@ -529,7 +574,7 @@
   border: 0;
   background: none;
   padding: 0;
-  color: theme.$blue;
+  color: #2563eb;
   font-family: inherit;
   font-size: 0.84rem;
   font-weight: 800;
@@ -959,8 +1004,8 @@
   box-shadow: 0 4px 12px rgba(6, 18, 40, 0.16);
 
   &.is-popular {
-    background: theme.$accent-soft;
-    color: theme.$accent-dark;
+    background: rgba(244, 85, 29, 0.1);
+    color: theme.$accent;
   }
 
   i { font-size: 0.62rem; }
@@ -1138,8 +1183,8 @@
   gap: 0.85rem;
   padding: 0.7rem 0.95rem 0.7rem 0.75rem;
   margin-bottom: 1.5rem;
-  border: 1px solid theme.$line;
-  border-radius: 20px;
+  border: 1px solid #eef0f4;
+  border-radius: 16px;
   background: #fff;
   box-shadow: 0 8px 20px rgba(16, 28, 48, 0.06);
   overflow: hidden;
@@ -1164,7 +1209,7 @@
   width: 3px;
   height: 34px;
   border-radius: 2px;
-  background: theme.$blue;
+  background: #2563eb;
 }
 
 /** Les pastilles se chevauchent : c'est ce recouvrement qui fait la « pile ». */
@@ -1181,7 +1226,7 @@
   width: 34px;
   height: 34px;
   margin-left: -0.5rem;
-  border: 2px solid #fff;
+  border: 2.5px solid #fff;
   border-radius: 50%;
   background: theme.$blue;
   color: #fff;
@@ -1190,11 +1235,12 @@
   letter-spacing: 0.01em;
   overflow: hidden;
 
-  /* Le reste de l'effectif, en bleu clair : un compte, pas un visage. */
+  /* Le reste de l'effectif, dans l'accent joyeux : un compte, pas un visage. */
   &.more {
-    background: theme.$sky;
-    color: theme.$blue-deep;
+    background: #f4551d;
+    color: #fff;
     font-size: 0.68rem;
+    box-shadow: 0 4px 10px rgba(244, 85, 29, 0.35);
   }
 }
 

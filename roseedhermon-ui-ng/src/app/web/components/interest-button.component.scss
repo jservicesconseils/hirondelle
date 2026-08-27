@@ -112,6 +112,35 @@
   &:disabled:not(.is-done) { opacity: 0.6; cursor: default; }
 }
 
+/* ---------- Bouton carré, à côté d'un appel à l'action ---------- */
+
+.square {
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #e5e9f6;
+  border-radius: 12px;
+  background: #fff;
+  color: #8b90a0;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+
+  i { font-size: 1.05rem; }
+
+  &:hover:not(:disabled) { color: #f4551d; }
+
+  &.is-done {
+    border-color: #ffc4ad;
+    background: #fff1eb;
+    color: #f4551d;
+    cursor: default;
+  }
+
+  &:disabled:not(.is-done) { opacity: 0.6; cursor: default; }
+}
+
 /* ---------- Bouton large, sur la fiche ---------- */
 
 .full {

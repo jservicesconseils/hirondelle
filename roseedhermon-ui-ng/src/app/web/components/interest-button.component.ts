@@ -31,9 +31,10 @@ export class InterestButtonComponent implements OnChanges {
   @Input({ required: true }) eventId!: string;
   /**
    * `full` sur la fiche, `compact` en pastille avec libellé, `icon` en bouton
-   * rond posé sur un visuel — la place y est comptée, le cœur parle seul.
+   * rond posé sur un visuel, `square` en bouton carré à côté d'un appel à
+   * l'action — la place y est comptée, le cœur parle seul.
    */
-  @Input() variant: 'compact' | 'full' | 'icon' = 'full';
+  @Input() variant: 'compact' | 'full' | 'icon' | 'square' = 'full';
 
   /**
    * État partagé de l'événement courant — un signal *dans* un signal.
