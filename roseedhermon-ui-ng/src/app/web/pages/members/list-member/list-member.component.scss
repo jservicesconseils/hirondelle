@@ -11,14 +11,156 @@
   font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
 }
 
-/** Action destructive : même gabarit que `.head-ghost`, teinte rouge pour la distinguer. */
+/** Action destructive : même gabarit que `.head-cta`, en rouge plein pour bien se distinguer. */
 .head-danger {
-  border-color: rgba(239, 68, 68, 0.5);
-  background: rgba(239, 68, 68, 0.15);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  padding: 0.8rem 1.4rem;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.93rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 0;
+  background: #dc2626;
+  color: #fff;
+  transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+
+  i { font-size: 0.8rem; }
 
   &:hover {
-    border-color: rgba(239, 68, 68, 0.85);
-    background: rgba(239, 68, 68, 0.28);
+    background: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(220, 38, 38, 0.38);
+  }
+}
+
+/** Modal de confirmation destructive : bandeau rouge, corps blanc, saisie du mot de passe. */
+:host ::ng-deep .danger-dialog {
+  border-radius: 20px;
+  overflow: hidden;
+
+  .p-dialog-content { padding: 0; }
+}
+
+.danger-band {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+}
+
+.danger-body {
+  padding: 1.75rem;
+}
+
+.danger-warning {
+  margin: 0 0 1.4rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: theme.$muted;
+
+  strong { color: theme.$ink; }
+}
+
+.danger-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: theme.$ink;
+}
+
+.danger-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 1rem;
+  border-radius: 12px;
+  border: 1px solid theme.$line;
+  background: #f9fafb;
+  font-family: inherit;
+  font-size: 0.98rem;
+  color: theme.$ink;
+  box-sizing: border-box;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
+  }
+
+  &.has-error {
+    border-color: #dc2626;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.danger-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.danger-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 110px;
+    border-radius: 999px;
+    padding: 0.85rem 1.5rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    background: #fff;
+    color: theme.$ink;
+    border: 1px solid theme.$line;
+    cursor: pointer;
+    transition: border-color 0.18s ease, color 0.18s ease;
+
+    &:hover:not(:disabled) { border-color: theme.$ink; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+}
+
+.btn-danger-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 210px;
+  border-radius: 999px;
+  padding: 0.85rem 1.5rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: 0;
+  background: #dc2626;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+
+  &:not(:disabled):hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(220, 38, 38, 0.32);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 }
 

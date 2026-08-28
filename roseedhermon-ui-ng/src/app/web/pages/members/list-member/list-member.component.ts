@@ -546,29 +546,63 @@ export class ListMemberComponent implements OnInit, OnDestroy {
     reader.readAsDataURL(file);
   }
 
-  /** Vide l'annuaire — super admin uniquement, avec confirmation explicite (action irréversible). */
-  clearAllMembers() {
-    if (!this.auth.isSuperAdmin()) return;
-    const confirmed = window.confirm(
-      `Supprimer les ${this.totalMembers} fiches de l'annuaire ? Cette action est irréversible.`
-    );
-    if (!confirmed) return;
+  // --- Vider l'annuaire : modal avec confirmation par mot de passe ---------------
 
-    this.memberService.deleteAllMembers().subscribe({
-      next: (res) => {
-        this.loadMembers();
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Annuaire vidé',
-          detail: `${res.deleted} fiche(s) supprimée(s).`,
-          life: 5000
-        });
-      },
-      error: (err) => {
-        alert('Erreur lors de la suppression des membres');
-        console.error(err);
-      }
-    });
+  clearAllDialogVisible = false;
+  clearAllPassword = '';
+  clearAllError = '';
+  clearAllBusy = false;
+
+  openClearAllDialog() {
+    if (!this.auth.isSuperAdmin()) return;
+    this.clearAllPassword = '';
+    this.clearAllError = '';
+    this.clearAllBusy = false;
+    this.clearAllDialogVisible = true;
+  }
+
+  closeClearAllDialog() {
+    if (this.clearAllBusy) return;
+    this.clearAllDialogVisible = false;
+  }
+
+  /** Revalide le mot de passe auprès de Cognito avant d'exécuter l'action irréversible. */
+  confirmClearAll() {
+    const email = this.auth.user().email;
+    if (!this.clearAllPassword || !email) {
+      this.clearAllError = 'Saisissez votre mot de passe.';
+      return;
+    }
+
+    this.clearAllBusy = true;
+    this.clearAllError = '';
+
+    this.auth
+      .signIn(email, this.clearAllPassword)
+      .then(() =>
+        this.memberService.deleteAllMembers().subscribe({
+          next: (res) => {
+            this.clearAllDialogVisible = false;
+            this.clearAllBusy = false;
+            this.loadMembers();
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Annuaire vidé',
+              detail: `${res.deleted} fiche(s) supprimée(s).`,
+              life: 5000
+            });
+          },
+          error: (err) => {
+            this.clearAllBusy = false;
+            this.clearAllError = 'Erreur lors de la suppression des membres.';
+            console.error(err);
+          }
+        })
+      )
+      .catch(() => {
+        this.clearAllBusy = false;
+        this.clearAllError = 'Mot de passe incorrect.';
+      });
   }
 
   onAddMemberSubmit() {

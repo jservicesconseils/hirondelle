@@ -27,7 +27,7 @@
         <button type="button" class="head-cta" (click)="showAddMemberDialog()">
           <i class="pi pi-plus"></i> Ajouter un membre
         </button>
-        <button type="button" class="head-ghost head-danger" *ngIf="auth.isSuperAdmin()" (click)="clearAllMembers()">
+        <button type="button" class="head-danger" *ngIf="auth.isSuperAdmin()" (click)="openClearAllDialog()">
           <i class="pi pi-trash"></i> Vider l'annuaire
         </button>
       </div>
@@ -467,6 +467,63 @@
 
       <p class="form-note">Les modifications remplaceront la fiche existante du membre.</p>
     </form>
+  </p-dialog>
+
+  <!-- Modal de confirmation : vider l'annuaire -->
+  <p-dialog
+    [(visible)]="clearAllDialogVisible"
+    [modal]="true"
+    [style]="{width: 'min(460px, 94vw)'}"
+    [draggable]="false"
+    [resizable]="false"
+    [closable]="false"
+    [dismissableMask]="!clearAllBusy"
+    (onHide)="closeClearAllDialog()"
+    styleClass="danger-dialog">
+    <ng-template pTemplate="header">
+      <div class="modal-header-band danger-band">
+        <span class="header-icon"><i class="pi pi-exclamation-triangle"></i></span>
+        <div class="header-text">
+          <strong>Vider l'annuaire</strong>
+          <small>Action irréversible</small>
+        </div>
+        <button type="button" class="header-close" (click)="closeClearAllDialog()" aria-label="Fermer" [disabled]="clearAllBusy">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+    </ng-template>
+
+    <div class="danger-body">
+      <p class="danger-warning">
+        Vous êtes sur le point de supprimer <strong>{{ totalMembers }} fiche(s)</strong> de
+        l'annuaire, de façon définitive. Cette action ne peut pas être annulée.
+      </p>
+
+      <label class="danger-label" for="clear-all-password">Confirmez avec votre mot de passe</label>
+      <input
+        id="clear-all-password"
+        type="password"
+        class="danger-input"
+        [class.has-error]="clearAllError"
+        placeholder="Mot de passe"
+        [(ngModel)]="clearAllPassword"
+        [disabled]="clearAllBusy"
+        (keyup.enter)="confirmClearAll()"
+        autocomplete="current-password" />
+      <p class="danger-error" *ngIf="clearAllError">
+        <i class="pi pi-times-circle"></i> {{ clearAllError }}
+      </p>
+
+      <div class="danger-actions">
+        <button type="button" class="btn-outline" (click)="closeClearAllDialog()" [disabled]="clearAllBusy">
+          Annuler
+        </button>
+        <button type="button" class="btn-danger-solid" (click)="confirmClearAll()" [disabled]="clearAllBusy">
+          <i class="pi" [ngClass]="clearAllBusy ? 'pi-spin pi-spinner' : 'pi-trash'"></i>
+          {{ clearAllBusy ? 'Suppression…' : 'Supprimer définitivement' }}
+        </button>
+      </div>
+    </div>
   </p-dialog>
 </div>
 
