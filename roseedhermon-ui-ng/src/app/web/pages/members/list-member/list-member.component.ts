@@ -15,6 +15,7 @@ import { debounceTime, takeUntil } from 'rxjs/operators';
 import { ImportWizardComponent } from '../import-wizard/import-wizard.component';
 import { DetailMemberComponent } from '../detail-member/detail-member.component';
 import { CalendarModule } from 'primeng/calendar';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 /** Colonnes de la maquette qui n'existent pas telles quelles dans `Member`, précalculées. */
 interface MemberRow {
@@ -91,7 +92,8 @@ export class ListMemberComponent implements OnInit, OnDestroy {
     private memberService: MemberService,
     private fb: FormBuilder,
     private messageService: MessageService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    protected auth: AuthService
   ) {
     this.addMemberForm = this.fb.group({
       firstName: ['', Validators.required],
@@ -513,6 +515,31 @@ export class ListMemberComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     };
     reader.readAsDataURL(file);
+  }
+
+  /** Vide l'annuaire — super admin uniquement, avec confirmation explicite (action irréversible). */
+  clearAllMembers() {
+    if (!this.auth.isSuperAdmin()) return;
+    const confirmed = window.confirm(
+      `Supprimer les ${this.totalMembers} fiches de l'annuaire ? Cette action est irréversible.`
+    );
+    if (!confirmed) return;
+
+    this.memberService.deleteAllMembers().subscribe({
+      next: (res) => {
+        this.loadMembers();
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Annuaire vidé',
+          detail: `${res.deleted} fiche(s) supprimée(s).`,
+          life: 5000
+        });
+      },
+      error: (err) => {
+        alert('Erreur lors de la suppression des membres');
+        console.error(err);
+      }
+    });
   }
 
   onAddMemberSubmit() {

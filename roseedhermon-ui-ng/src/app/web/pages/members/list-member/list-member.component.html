@@ -27,6 +27,9 @@
         <button type="button" class="head-cta" (click)="showAddMemberDialog()">
           <i class="pi pi-plus"></i> Ajouter un membre
         </button>
+        <button type="button" class="head-ghost head-danger" *ngIf="auth.isSuperAdmin()" (click)="clearAllMembers()">
+          <i class="pi pi-trash"></i> Vider l'annuaire
+        </button>
       </div>
     </div>
 

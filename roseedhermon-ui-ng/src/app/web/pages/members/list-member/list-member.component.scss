@@ -11,6 +11,17 @@
   font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
 }
 
+/** Action destructive : même gabarit que `.head-ghost`, teinte rouge pour la distinguer. */
+.head-danger {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.15);
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.85);
+    background: rgba(239, 68, 68, 0.28);
+  }
+}
+
 /** Une ville se lit en toutes lettres : elle n'a pas la taille d'un compteur. */
 .head-stats .stat-text {
   font-size: 1.05rem;
