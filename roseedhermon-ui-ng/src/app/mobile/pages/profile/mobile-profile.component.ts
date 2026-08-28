@@ -131,6 +131,19 @@ const MAX_PHOTO_BYTES = 1_500_000;
             </label>
           </section>
 
+          <!-- Propre à la communauté du membre : colonnes de son fichier d'import, sous leur en-tête d'origine. -->
+          <section class="card" *ngIf="member?.groupId && customFieldEntries.length">
+            <h2 class="card-title orange">
+              <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg></span>
+              Ma communauté
+            </h2>
+
+            <label class="field" *ngFor="let entry of customFieldEntries">
+              <span>{{ entry.key }}</span>
+              <input type="text" [(ngModel)]="entry.value" [name]="'custom-' + entry.key" />
+            </label>
+          </section>
+
           <p class="feedback ok" *ngIf="savedMessage">{{ savedMessage }}</p>
           <p class="feedback ko" *ngIf="saveError">{{ saveError }}</p>
 
@@ -281,6 +294,7 @@ const MAX_PHOTO_BYTES = 1_500_000;
     .card-title.blue .dot { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
     .card-title.coral .dot { background: linear-gradient(135deg, #ff7a4d 0%, #f4551d 100%); }
     .card-title.green .dot { background: linear-gradient(135deg, #43cd80 0%, #17a05c 100%); }
+    .card-title.orange .dot { background: linear-gradient(135deg, #ffb04d 0%, #f4551d 100%); }
 
     .field { display: block; margin-bottom: 12px; }
     .field:last-child { margin-bottom: 0; }
@@ -395,6 +409,9 @@ export class MobileProfileComponent implements OnInit {
 
   form: ProfileForm = {};
 
+  /** Colonnes du fichier d'import de la communauté du membre : en-tête d'origine -> valeur, éditable. */
+  customFieldEntries: { key: string; value: string }[] = [];
+
   constructor(
     private memberService: MemberService,
     private identity: IdentityService,
@@ -418,6 +435,7 @@ export class MobileProfileComponent implements OnInit {
         if (member?.id) {
           this.member = member;
           this.form = { ...member };
+          this.customFieldEntries = Object.entries(member.customFields || {}).map(([key, value]) => ({ key, value }));
         } else {
           this.identity.memberId = '';
         }
@@ -504,6 +522,9 @@ export class MobileProfileComponent implements OnInit {
 
     // On repart de la fiche d'origine pour ne perdre aucun champ non affiché.
     const payload = { ...(this.member || {}), ...this.form } as Member;
+    if (this.customFieldEntries.length) {
+      payload.customFields = Object.fromEntries(this.customFieldEntries.map((entry) => [entry.key, entry.value]));
+    }
 
     // Fiche existante : mise à jour. Sinon, première sauvegarde : on la crée.
     const request = this.member?.id
@@ -514,6 +535,7 @@ export class MobileProfileComponent implements OnInit {
       next: (saved: Member) => {
         this.member = saved?.id ? saved : payload;
         this.form = { ...this.member };
+        this.customFieldEntries = Object.entries(this.member.customFields || {}).map(([key, value]) => ({ key, value }));
         if (this.member.id) this.identity.memberId = this.member.id;
         this.saving = false;
         this.savedMessage = 'Vos informations ont été enregistrées.';
