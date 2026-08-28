@@ -48,9 +48,32 @@ export async function getMembersByGroup(groupId: string): Promise<MemberDocument
   return MemberModel.find({ groupId }).exec();
 }
 
-/** Retrouve un membre par son courriel : lien entre le compte Cognito et sa fiche. */
+/**
+ * Retrouve un membre par son courriel : lien entre le compte Cognito et sa fiche.
+ *
+ * D'abord sur le champ `email` proprement dit ; à défaut, sur les champs personnalisés
+ * d'un import — une fiche importée avant que la colonne Email ne redevienne un champ
+ * reconnu par l'assistant peut très bien porter son courriel sous `customFields.Email`
+ * (ou tout autre en-tête équivalent) plutôt que sur le champ dédié. Sans ce repli, la
+ * personne retomberait sur un profil vide malgré une fiche déjà complète.
+ */
 export async function findMemberByEmail(email: string): Promise<MemberDocument | null> {
-  return MemberModel.findOne({ email: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }).exec();
+  const exact = await MemberModel.findOne({
+    email: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
+  }).exec();
+  if (exact) return exact;
+
+  const needle = email.trim().toLowerCase();
+  // `email: null` en Mongo trouve aussi bien les documents où le champ est absent que
+  // ceux où il vaut explicitement null — les deux cas laissés par `withoutNulls()`.
+  const candidates = await MemberModel.find({ email: null, customFields: { $exists: true } }).exec();
+  return (
+    candidates.find((candidate) =>
+      Object.values((candidate.customFields as Record<string, string> | undefined) ?? {}).some(
+        (value) => typeof value === 'string' && value.trim().toLowerCase() === needle,
+      ),
+    ) ?? null
+  );
 }
 
 export async function getMemberById(id: string): Promise<MemberDocument | null> {
