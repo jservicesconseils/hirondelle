@@ -84,7 +84,7 @@
           <strong class="name">{{ row.fullName }}</strong>
           <div class="badges" *ngIf="row.role || row.subgroup">
             <span class="role" *ngIf="row.role">{{ row.role }}</span>
-            <span class="role subgroup" *ngIf="row.subgroup && row.subgroup !== row.role">{{ row.subgroup }}</span>
+            <span class="role subgroup" *ngIf="row.showSubgroupBadge">{{ row.subgroup }}</span>
           </div>
 
           <span class="line" *ngIf="row.city">

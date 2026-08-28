@@ -423,7 +423,11 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  margin-top: 0.65rem;
+  // `auto` colle les boutons en bas de la carte : deux fiches côte à côte ont rarement
+  // le même nombre de lignes au-dessus (badges, ville, courriel...), mais la grille les
+  // étire déjà à la même hauteur — sans ce `auto` les boutons suivraient le contenu et
+  // ne s'aligneraient jamais entre deux cartes voisines.
+  margin-top: auto;
   padding-top: 0.65rem;
   border-top: 1px solid theme.$line;
 }

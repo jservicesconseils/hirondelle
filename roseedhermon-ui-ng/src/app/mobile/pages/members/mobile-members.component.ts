@@ -15,6 +15,8 @@ interface MemberRow {
   photo: string;
   role: string;
   subgroup: string;
+  /** `subgroup` n'est un second badge que s'il dit vraiment autre chose que `role`. */
+  showSubgroupBadge: boolean;
   phone: string;
   city: string;
   address: string;
@@ -194,6 +196,9 @@ export class MobileMembersComponent implements OnInit {
   private toRow(member: Member, index: number): MemberRow {
     const fullName = `${member.firstName || ''} ${member.lastName || ''}`.trim() || 'Sans nom';
 
+    const role = (member.profession || '').trim();
+    const subgroup = (member.subgroup || '').trim();
+
     return {
       member,
       fullName,
@@ -201,8 +206,9 @@ export class MobileMembersComponent implements OnInit {
         `${(member.firstName || '').charAt(0)}${(member.lastName || '').charAt(0)}`.toUpperCase() || '?',
       color: AVATAR_COLORS[index % AVATAR_COLORS.length],
       photo: (member.photo || '').trim(),
-      role: (member.profession || '').trim(),
-      subgroup: (member.subgroup || '').trim(),
+      role,
+      subgroup,
+      showSubgroupBadge: !!subgroup && subgroup.toLowerCase() !== role.toLowerCase(),
       phone: (member.phoneNumber || '').trim(),
       city: (member.city || '').trim(),
       address: (member.address || '').trim(),
