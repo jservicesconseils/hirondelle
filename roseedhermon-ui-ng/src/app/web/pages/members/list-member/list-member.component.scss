@@ -22,6 +22,27 @@
   }
 }
 
+/** Bouton de suppression : même gabarit que `.icon-action`, teinte rouge pour la distinguer. */
+.icon-danger {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.6) !important;
+  }
+}
+
+.card-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .btn-message {
+    flex: 1;
+  }
+}
+
 /** Une ville se lit en toutes lettres : elle n'a pas la taille d'un compteur. */
 .head-stats .stat-text {
   font-size: 1.05rem;

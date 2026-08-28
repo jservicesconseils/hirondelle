@@ -327,6 +327,35 @@ export class ListMemberComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Super admin ou admin du groupe : le backend borne déjà l'admin de groupe à sa propre communauté. */
+  get canDeleteMembers(): boolean {
+    return this.auth.isSuperAdmin() || this.auth.isGroupAdmin();
+  }
+
+  deleteMemberRow(row: MemberRow, event: Event) {
+    event.stopPropagation();
+    if (!row.member.id) return;
+
+    const confirmed = window.confirm(`Supprimer la fiche de ${row.fullName} ? Cette action est irréversible.`);
+    if (!confirmed) return;
+
+    this.memberService.deleteMember(row.member.id).subscribe({
+      next: () => {
+        this.loadMembers();
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Membre supprimé',
+          detail: `${row.fullName} a été retiré de l'annuaire.`,
+          life: 5000
+        });
+      },
+      error: (err) => {
+        alert('Erreur lors de la suppression du membre');
+        console.error(err);
+      }
+    });
+  }
+
   exportCsv() {
     const header = ['Prénom', 'Nom', 'Genre', 'Date de naissance', 'Profession', 'Téléphone', 'Email', 'Ville'];
     const lines = this.filteredRows.map((row) => [

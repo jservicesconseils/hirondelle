@@ -124,9 +124,15 @@
             <span class="city"><i class="pi pi-map-marker"></i>{{ row.cityLabel }}</span>
             <span class="role-pill">{{ row.role }}</span>
           </div>
-          <button type="button" class="btn-message" (click)="sendMessage(row); $event.stopPropagation()">
-            <i class="pi pi-comment"></i> Message
-          </button>
+          <div class="card-actions-row">
+            <button type="button" class="btn-message" (click)="sendMessage(row); $event.stopPropagation()">
+              <i class="pi pi-comment"></i> Message
+            </button>
+            <button type="button" class="icon-action icon-danger" *ngIf="canDeleteMembers"
+                    (click)="deleteMemberRow(row, $event)" aria-label="Supprimer">
+              <i class="pi pi-trash"></i>
+            </button>
+          </div>
         </article>
       </div>
 
@@ -175,6 +181,10 @@
                   <i class="pi pi-eye"></i>
                 </button>
                 <button type="button" class="btn-view" (click)="openMember(row)">Voir</button>
+                <button type="button" class="icon-action icon-danger" *ngIf="canDeleteMembers"
+                        (click)="deleteMemberRow(row, $event)" aria-label="Supprimer">
+                  <i class="pi pi-trash"></i>
+                </button>
               </td>
             </tr>
             <tr *ngIf="!pagedRows.length">
