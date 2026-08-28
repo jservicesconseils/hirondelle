@@ -33,6 +33,10 @@ const memberSchema = new Schema(
     city: { type: String },
     location: { type: String },
     photo: { type: String },
+    // Colonnes importées qui ne correspondent à aucun champ ci-dessus (ex. « Ministère »,
+    // « Date de baptême ») : chaque communauté a les siennes, impossible de les prévoir
+    // toutes. Clé = en-tête exact du fichier, valeur = texte de la cellule.
+    customFields: { type: Schema.Types.Mixed },
     // `default: undefined` : sans lui Mongoose écrirait un tableau vide là où Spring
     // Data n'écrivait aucune clé (et le JSON renverrait `[]` au lieu de `null`).
     socialLinks: { type: [String], default: undefined },

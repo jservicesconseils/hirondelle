@@ -23,6 +23,8 @@ export interface Member {
     address?: string;
     city?: string;
     location?: string;
+    /** Colonnes importées sans équivalent connu : en-tête exact du fichier -> valeur. */
+    customFields?: { [key: string]: string };
     photo?: string;
     socialLinks?: Array<string>;
     /** Rôles de la plateforme : SUPER_ADMIN, GROUP_ADMIN, MEMBER. */

@@ -21,6 +21,8 @@ interface MemberRow {
   email: string;
   gender: string;
   birthDate: string;
+  /** Colonnes importées sans équivalent connu : en-tête exact du fichier -> valeur. */
+  customFieldEntries: { label: string; value: string }[];
   search: string;
 }
 
@@ -211,7 +213,16 @@ export class MobileMembersComponent implements OnInit {
       email: (member.email || '').trim(),
       gender: formatGender(member.gender),
       birthDate: formatBirthDate(member.birthDate),
-      search: [fullName, member.profession, member.subgroup, member.phoneNumber, member.city, member.email]
+      customFieldEntries: Object.entries(member.customFields || {}).map(([label, value]) => ({ label, value })),
+      search: [
+        fullName,
+        member.profession,
+        member.subgroup,
+        member.phoneNumber,
+        member.city,
+        member.email,
+        ...Object.values(member.customFields || {})
+      ]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()

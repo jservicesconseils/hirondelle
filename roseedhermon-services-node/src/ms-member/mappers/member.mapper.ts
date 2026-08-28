@@ -16,9 +16,19 @@ export interface MemberInput {
   city: string | null;
   location: string | null;
   photo: string | null;
+  /** Colonnes importées sans équivalent connu, en-tête du fichier -> valeur de la cellule. */
+  customFields: Record<string, string> | null;
   socialLinks: string[] | null;
   roles: string[] | null;
   groupId: string | null;
+}
+
+function toStringRecordOrNull(value: unknown): Record<string, string> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const entries = Object.entries(value as Record<string, unknown>)
+    .map(([key, val]) => [key, toStringOrNull(val)] as const)
+    .filter((entry): entry is [string, string] => entry[1] !== null);
+  return entries.length ? Object.fromEntries(entries) : null;
 }
 
 function toStringArrayOrNull(value: unknown): string[] | null {
@@ -45,6 +55,7 @@ export function memberToJson(doc: MemberDocument) {
     city: doc.city ?? null,
     location: doc.location ?? null,
     photo: doc.photo ?? null,
+    customFields: (doc.customFields as Record<string, string> | undefined) ?? null,
     socialLinks: doc.socialLinks ?? null,
     roles: doc.roles ?? null,
     groupId: doc.groupId ?? null,
@@ -66,6 +77,7 @@ export function memberFromBody(body: Record<string, unknown>): MemberInput {
     city: toStringOrNull(body.city),
     location: toStringOrNull(body.location),
     photo: toStringOrNull(body.photo),
+    customFields: toStringRecordOrNull(body.customFields),
     socialLinks: toStringArrayOrNull(body.socialLinks),
     roles: toStringArrayOrNull(body.roles),
     groupId: toStringOrNull(body.groupId),

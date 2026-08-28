@@ -111,6 +111,11 @@
             {{ row.gender }}<ng-container *ngIf="row.gender && row.birthDate"> • </ng-container>{{ row.birthDate }}
           </span>
 
+          <!-- Colonnes propres à cette communauté : affichées telles quelles, sous leur en-tête exact. -->
+          <span class="line custom" *ngFor="let field of row.customFieldEntries">
+            <strong>{{ field.label }}&nbsp;:</strong> {{ field.value }}
+          </span>
+
           <div class="card-actions" *ngIf="row.phone">
             <button type="button" class="act call" (click)="call(row)"
                     [attr.aria-label]="'Appeler ' + row.fullName">

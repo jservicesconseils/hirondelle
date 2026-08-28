@@ -6,37 +6,35 @@ import * as XLSX from 'xlsx';
 import { Member } from '../../../../shared/services/api/model/member';
 import { MemberService } from '../../../../shared/services/members/members.service';
 
-/** Champs de `Member` proposés dans les listes de correspondance de l'étape 2. */
+/** Sentinelle : la colonne devient un champ personnalisé, importé tel quel sous son en-tête. */
+const CUSTOM_FIELD = '__custom__';
+
+/**
+ * Seuls ces champs ont un sens applicatif fixe (nom affiché, tri, bouton Appeler/WhatsApp,
+ * onglets de l'annuaire). Toute autre colonne — Genre, Profession, Email, Ville, ou n'importe
+ * quel champ propre à une communauté — est importée telle quelle en champ personnalisé :
+ * chaque association a ses propres colonnes, impossible de les prévoir toutes à l'avance.
+ */
 export const MEMBER_FIELDS: { value: string; label: string }[] = [
-  { value: '', label: 'Ignorer cette colonne' },
   { value: 'firstName', label: 'Prénom' },
   { value: 'lastName', label: 'Nom' },
-  { value: 'gender', label: 'Genre' },
-  { value: 'birthDate', label: 'Date de naissance' },
-  { value: 'profession', label: 'Profession' },
   { value: 'subgroup', label: 'Groupe' },
   { value: 'phoneNumber', label: 'Téléphone' },
-  { value: 'email', label: 'Email' },
-  { value: 'city', label: 'Ville' },
-  { value: 'address', label: 'Adresse' }
+  { value: CUSTOM_FIELD, label: 'Champ personnalisé' },
+  { value: '', label: 'Ignorer cette colonne' }
 ];
 
 /** Sans ces champs une ligne ne peut pas être importée. */
-const REQUIRED_FIELDS = ['firstName', 'lastName', 'gender', 'birthDate', 'profession', 'phoneNumber', 'email', 'city'];
+const REQUIRED_FIELDS = ['firstName', 'lastName'];
 
-/** En-têtes reconnus automatiquement, en plus du nom exact du champ. */
+/** En-têtes reconnus automatiquement ; tout le reste devient un champ personnalisé. */
 const HEADER_ALIASES: Record<string, string> = {
   prenom: 'firstName', 'prénom': 'firstName', firstname: 'firstName', first_name: 'firstName',
   nom: 'lastName', lastname: 'lastName', last_name: 'lastName', 'nom de famille': 'lastName',
-  genre: 'gender', sexe: 'gender', gender: 'gender',
-  'date de naissance': 'birthDate', datenaissance: 'birthDate', birthdate: 'birthDate', birth_date: 'birthDate', naissance: 'birthDate',
-  profession: 'profession', metier: 'profession', 'métier': 'profession',
-  sousgroupe: 'subgroup', 'sous-groupe': 'subgroup', 'sous groupe': 'subgroup', subgroup: 'subgroup', groupe: 'subgroup',
+  sousgroupe: 'subgroup', 'sous-groupe': 'subgroup', 'sous groupe': 'subgroup', subgroup: 'subgroup',
+  groupe: 'subgroup', group: 'subgroup',
   telephone: 'phoneNumber', 'téléphone': 'phoneNumber', tel: 'phoneNumber', phone: 'phoneNumber',
-  phonenumber: 'phoneNumber', phone_number: 'phoneNumber', mobile: 'phoneNumber',
-  email: 'email', courriel: 'email', mail: 'email', email_address: 'email', emailaddress: 'email',
-  ville: 'city', city: 'city',
-  adresse: 'address', address: 'address'
+  phonenumber: 'phoneNumber', phone_number: 'phoneNumber', mobile: 'phoneNumber'
 };
 
 const BOM = /^\uFEFF/;
@@ -185,16 +183,20 @@ export class ImportWizardComponent {
     });
   }
 
+  /** Reconnaît prénom/nom/téléphone/groupe par leur en-tête ; tout le reste devient un champ personnalisé. */
   private autoMap(headers: string[]): Record<string, string> {
     const mapping: Record<string, string> = {};
     const taken = new Set<string>();
 
     headers.forEach((header) => {
       const key = header.toLowerCase().replace(/[\s_-]+/g, ' ').trim();
-      const direct = MEMBER_FIELDS.find((field) => field.value.toLowerCase() === key.replace(/\s/g, ''));
-      const field = direct?.value || HEADER_ALIASES[key] || HEADER_ALIASES[key.replace(/\s/g, '')] || '';
-      mapping[header] = field && !taken.has(field) ? field : '';
-      if (mapping[header]) taken.add(field);
+      const recognized = HEADER_ALIASES[key] || HEADER_ALIASES[key.replace(/\s/g, '')];
+      if (recognized && !taken.has(recognized)) {
+        mapping[header] = recognized;
+        taken.add(recognized);
+      } else {
+        mapping[header] = CUSTOM_FIELD;
+      }
     });
 
     return mapping;
@@ -227,11 +229,21 @@ export class ImportWizardComponent {
 
     this.rows.forEach((row, index) => {
       const member: any = {};
+      const customFields: Record<string, string> = {};
+
       this.headers.forEach((header) => {
         const field = this.mapping[header];
-        if (!field) return;
-        member[field] = field === 'birthDate' ? toIsoDate(row[header]) : toText(row[header]);
+        if (!field) return; // colonne ignorée
+
+        const value = toText(row[header]);
+        if (field === CUSTOM_FIELD) {
+          if (value) customFields[header] = value;
+          return;
+        }
+        member[field] = value;
       });
+
+      if (Object.keys(customFields).length) member.customFields = customFields;
 
       const label = `${member.firstName || ''} ${member.lastName || ''}`.trim() || `Ligne ${index + 2}`;
       const missing = REQUIRED_FIELDS.filter((field) => !member[field]);
