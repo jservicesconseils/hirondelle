@@ -38,6 +38,18 @@
           à vous connecter la prochaine fois.
         </p>
 
+        <!-- Identité : commune aux deux façons de s'inscrire -->
+        <div class="field-row" *ngIf="view === 'signup'">
+          <label class="field">
+            <span>Prénom</span>
+            <input type="text" name="firstName" autocomplete="given-name" [(ngModel)]="firstName" />
+          </label>
+          <label class="field">
+            <span>Nom</span>
+            <input type="text" name="lastName" autocomplete="family-name" [(ngModel)]="lastName" />
+          </label>
+        </div>
+
         <!-- Numéro : seul champ de l'inscription par téléphone -->
         <label class="field" *ngIf="view === 'signup' && signupMethod === 'phone'">
           <span>Téléphone</span>

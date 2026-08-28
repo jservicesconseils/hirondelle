@@ -32,6 +32,10 @@ export class MobileLoginComponent implements OnInit {
   signupMethod: 'phone' | 'email' = 'email';
   phone = '';
 
+  // Identité : demandée à l'inscription, quelle que soit la méthode choisie.
+  firstName = '';
+  lastName = '';
+
   // Mot de passe (inscription par courriel) puis sa confirmation ; réutilisés par le
   // mot de passe provisoire imposé par Cognito à la première connexion.
   newPassword = '';
@@ -178,6 +182,7 @@ export class MobileLoginComponent implements OnInit {
 
   private async doSignUpByEmail(): Promise<void> {
     const email = this.email.trim();
+    if (!this.identityProvided()) return;
     if (!email) {
       this.error = 'Indiquez votre courriel.';
       return;
@@ -202,6 +207,7 @@ export class MobileLoginComponent implements OnInit {
   private async doSignUpByPhone(): Promise<void> {
     const email = this.email.trim();
     const phone = toE164(this.phone.trim());
+    if (!this.identityProvided()) return;
     if (!phone) {
       this.error = 'Indiquez un numéro de téléphone valide.';
       return;
@@ -259,11 +265,28 @@ export class MobileLoginComponent implements OnInit {
   private async signInAfterSignUp(): Promise<void> {
     const user = await this.auth.signIn(this.email.trim(), this.password);
 
+    // Best-effort, comme le numéro juste en dessous : la connexion ne doit pas
+    // échouer si l'écriture du nom échoue, la personne pourra le corriger sur son profil.
+    try {
+      await this.auth.updateName(this.firstName.trim(), this.lastName.trim());
+    } catch (error) {
+      console.warn("Le nom n'a pas pu être enregistré à l'inscription", error);
+    }
+
     // Ce qui permettra la prochaine connexion par téléphone à retrouver ce compte.
     const phone = toE164(this.phone.trim());
     if (phone) this.auth.registerAccountPhone(phone).catch(() => undefined);
 
     this.leave(user);
+  }
+
+  /** Prénom et nom : demandés à l'inscription, quelle que soit la méthode. */
+  private identityProvided(): boolean {
+    if (!this.firstName.trim() || !this.lastName.trim()) {
+      this.error = 'Indiquez votre prénom et votre nom.';
+      return false;
+    }
+    return true;
   }
 
   /** Parcourir sans compte : seules les pages publiques resteront accessibles. */

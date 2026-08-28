@@ -96,6 +96,13 @@
   }
 }
 
+.field-row {
+  display: flex;
+  gap: 0.7rem;
+
+  .field { flex: 1 1 0; min-width: 0; }
+}
+
 .method-toggle {
   display: flex;
   gap: 0.55rem;
