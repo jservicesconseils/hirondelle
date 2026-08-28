@@ -4,7 +4,7 @@
 
 :host {
   display: block;
-  font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .members-screen {
@@ -308,33 +308,37 @@
   &:active { transform: scale(0.99); }
 }
 
-/** Bandeau en haut de la carte : l'avatar vient le chevaucher, comme le modèle. */
+/**
+ * Bandeau en haut de la carte : dimensions calées pour que la photo, centrée,
+ * chevauche à cheval la ligne de séparation — comme les suggestions LinkedIn.
+ */
 .card-header {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 58px;
+  height: 54px;
   background: linear-gradient(135deg, theme.$ink 0%, theme.$blue-deep 55%, theme.$blue 100%);
 }
 
-/** Pastille colorée : les initiales quand aucune photo n'est jointe. */
+/** Photo (ou initiales) centrée, à cheval sur le bandeau — même gabarit que LinkedIn. */
 .avatar {
   position: relative;
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 0.6rem;
-  border: 3px solid #fff;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 0.6rem;
+  border: 4px solid #fff;
   border-radius: 50%;
   background: linear-gradient(135deg, theme.$blue-deep 0%, theme.$blue 100%);
   color: #fff;
-  font-size: 1rem;
+  font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   overflow: hidden;
+  box-shadow: 0 4px 10px rgba(16, 28, 48, 0.18);
 
   img {
     width: 100%;
@@ -351,6 +355,7 @@
   font-weight: 800;
   color: theme.$ink;
   line-height: 1.3;
+  text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -360,6 +365,7 @@
 .badges {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.3rem;
   margin-bottom: 0.5rem;
 }
@@ -389,7 +395,6 @@
   gap: 0.35rem;
   margin-bottom: 0.25rem;
   color: theme.$ink;
-  font-family: 'Inter', 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-weight: 500;
   font-size: 0.76rem;
   letter-spacing: 0.005em;
