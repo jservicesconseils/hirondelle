@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { MemberService } from '../../../shared/services/members/members.service';
 import { Member } from '../../../shared/services/api/model/member';
@@ -154,6 +155,15 @@ const MAX_PHOTO_BYTES = 1_500_000;
             </button>
           </div>
         </form>
+
+        <button type="button" class="sign-out" (click)="signOut()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <path d="M16 17l5-5-5-5" />
+            <path d="M21 12H9" />
+          </svg>
+          Se déconnecter
+        </button>
       </ng-container>
     </div>
   `,
@@ -393,6 +403,26 @@ const MAX_PHOTO_BYTES = 1_500_000;
     .save svg { width: 19px; height: 19px; flex-shrink: 0; }
 
     .save:disabled { opacity: 0.6; cursor: default; box-shadow: none; }
+
+    .sign-out {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      height: 48px;
+      margin: 4px 18px 18px;
+      border: 1px solid #e6e9ee;
+      border-radius: 14px;
+      background: transparent;
+      color: #c0392b;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .sign-out svg { width: 18px; height: 18px; flex-shrink: 0; }
   `]
 })
 export class MobileProfileComponent implements OnInit {
@@ -415,7 +445,8 @@ export class MobileProfileComponent implements OnInit {
   constructor(
     private memberService: MemberService,
     private identity: IdentityService,
-    private auth: AuthService
+    private auth: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -546,5 +577,10 @@ export class MobileProfileComponent implements OnInit {
         this.saveError = `L'enregistrement a échoué (${error?.status || 'réseau'}).`;
       }
     });
+  }
+
+  signOut(): void {
+    this.auth.signOut();
+    this.router.navigate(['/mobile/login']);
   }
 }
