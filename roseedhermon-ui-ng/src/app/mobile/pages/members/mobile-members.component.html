@@ -68,8 +68,6 @@
     <p class="state is-error" *ngIf="loadError">{{ loadError }}</p>
 
     <ng-container *ngIf="!loading && !loadError">
-      <p class="results-count" *ngIf="filteredRows.length">{{ filteredRows.length }} résultat{{ filteredRows.length > 1 ? 's' : '' }}</p>
-
       <p class="state" *ngIf="!filteredRows.length">
         {{ rows.length ? 'Aucun membre ne correspond à cette recherche.' : 'Aucun membre enregistré.' }}
       </p>
