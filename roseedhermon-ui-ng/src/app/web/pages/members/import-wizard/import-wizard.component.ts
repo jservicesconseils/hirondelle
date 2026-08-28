@@ -10,16 +10,20 @@ import { MemberService } from '../../../../shared/services/members/members.servi
 const CUSTOM_FIELD = '__custom__';
 
 /**
- * Seuls ces champs ont un sens applicatif fixe (nom affiché, tri, bouton Appeler/WhatsApp,
- * onglets de l'annuaire). Toute autre colonne — Genre, Profession, Email, Ville, ou n'importe
- * quel champ propre à une communauté — est importée telle quelle en champ personnalisé :
- * chaque association a ses propres colonnes, impossible de les prévoir toutes à l'avance.
+ * Seuls ces champs ont un sens applicatif fixe : nom affiché, tri, bouton Appeler/WhatsApp,
+ * onglets de l'annuaire — et Email, qui relie la fiche importée au compte de connexion de la
+ * personne (`/api/v1/me` la retrouve par courriel) : sans lui, quelqu'un d'importé qui se
+ * connecte plus tard retombe sur un profil vide au lieu de voir ses informations préremplies.
+ * Toute autre colonne — Genre, Profession, Ville, ou n'importe quel champ propre à une
+ * communauté — est importée telle quelle en champ personnalisé : chaque association a ses
+ * propres colonnes, impossible de les prévoir toutes à l'avance.
  */
 export const MEMBER_FIELDS: { value: string; label: string }[] = [
   { value: 'firstName', label: 'Prénom' },
   { value: 'lastName', label: 'Nom' },
   { value: 'subgroup', label: 'Groupe' },
   { value: 'phoneNumber', label: 'Téléphone' },
+  { value: 'email', label: 'Email' },
   { value: CUSTOM_FIELD, label: 'Champ personnalisé' },
   { value: '', label: 'Ignorer cette colonne' }
 ];
@@ -34,7 +38,8 @@ const HEADER_ALIASES: Record<string, string> = {
   sousgroupe: 'subgroup', 'sous-groupe': 'subgroup', 'sous groupe': 'subgroup', subgroup: 'subgroup',
   groupe: 'subgroup', group: 'subgroup',
   telephone: 'phoneNumber', 'téléphone': 'phoneNumber', tel: 'phoneNumber', phone: 'phoneNumber',
-  phonenumber: 'phoneNumber', phone_number: 'phoneNumber', mobile: 'phoneNumber'
+  phonenumber: 'phoneNumber', phone_number: 'phoneNumber', mobile: 'phoneNumber',
+  email: 'email', courriel: 'email', mail: 'email', email_address: 'email', emailaddress: 'email'
 };
 
 const BOM = /^\uFEFF/;
