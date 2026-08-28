@@ -397,7 +397,8 @@
   align-items: center;
   gap: 0.35rem;
   margin-bottom: 0.2rem;
-  color: theme.$muted;
+  color: theme.$ink;
+  font-weight: 600;
   font-size: 0.76rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -413,6 +414,13 @@
   &.sub {
     padding-left: 1.05rem;
     font-size: 0.72rem;
+    color: theme.$ink-2;
+    font-weight: 500;
+  }
+
+  &.custom strong {
+    color: theme.$blue-deep;
+    font-weight: 800;
   }
 }
 
