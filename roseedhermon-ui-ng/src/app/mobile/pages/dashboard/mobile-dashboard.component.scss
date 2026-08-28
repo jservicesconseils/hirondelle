@@ -1088,7 +1088,7 @@
   letter-spacing: -0.01em;
 
   &.is-free {
-    background: linear-gradient(90deg, theme.$green, theme.$accent);
+    background: theme.$green;
     color: #fff;
   }
 
