@@ -7,7 +7,7 @@ import { Member } from '../../../shared/services/api/model/member';
 import { IdentityService } from '../../services/identity.service';
 import { AuthService } from '../../../core/auth/auth.service';
 
-const GENDERS = ['Homme', 'Femme', 'Autre'];
+const GENDERS = ['Homme', 'Femme'];
 
 /**
  * Le modèle généré restreint `gender` à MALE/FEMALE/OTHER, alors que les fiches
