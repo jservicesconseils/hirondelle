@@ -1179,9 +1179,12 @@
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 0.7rem 0.95rem 0.7rem 0.75rem;
+  padding: 0.7rem 0.95rem 0.7rem 0.85rem;
   margin-bottom: 1.5rem;
   border: 1px solid #eef0f4;
+  // Un vrai `border-left`, sur toute la hauteur de la carte, plutôt qu'un
+  // segment décoratif flottant au milieu — le rayon de la carte l'arrondit déjà.
+  border-left: 4px solid theme.$blue;
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 8px 20px rgba(16, 28, 48, 0.06);
@@ -1199,15 +1202,6 @@
     background: theme.$accent;
     opacity: 0.7;
   }
-}
-
-/** Reprend le repère bleu des titres de section, posé contre le bord de la carte. */
-.social-accent {
-  flex: 0 0 auto;
-  width: 3px;
-  height: 34px;
-  border-radius: 2px;
-  background: #2563eb;
 }
 
 /** Les pastilles se chevauchent : c'est ce recouvrement qui fait la « pile ». */
