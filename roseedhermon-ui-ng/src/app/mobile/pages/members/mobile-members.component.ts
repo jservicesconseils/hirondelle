@@ -148,10 +148,6 @@ export class MobileMembersComponent implements OnInit {
     return Math.max(0, this.filteredRows.length - this.visibleCount);
   }
 
-  get shownCount(): number {
-    return Math.min(this.visibleCount, this.filteredRows.length);
-  }
-
   get shownRows(): MemberRow[] {
     return this.filteredRows.slice(0, this.visibleCount);
   }
