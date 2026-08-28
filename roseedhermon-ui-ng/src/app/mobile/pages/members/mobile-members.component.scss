@@ -218,7 +218,7 @@
   display: flex;
   gap: 0.5rem;
   margin: 1rem 0 0;
-  padding: 0.1rem 1.15rem 0.3rem;
+  padding: 0.1rem 1.15rem 0.65rem;
   overflow-x: auto;
   scrollbar-width: none;
 
@@ -226,6 +226,7 @@
 }
 
 .tab {
+  position: relative;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -243,8 +244,8 @@
   em {
     padding: 0.02rem 0.4rem;
     border-radius: 999px;
-    background: theme.$sky;
-    color: theme.$blue-deep;
+    background: #f4551d;
+    color: #fff;
     font-size: 0.72rem;
     font-style: normal;
     font-weight: 800;
@@ -256,9 +257,15 @@
     color: #fff;
     box-shadow: 0 8px 18px rgba(43, 95, 184, 0.3);
 
-    em {
-      background: rgba(255, 255, 255, 0.22);
-      color: #fff;
+    &::after {
+      content: '';
+      position: absolute;
+      left: 22%;
+      right: 22%;
+      bottom: -7px;
+      height: 3px;
+      border-radius: 2px;
+      background: #f4551d;
     }
   }
 }
