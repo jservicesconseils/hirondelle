@@ -366,10 +366,16 @@
 }
 
 /** Le sous-groupe (fonction), en pastille bleu clair. */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
 .role {
   align-self: flex-start;
   max-width: 100%;
-  margin-bottom: 0.5rem;
   padding: 0.16rem 0.6rem;
   border-radius: 999px;
   background: theme.$sky;
@@ -379,6 +385,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  &.subgroup {
+    background: rgba(244, 85, 29, 0.12);
+    color: #f4551d;
+  }
 }
 
 .line {

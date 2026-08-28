@@ -84,7 +84,10 @@
           </span>
 
           <strong class="name">{{ row.fullName }}</strong>
-          <span class="role" *ngIf="row.role">{{ row.role }}</span>
+          <div class="badges" *ngIf="row.role || row.subgroup">
+            <span class="role" *ngIf="row.role">{{ row.role }}</span>
+            <span class="role subgroup" *ngIf="row.subgroup && row.subgroup !== row.role">{{ row.subgroup }}</span>
+          </div>
 
           <span class="line" *ngIf="row.city">
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -93,6 +96,20 @@
             {{ row.city }}
           </span>
           <span class="line sub" *ngIf="row.address">{{ row.address }}</span>
+
+          <span class="line" *ngIf="row.email">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
+            </svg>
+            {{ row.email }}
+          </span>
+
+          <span class="line" *ngIf="row.gender || row.birthDate">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z" />
+            </svg>
+            {{ row.gender }}<ng-container *ngIf="row.gender && row.birthDate"> • </ng-container>{{ row.birthDate }}
+          </span>
 
           <div class="card-actions" *ngIf="row.phone">
             <button type="button" class="act call" (click)="call(row)"

@@ -19,6 +19,8 @@ interface MemberRow {
   city: string;
   address: string;
   email: string;
+  gender: string;
+  birthDate: string;
   search: string;
 }
 
@@ -207,12 +209,32 @@ export class MobileMembersComponent implements OnInit {
       city: (member.city || '').trim(),
       address: (member.address || '').trim(),
       email: (member.email || '').trim(),
+      gender: formatGender(member.gender),
+      birthDate: formatBirthDate(member.birthDate),
       search: [fullName, member.profession, member.subgroup, member.phoneNumber, member.city, member.email]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
     };
   }
+}
+
+/** Reprend telle quelle la valeur importée : « Homme »/« Femme » aussi bien que MALE/FEMALE. */
+function formatGender(gender: Member.GenderEnum | string | undefined): string {
+  switch (gender) {
+    case 'MALE': return 'Homme';
+    case 'FEMALE': return 'Femme';
+    case 'OTHER': return 'Autre';
+    default: return (gender || '').trim();
+  }
+}
+
+/** `T00:00:00` évite qu'une date sans heure ne recule d'un jour selon le fuseau du navigateur. */
+function formatBirthDate(birthDate: string | undefined): string {
+  if (!birthDate) return '';
+  const date = new Date(`${birthDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 /** Tri d'annuaire : nom de famille, puis prénom, sans tenir compte des accents. */
