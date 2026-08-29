@@ -308,27 +308,27 @@
       <div class="form-grid">
         <div class="form-field">
           <label for="add-lastName">Nom</label>
-          <input id="add-lastName" type="text" formControlName="lastName" placeholder="Dubois" />
+          <input id="add-lastName" type="text" formControlName="lastName" placeholder="Dubois" autocomplete="off" />
         </div>
         <div class="form-field">
           <label for="add-firstName">Prénom</label>
-          <input id="add-firstName" type="text" formControlName="firstName" placeholder="Marie" />
+          <input id="add-firstName" type="text" formControlName="firstName" placeholder="Marie" autocomplete="off" />
         </div>
         <div class="form-field">
           <label for="add-email">Email</label>
-          <input id="add-email" type="email" formControlName="email" placeholder="marie.example@email.com" />
+          <input id="add-email" type="email" formControlName="email" placeholder="marie.example@email.com" autocomplete="off" />
         </div>
         <div class="form-field">
           <label for="add-phone">Téléphone</label>
-          <input id="add-phone" type="text" formControlName="phoneNumber" placeholder="+33 6 12 34 56 78" />
+          <input id="add-phone" type="text" formControlName="phoneNumber" placeholder="+33 6 12 34 56 78" autocomplete="off" />
         </div>
         <div class="form-field">
           <label for="add-city">Ville</label>
-          <input id="add-city" type="text" formControlName="city" placeholder="Hermon" />
+          <input id="add-city" type="text" formControlName="city" placeholder="Hermon" autocomplete="off" />
         </div>
         <div class="form-field">
           <label for="add-gender">Genre</label>
-          <input id="add-gender" type="text" formControlName="gender" placeholder="Femme" />
+          <input id="add-gender" type="text" formControlName="gender" placeholder="Femme" autocomplete="off" />
         </div>
         <div class="form-field">
           <label for="add-birthDate">Date de naissance</label>
@@ -345,11 +345,11 @@
         </div>
         <div class="form-field">
           <label for="add-profession">Profession</label>
-          <input id="add-profession" type="text" formControlName="profession" placeholder="Enseignante" />
+          <input id="add-profession" type="text" formControlName="profession" placeholder="Enseignante" autocomplete="off" />
         </div>
         <div class="form-field">
           <label for="add-subgroup">Groupe</label>
-          <input id="add-subgroup" type="text" formControlName="subgroup" placeholder="Membre" />
+          <input id="add-subgroup" type="text" formControlName="subgroup" placeholder="Membre" autocomplete="off" />
         </div>
       </div>
 
@@ -410,33 +410,33 @@
       <div class="form-grid">
         <div class="form-field">
           <label for="edit-lastName">Nom</label>
-          <input id="edit-lastName" type="text" formControlName="lastName" placeholder="Dubois" />
+          <input id="edit-lastName" type="text" formControlName="lastName" placeholder="Dubois" autocomplete="off" />
           <span class="error-message" *ngIf="editMemberForm.get('lastName')?.invalid && (editMemberForm.get('lastName')?.dirty || editMemberForm.get('lastName')?.touched)">
             Nom requis
           </span>
         </div>
         <div class="form-field">
           <label for="edit-firstName">Prénom</label>
-          <input id="edit-firstName" type="text" formControlName="firstName" placeholder="Marie" />
+          <input id="edit-firstName" type="text" formControlName="firstName" placeholder="Marie" autocomplete="off" />
           <span class="error-message" *ngIf="editMemberForm.get('firstName')?.invalid && (editMemberForm.get('firstName')?.dirty || editMemberForm.get('firstName')?.touched)">
             Prénom requis
           </span>
         </div>
         <div class="form-field">
           <label for="edit-email">Email</label>
-          <input id="edit-email" type="email" formControlName="email" placeholder="marie.example@email.com" />
+          <input id="edit-email" type="email" formControlName="email" placeholder="marie.example@email.com" autocomplete="off" />
         </div>
         <div class="form-field">
           <label for="edit-phone">Téléphone</label>
-          <input id="edit-phone" type="text" formControlName="phoneNumber" placeholder="+33 6 12 34 56 78" />
+          <input id="edit-phone" type="text" formControlName="phoneNumber" placeholder="+33 6 12 34 56 78" autocomplete="off" />
         </div>
         <div class="form-field">
           <label for="edit-city">Ville</label>
-          <input id="edit-city" type="text" formControlName="city" placeholder="Hermon" />
+          <input id="edit-city" type="text" formControlName="city" placeholder="Hermon" autocomplete="off" />
         </div>
         <div class="form-field">
           <label for="edit-gender">Genre</label>
-          <input id="edit-gender" type="text" formControlName="gender" placeholder="Femme" />
+          <input id="edit-gender" type="text" formControlName="gender" placeholder="Femme" autocomplete="off" />
           <span class="error-message" *ngIf="editMemberForm.get('gender')?.invalid && (editMemberForm.get('gender')?.dirty || editMemberForm.get('gender')?.touched)">
             Genre requis
           </span>
@@ -459,11 +459,11 @@
         </div>
         <div class="form-field">
           <label for="edit-profession">Profession</label>
-          <input id="edit-profession" type="text" formControlName="profession" placeholder="Enseignante" />
+          <input id="edit-profession" type="text" formControlName="profession" placeholder="Enseignante" autocomplete="off" />
         </div>
         <div class="form-field">
           <label for="edit-subgroup">Groupe</label>
-          <input id="edit-subgroup" type="text" formControlName="subgroup" placeholder="Membre" />
+          <input id="edit-subgroup" type="text" formControlName="subgroup" placeholder="Membre" autocomplete="off" />
         </div>
       </div>
 
