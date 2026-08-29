@@ -123,6 +123,33 @@ export class AuthService {
     return this.cachedToken;
   }
 
+  /**
+   * Rafraîchit le jeton en cache s'il en a besoin, puis le renvoie.
+   *
+   * `idToken` ne fait que lire `cachedToken` : sans ce contrôle, une session
+   * ouverte depuis plus d'une heure (le temps d'un import de plusieurs dizaines
+   * de fiches, par exemple) laissait le jeton Cognito expirer en silence — chaque
+   * appel suivant échouait alors en 401 jusqu'à ce que la page soit rechargée.
+   * Appelée par l'intercepteur avant chaque requête vers notre API.
+   */
+  async ensureFreshToken(): Promise<string> {
+    if (!this.pool) return this.cachedToken;
+
+    if (await this.restoreFederated()) return this.cachedToken;
+
+    const user = this.pool.getCurrentUser();
+    if (!user) return this.cachedToken;
+
+    return new Promise<string>((resolve) => {
+      user.getSession((error: Error | null, session: CognitoUserSession | null) => {
+        if (!error && session?.isValid()) {
+          this.cachedToken = session.getIdToken().getJwtToken();
+        }
+        resolve(this.cachedToken);
+      });
+    });
+  }
+
   // --- « Se souvenir de moi » ---------------------------------------------------------
 
   get remember(): boolean {

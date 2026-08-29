@@ -1,5 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { from } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 
@@ -42,8 +44,13 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request.clone({ setHeaders: headers }));
   }
 
-  const token = auth.idToken;
-  if (!token) return next(request);
-
-  return next(request.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
+  // Rafraîchit le jeton au besoin avant l'appel : sans ça, une session ouverte
+  // depuis plus d'une heure (le temps d'un import de plusieurs dizaines de fiches,
+  // par exemple) envoyait un jeton expiré et chaque requête échouait en 401.
+  return from(auth.ensureFreshToken()).pipe(
+    switchMap((token) => {
+      if (!token) return next(request);
+      return next(request.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
+    })
+  );
 };
