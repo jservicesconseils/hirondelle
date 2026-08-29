@@ -204,6 +204,13 @@ export class MobileMembersComponent implements OnInit {
     window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, '_blank');
   }
 
+  /** Ouvre l'application de messagerie du téléphone (SMS), pas WhatsApp — bouton « Message ». */
+  openSms(row: MemberRow): void {
+    if (!row.phone) return;
+    const message = `Bonjour ${row.member.firstName || ''}, je vous contacte depuis l'application ${this.groupName}.`;
+    window.location.href = `sms:${row.phone.replace(/\s/g, '')}?body=${encodeURIComponent(message)}`;
+  }
+
   // --- Construction ------------------------------------------------------------------
 
   private toRow(member: Member, index: number): MemberRow {
