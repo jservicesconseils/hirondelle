@@ -106,6 +106,22 @@ jobs:
             --region "$AWS_REGION" \
             >/dev/null
 
+          echo "Setting the verification code email subject..."
+
+          # Cognito's own default subject is a bare "Your verification code" — the
+          # same template serves both the sign-up confirmation code and the
+          # passwordless "already-in-the-directory" phone login (forgotPassword),
+          # so this covers both without touching either flow's code.
+          aws cognito-idp update-user-pool \
+            --user-pool-id "$POOL_ID" \
+            --verification-message-template '{
+              "DefaultEmailOption": "CONFIRM_WITH_CODE",
+              "EmailSubject": "Hirondelle App | Your verification code",
+              "EmailMessage": "Your verification code is {####}"
+            }' \
+            --region "$AWS_REGION" \
+            >/dev/null
+
           for GROUP in SUPER_ADMIN GROUP_ADMIN MEMBER; do
             if aws cognito-idp get-group --user-pool-id "$POOL_ID" --group-name "$GROUP" >/dev/null 2>&1; then
               echo "Group $GROUP already exists."
