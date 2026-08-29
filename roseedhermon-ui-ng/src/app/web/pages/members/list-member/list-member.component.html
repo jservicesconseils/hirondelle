@@ -298,10 +298,10 @@
           <img *ngIf="photoPreview" [src]="photoPreview" alt="Photo du membre" />
           <i *ngIf="!photoPreview" class="pi pi-user"></i>
           <span class="photo-plus"><i class="pi pi-plus"></i></span>
-          <input type="file" accept="image/png,image/jpeg" (change)="onPhotoSelected($event)" />
+          <input type="file" accept="image/*" (change)="onPhotoSelected($event)" />
         </label>
         <strong class="photo-title">Téléverser la photo</strong>
-        <small class="photo-hint">JPG ou PNG, max 2 Mo • Cliquer pour téléverser</small>
+        <small class="photo-hint">Redimensionnée automatiquement • Cliquer pour téléverser</small>
         <small class="photo-error" *ngIf="photoError">{{ photoError }}</small>
       </div>
 
@@ -400,10 +400,10 @@
           <img *ngIf="editPhotoPreview" [src]="editPhotoPreview" alt="Photo du membre" />
           <i *ngIf="!editPhotoPreview" class="pi pi-user"></i>
           <span class="photo-plus"><i class="pi pi-pencil"></i></span>
-          <input type="file" accept="image/png,image/jpeg" (change)="onEditPhotoSelected($event)" />
+          <input type="file" accept="image/*" (change)="onEditPhotoSelected($event)" />
         </label>
         <strong class="photo-title">{{ editPhotoPreview ? 'Changer la photo' : 'Téléverser la photo' }}</strong>
-        <small class="photo-hint">JPG ou PNG, max 2 Mo • Cliquer pour téléverser</small>
+        <small class="photo-hint">Redimensionnée automatiquement • Cliquer pour téléverser</small>
         <small class="photo-error" *ngIf="editPhotoError">{{ editPhotoError }}</small>
       </div>
 

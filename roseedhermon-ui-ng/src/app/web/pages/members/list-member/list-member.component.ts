@@ -14,6 +14,7 @@ import { debounceTime, takeUntil } from 'rxjs/operators';
 
 import { ImportWizardComponent } from '../import-wizard/import-wizard.component';
 import { DetailMemberComponent } from '../detail-member/detail-member.component';
+import { compressImageToDataUrl } from '../../../../shared/utils/image-compression';
 import { CalendarModule } from 'primeng/calendar';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { fieldIconKind, FieldIconKind, primeIconFor } from '../../../../shared/utils/field-icons';
@@ -596,29 +597,39 @@ export class ListMemberComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** La photo est conservée en data URL : le champ `photo` de l'API est une chaîne. */
-  private readPhoto(event: Event, apply: (dataUrl: string) => void, fail: (message: string) => void) {
+  /**
+   * La photo est conservée en data URL : le champ `photo` de l'API est une chaîne.
+   * Redimensionnée et recompressée avant d'être gardée : une photo prise au
+   * téléphone (couramment plusieurs Mo) tient large sous la limite une fois
+   * passée par là, sans jamais refuser l'envoi côté admin.
+   */
+  private async readPhoto(event: Event, apply: (dataUrl: string) => void, fail: (message: string) => void) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
 
-    if (!/^image\/(png|jpe?g)$/i.test(file.type)) {
-      fail('Formats acceptés : JPG ou PNG.');
+    // N'importe quel format image, pas seulement JPG/PNG : la compression qui suit
+    // réencode de toute façon tout en JPEG, autant ne pas refuser une photo au départ.
+    if (!file.type.startsWith('image/')) {
+      fail('Choisissez un fichier image.');
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      fail('Image trop lourde : 2 Mo maximum.');
+    // Filet de sécurité avant compression : au-delà, ce n'est probablement plus une photo.
+    if (file.size > 20 * 1024 * 1024) {
+      fail('Ce fichier est trop lourd pour être une photo.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onerror = () => fail('La photo n\'a pas pu être lue.');
-    reader.onload = () => {
-      apply(String(reader.result));
+    try {
+      const dataUrl = await compressImageToDataUrl(file);
+      apply(dataUrl);
+    } catch (error) {
+      console.error('Compression de la photo impossible', error);
+      fail("La photo n'a pas pu être traitée.");
+    } finally {
       this.cdr.detectChanges();
-    };
-    reader.readAsDataURL(file);
+    }
   }
 
   // --- Vider l'annuaire : modal avec confirmation par mot de passe ---------------

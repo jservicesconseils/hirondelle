@@ -7,6 +7,7 @@ import { MemberService } from '../../../shared/services/members/members.service'
 import { Member } from '../../../shared/services/api/model/member';
 import { IdentityService } from '../../services/identity.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { compressImageToDataUrl } from '../../../shared/utils/image-compression';
 
 const GENDERS = ['Homme', 'Femme'];
 
@@ -16,7 +17,8 @@ const GENDERS = ['Homme', 'Femme'];
  * formulaire pour ne pas réécrire des valeurs déjà en base.
  */
 type ProfileForm = Omit<Member, 'gender'> & { gender?: string };
-const MAX_PHOTO_BYTES = 1_500_000;
+/** Filet de sécurité avant compression : au-delà, ce n'est probablement plus une photo. */
+const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
 
 @Component({
   selector: 'app-mobile-profile',
@@ -506,27 +508,31 @@ export class MobileProfileComponent implements OnInit {
     return `${(member.firstName || '').charAt(0)}${(member.lastName || '').charAt(0)}`.toUpperCase() || '?';
   }
 
-  onPhotoSelected(event: Event): void {
+  async onPhotoSelected(event: Event): Promise<void> {
     this.photoError = '';
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
+    input.value = '';
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
       this.photoError = 'Choisissez un fichier image.';
       return;
     }
-    // La photo part telle quelle dans le champ `photo` du membre : on borne sa taille.
-    if (file.size > MAX_PHOTO_BYTES) {
-      this.photoError = 'Image trop lourde (1,5 Mo maximum).';
+    if (file.size > MAX_SOURCE_PHOTO_BYTES) {
+      this.photoError = 'Ce fichier est trop lourd pour être une photo.';
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => (this.form.photo = String(reader.result || ''));
-    reader.onerror = () => (this.photoError = "L'image n'a pas pu être lue.");
-    reader.readAsDataURL(file);
-    input.value = '';
+    // Redimensionnée et recompressée avant d'être gardée : une photo prise au
+    // téléphone (couramment plusieurs Mo) tient large sous la limite une fois
+    // passée par là, sans jamais refuser l'envoi côté personne.
+    try {
+      this.form.photo = await compressImageToDataUrl(file);
+    } catch (error) {
+      console.error('Compression de la photo impossible', error);
+      this.photoError = "L'image n'a pas pu être traitée.";
+    }
   }
 
   async save(): Promise<void> {
