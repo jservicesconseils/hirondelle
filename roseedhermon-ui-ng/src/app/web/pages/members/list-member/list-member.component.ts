@@ -16,7 +16,10 @@ import { ImportWizardComponent } from '../import-wizard/import-wizard.component'
 import { DetailMemberComponent } from '../detail-member/detail-member.component';
 import { CalendarModule } from 'primeng/calendar';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { fieldIconKind, primeIconFor } from '../../../../shared/utils/field-icons';
+import { fieldIconKind, FieldIconKind, primeIconFor } from '../../../../shared/utils/field-icons';
+
+/** Ces concepts ont déjà leur propre colonne fixe : jamais de doublon en colonne dynamique. */
+const MERGED_KINDS: FieldIconKind[] = ['city', 'address', 'gender', 'phone'];
 
 /** Colonnes de la maquette qui n'existent pas telles quelles dans `Member`, précalculées. */
 interface MemberRow {
@@ -202,11 +205,17 @@ export class ListMemberComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** En-têtes distincts, dans l'ordre où ils apparaissent la première fois. */
+  /**
+   * En-têtes distincts, dans l'ordre où ils apparaissent la première fois — sauf ceux qui
+   * désignent Ville, Adresse, Genre ou Téléphone : ces concepts ont déjà leur colonne fixe,
+   * et un fichier qui les a nommés « Ville » ou « Numéro de téléphone » plutôt que l'en-tête
+   * exact attendu par l'assistant d'import ne doit pas dupliquer la colonne.
+   */
   private collectCustomFieldColumns(members: Member[]): string[] {
     const columns: string[] = [];
     members.forEach((member) => {
       Object.keys(member.customFields || {}).forEach((key) => {
+        if (MERGED_KINDS.includes(fieldIconKind(key))) return;
         if (!columns.includes(key)) columns.push(key);
       });
     });
@@ -216,6 +225,17 @@ export class ListMemberComponent implements OnInit, OnDestroy {
   /** Icône PrimeIcons adaptée au sens du champ (Ville, Adresse, Genre...), pas à sa provenance. */
   columnIcon(label: string): string {
     return primeIconFor(fieldIconKind(label));
+  }
+
+  /**
+   * Valeur du champ réel si elle existe ; sinon reprend le premier champ personnalisé qui
+   * désigne le même concept (ex. un fichier importé avant que Ville/Adresse/Genre ne
+   * deviennent des champs personnalisés par défaut, ou dont l'en-tête diffère du nom attendu).
+   */
+  mergedFieldValue(member: Member, structured: string | undefined, kind: FieldIconKind): string {
+    if (structured) return structured;
+    const entry = Object.entries(member.customFields || {}).find(([key]) => fieldIconKind(key) === kind);
+    return entry ? entry[1] : '—';
   }
 
   private toRow(member: Member): MemberRow {

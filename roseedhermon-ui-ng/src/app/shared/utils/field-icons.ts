@@ -9,19 +9,35 @@
  */
 export type FieldIconKind = 'city' | 'address' | 'gender' | 'phone' | 'email' | 'birthdate' | 'group' | 'generic';
 
-const PATTERNS: [RegExp, FieldIconKind][] = [
-  [/^(ville|city)$/i, 'city'],
-  [/^(adresse|address)$/i, 'address'],
-  [/^(genre|sexe|gender)$/i, 'gender'],
-  [/^(t[ée]l[ée]phone|tel|phone|mobile|cellulaire)$/i, 'phone'],
-  [/^(email|courriel|mail)$/i, 'email'],
-  [/naissance|birth/i, 'birthdate'],
-  [/^(groupe|group|sous.?groupe|subgroup)$/i, 'group'],
+/**
+ * Sous-chaînes reconnues dans le libellé une fois normalisé (minuscules, sans
+ * accents) — pas une correspondance exacte : un fichier dit aussi bien « Ville »
+ * que « Numéro de téléphone » ou « Adresse email ». L'ordre compte : une entrée
+ * plus haut est testée avant celles du dessous, pour trancher les chevauchements
+ * (« adresse email » doit rester un courriel, pas une adresse postale).
+ */
+const PATTERNS: [string[], FieldIconKind][] = [
+  [['email', 'courriel', 'mail'], 'email'],
+  [['naissance', 'birth'], 'birthdate'],
+  [['telephone', 'tel', 'phone', 'mobile', 'cellulaire'], 'phone'],
+  [['ville', 'city'], 'city'],
+  [['adresse', 'address'], 'address'],
+  [['genre', 'sexe', 'gender'], 'gender'],
+  [['groupe', 'group'], 'group'],
 ];
 
+/** Minuscules, accents retirés : « Numéro de Téléphone » -> « numero de telephone ». */
+function normalize(label: string): string {
+  return label
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
+}
+
 export function fieldIconKind(label: string): FieldIconKind {
-  const needle = label.trim();
-  const match = PATTERNS.find(([pattern]) => pattern.test(needle));
+  const needle = normalize(label);
+  const match = PATTERNS.find(([keywords]) => keywords.some((keyword) => needle.includes(keyword)));
   return match ? match[1] : 'generic';
 }
 

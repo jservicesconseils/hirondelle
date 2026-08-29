@@ -177,10 +177,10 @@
                   </div>
                 </div>
               </td>
-              <td class="cell-city">{{ row.cityLabel }}</td>
-              <td>{{ row.member.phoneNumber || '—' }}</td>
-              <td>{{ row.member.address || '—' }}</td>
-              <td>{{ row.member.gender || '—' }}</td>
+              <td class="cell-city">{{ row.member.city ? row.cityLabel : mergedFieldValue(row.member, '', 'city') }}</td>
+              <td>{{ mergedFieldValue(row.member, row.member.phoneNumber, 'phone') }}</td>
+              <td>{{ mergedFieldValue(row.member, row.member.address, 'address') }}</td>
+              <td>{{ mergedFieldValue(row.member, row.member.gender, 'gender') }}</td>
               <td><span class="status-pill"><span class="dot"></span>Actif</span></td>
               <td><span class="role-pill">{{ row.role }}</span></td>
               <td class="cell-date">{{ row.addedAt ? (row.addedAt | date:'dd MMM y') : '—' }}</td>
