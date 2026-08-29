@@ -5,6 +5,19 @@ import { FormsModule } from '@angular/forms';
 import { MemberService } from '../../../shared/services/members/members.service';
 import { Member } from '../../../shared/services/api/model/member';
 import { AuthService } from '../../../core/auth/auth.service';
+import { fieldIconKind, FieldIconKind } from '../../../shared/utils/field-icons';
+
+/** Tracé SVG (`viewBox="0 0 24 24"`) adapté au sens du champ, pas à sa provenance. */
+const FIELD_ICON_PATHS: Record<FieldIconKind, string> = {
+  city: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z',
+  address: 'M12 3 4 9v12h5v-7h6v7h5V9z',
+  gender: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
+  phone: 'M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z',
+  email: 'M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z',
+  birthdate: 'M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z',
+  group: 'M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
+  generic: 'M17.63 5.84C17.27 5.33 16.67 5 16 5H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h11c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z'
+};
 
 /** Une fiche de l'annuaire, préparée pour l'affichage. */
 interface MemberRow {
@@ -24,7 +37,7 @@ interface MemberRow {
   gender: string;
   birthDate: string;
   /** Colonnes importées sans équivalent connu : en-tête exact du fichier -> valeur. */
-  customFieldEntries: { label: string; value: string }[];
+  customFieldEntries: { label: string; value: string; icon: string }[];
   search: string;
 }
 
@@ -215,7 +228,11 @@ export class MobileMembersComponent implements OnInit {
       email: (member.email || '').trim(),
       gender: formatGender(member.gender),
       birthDate: formatBirthDate(member.birthDate),
-      customFieldEntries: Object.entries(member.customFields || {}).map(([label, value]) => ({ label, value })),
+      customFieldEntries: Object.entries(member.customFields || {}).map(([label, value]) => ({
+        label,
+        value,
+        icon: FIELD_ICON_PATHS[fieldIconKind(label)]
+      })),
       search: [
         fullName,
         member.profession,

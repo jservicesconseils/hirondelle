@@ -117,7 +117,7 @@
           <!-- Colonnes propres à cette communauté : affichées telles quelles, sous leur en-tête exact. -->
           <span class="line custom" *ngFor="let field of row.customFieldEntries">
             <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.63 5.84C17.27 5.33 16.67 5 16 5H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h11c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z" />
+              <path [attr.d]="field.icon" />
             </svg>
             <strong>{{ field.label }}&nbsp;:</strong> {{ field.value }}
           </span>

@@ -16,6 +16,7 @@ import { ImportWizardComponent } from '../import-wizard/import-wizard.component'
 import { DetailMemberComponent } from '../detail-member/detail-member.component';
 import { CalendarModule } from 'primeng/calendar';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { fieldIconKind, primeIconFor } from '../../../../shared/utils/field-icons';
 
 /** Colonnes de la maquette qui n'existent pas telles quelles dans `Member`, précalculées. */
 interface MemberRow {
@@ -57,6 +58,13 @@ export class ListMemberComponent implements OnInit, OnDestroy {
   memberList: Member[] = [];
   rows: MemberRow[] = [];
   filteredRows: MemberRow[] = [];
+
+  /**
+   * En-têtes des champs personnalisés réellement présents sur les fiches chargées,
+   * dans leur ordre de première apparition — chaque communauté a les siens, ce
+   * n'est jamais une liste fixée à l'avance (voir l'assistant d'import).
+   */
+  customFieldColumns: string[] = [];
 
   selectedMember: Member | null = null;
   showDetailPanel = false;
@@ -177,6 +185,7 @@ export class ListMemberComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.memberList = data;
         this.rows = data.map((member) => this.toRow(member));
+        this.customFieldColumns = this.collectCustomFieldColumns(data);
         this.applyFilters();
       },
       error: (err) => {
@@ -191,6 +200,22 @@ export class ListMemberComponent implements OnInit, OnDestroy {
         });
       }
     });
+  }
+
+  /** En-têtes distincts, dans l'ordre où ils apparaissent la première fois. */
+  private collectCustomFieldColumns(members: Member[]): string[] {
+    const columns: string[] = [];
+    members.forEach((member) => {
+      Object.keys(member.customFields || {}).forEach((key) => {
+        if (!columns.includes(key)) columns.push(key);
+      });
+    });
+    return columns;
+  }
+
+  /** Icône PrimeIcons adaptée au sens du champ (Ville, Adresse, Genre...), pas à sa provenance. */
+  columnIcon(label: string): string {
+    return primeIconFor(fieldIconKind(label));
   }
 
   private toRow(member: Member): MemberRow {
