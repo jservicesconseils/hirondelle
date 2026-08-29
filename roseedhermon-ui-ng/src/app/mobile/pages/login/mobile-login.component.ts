@@ -80,7 +80,15 @@ export class MobileLoginComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private settings: PlatformSettingsService
-  ) {}
+  ) {
+    // Le mobile n'a pas de case « Se souvenir de moi » comme le site : une appli
+    // reste connectée jusqu'à une déconnexion volontaire, point final. `remember`
+    // décide où la session s'écrit (localStorage, qui survit à la fermeture de
+    // l'appli, plutôt que sessionStorage, qui n'y survit pas) — les appels de
+    // connexion plus bas s'y réfèrent tous par défaut, poser ce drapeau une
+    // bonne fois pour toutes ici suffit à couvrir chacun d'eux.
+    this.auth.remember = true;
+  }
 
   ngOnInit(): void {
     this.redirect = this.route.snapshot.queryParamMap.get('redirect') ?? '';
