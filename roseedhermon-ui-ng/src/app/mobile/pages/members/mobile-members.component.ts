@@ -211,6 +211,12 @@ export class MobileMembersComponent implements OnInit {
     window.location.href = `sms:${row.phone.replace(/\s/g, '')}?body=${encodeURIComponent(message)}`;
   }
 
+  openEmail(row: MemberRow): void {
+    if (!row.email) return;
+    const subject = `Message depuis ${this.groupName}`;
+    window.location.href = `mailto:${row.email}?subject=${encodeURIComponent(subject)}`;
+  }
+
   // --- Construction ------------------------------------------------------------------
 
   private toRow(member: Member, index: number): MemberRow {
