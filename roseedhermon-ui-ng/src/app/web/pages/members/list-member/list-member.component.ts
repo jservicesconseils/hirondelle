@@ -232,10 +232,23 @@ export class ListMemberComponent implements OnInit, OnDestroy {
    * désigne le même concept (ex. un fichier importé avant que Ville/Adresse/Genre ne
    * deviennent des champs personnalisés par défaut, ou dont l'en-tête diffère du nom attendu).
    */
-  mergedFieldValue(member: Member, structured: string | undefined, kind: FieldIconKind): string {
+  /** Libellés lisibles des champs requis manquants, pour dire à l'admin quoi corriger. */
+  private invalidFieldLabels(form: FormGroup): string[] {
+    const labels: Record<string, string> = {
+      firstName: 'Prénom',
+      lastName: 'Nom',
+      gender: 'Genre',
+      birthDate: 'Date de naissance'
+    };
+    return Object.keys(form.controls)
+      .filter((key) => form.get(key)?.invalid)
+      .map((key) => labels[key] || key);
+  }
+
+  mergedFieldValue(member: Member, structured: string | undefined, kind: FieldIconKind, fallback = '—'): string {
     if (structured) return structured;
     const entry = Object.entries(member.customFields || {}).find(([key]) => fieldIconKind(key) === kind);
-    return entry ? entry[1] : '—';
+    return entry ? entry[1] : fallback;
   }
 
   private toRow(member: Member): MemberRow {
@@ -435,17 +448,22 @@ export class ListMemberComponent implements OnInit, OnDestroy {
 
   editMember() {
     if (this.selectedMember) {
+      const member = this.selectedMember;
+      // Repli sur les champs personnalisés : un fichier importé avant que Ville, Genre
+      // et consorts ne deviennent des champs personnalisés par défaut (ou dont l'en-tête
+      // diffère du nom attendu) laisse la donnée là plutôt que sur le champ dédié — sans
+      // ce repli, ces champs s'ouvraient vides, « Genre » requis bloquait la sauvegarde.
       this.editMemberForm.patchValue({
-        firstName: this.selectedMember.firstName || '',
-        lastName: this.selectedMember.lastName || '',
-        gender: this.selectedMember.gender || '',
-        birthDate: this.selectedMember.birthDate ? new Date(this.selectedMember.birthDate) : null,
-        profession: this.selectedMember.profession || '',
-        subgroup: this.selectedMember.subgroup || '',
-        phoneNumber: this.selectedMember.phoneNumber || '',
-        email: this.selectedMember.email || '',
-        city: this.selectedMember.city || '',
-        photo: this.selectedMember.photo || ''
+        firstName: member.firstName || '',
+        lastName: member.lastName || '',
+        gender: this.mergedFieldValue(member, member.gender, 'gender', ''),
+        birthDate: member.birthDate ? new Date(member.birthDate) : null,
+        profession: member.profession || '',
+        subgroup: this.mergedFieldValue(member, member.subgroup, 'group', ''),
+        phoneNumber: this.mergedFieldValue(member, member.phoneNumber, 'phone', ''),
+        email: this.mergedFieldValue(member, member.email, 'email', ''),
+        city: this.mergedFieldValue(member, member.city, 'city', ''),
+        photo: member.photo || ''
       });
       this.editPhotoPreview = this.selectedMember.photo || null;
       this.editPhotoError = '';
@@ -479,7 +497,19 @@ export class ListMemberComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
 
     if (!this.editMemberForm.valid) {
-      console.warn('Formulaire invalide à la soumission', this.editMemberForm.errors, this.editMemberForm.value);
+      // Les messages « requis » sous chaque champ ne s'affichent que sur les
+      // contrôles déjà touchés — sans ça, cliquer Enregistrer sans avoir mis le
+      // doigt dans un champ ne montrait jamais pourquoi rien ne se passait.
+      this.editMemberForm.markAllAsTouched();
+      this.cdr.detectChanges();
+      this.messageService.add({
+        severity: 'error',
+        summary: '❌ Formulaire incomplet',
+        detail: `Vérifiez : ${this.invalidFieldLabels(this.editMemberForm).join(', ')}`,
+        life: 6000,
+        closable: true,
+        key: 'memberEditErrorToast'
+      });
       return;
     }
 
@@ -651,27 +681,39 @@ export class ListMemberComponent implements OnInit, OnDestroy {
   }
 
   onAddMemberSubmit() {
-    if (this.addMemberForm.valid) {
-      const newMember: Member = this.addMemberForm.value;
-      this.memberService.createMember(newMember).subscribe({
-        next: () => {
-          this.addMemberDialogVisible = false;
-          this.loadMembers();
-          this.messageService.add({
-            severity: 'success',
-            summary: '✅ Ajout réussi',
-            detail: `Le membre ${newMember.firstName} ${newMember.lastName} a été ajouté avec succès`,
-            life: 5000,
-            closable: true,
-            key: 'memberAddToast'
-          });
-        },
-        error: (err) => {
-          alert('Erreur lors de l\'ajout du membre');
-          console.error(err);
-        }
+    if (!this.addMemberForm.valid) {
+      this.addMemberForm.markAllAsTouched();
+      this.cdr.detectChanges();
+      this.messageService.add({
+        severity: 'error',
+        summary: '❌ Formulaire incomplet',
+        detail: `Vérifiez : ${this.invalidFieldLabels(this.addMemberForm).join(', ')}`,
+        life: 6000,
+        closable: true,
+        key: 'memberAddToast'
       });
+      return;
     }
+
+    const newMember: Member = this.addMemberForm.value;
+    this.memberService.createMember(newMember).subscribe({
+      next: () => {
+        this.addMemberDialogVisible = false;
+        this.loadMembers();
+        this.messageService.add({
+          severity: 'success',
+          summary: '✅ Ajout réussi',
+          detail: `Le membre ${newMember.firstName} ${newMember.lastName} a été ajouté avec succès`,
+          life: 5000,
+          closable: true,
+          key: 'memberAddToast'
+        });
+      },
+      error: (err) => {
+        alert('Erreur lors de l\'ajout du membre');
+        console.error(err);
+      }
+    });
   }
 
   onSaveMember(updatedMember: Member) {
