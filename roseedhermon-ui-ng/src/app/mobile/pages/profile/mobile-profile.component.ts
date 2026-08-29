@@ -409,7 +409,10 @@ const MAX_PHOTO_BYTES = 1_500_000;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      width: 100%;
+      // 100% s'ajoutait aux 18px de marge de chaque côté (le bouton est hors de
+      // .profile-form, donc sans son padding pour absorber la largeur) : le
+      // bouton débordait de 36px hors de l'écran. calc() les soustrait au lieu.
+      width: calc(100% - 36px);
       height: 48px;
       margin: 4px 18px 18px;
       border: none;
