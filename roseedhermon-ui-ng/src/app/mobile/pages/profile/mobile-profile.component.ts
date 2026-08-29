@@ -391,13 +391,13 @@ const MAX_PHOTO_BYTES = 1_500_000;
       height: 52px;
       border: none;
       border-radius: 14px;
-      background: #f4551d;
+      background: #17a05c;
       color: #fff;
       font: inherit;
       font-size: 16px;
       font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 12px 26px rgba(244, 85, 29, 0.35);
+      box-shadow: 0 12px 26px rgba(23, 160, 92, 0.35);
     }
 
     .save svg { width: 19px; height: 19px; flex-shrink: 0; }
@@ -412,14 +412,15 @@ const MAX_PHOTO_BYTES = 1_500_000;
       width: 100%;
       height: 48px;
       margin: 4px 18px 18px;
-      border: 1px solid #e6e9ee;
+      border: none;
       border-radius: 14px;
-      background: transparent;
-      color: #c0392b;
+      background: #e74c3c;
+      color: #fff;
       font: inherit;
       font-size: 15px;
       font-weight: 700;
       cursor: pointer;
+      box-shadow: 0 10px 22px rgba(231, 76, 60, 0.3);
     }
 
     .sign-out svg { width: 18px; height: 18px; flex-shrink: 0; }
