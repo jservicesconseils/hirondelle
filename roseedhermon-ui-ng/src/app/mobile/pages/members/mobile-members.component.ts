@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MemberService } from '../../../shared/services/members/members.service';
 import { Member } from '../../../shared/services/api/model/member';
 import { AuthService } from '../../../core/auth/auth.service';
-import { fieldIconKind, FieldIconKind } from '../../../shared/utils/field-icons';
+import { canonicalLabel, fieldIconKind, FieldIconKind } from '../../../shared/utils/field-icons';
 
 /** Tracé SVG (`viewBox="0 0 24 24"`) adapté au sens du champ, pas à sa provenance. */
 const FIELD_ICON_PATHS: Record<FieldIconKind, string> = {
@@ -235,11 +235,10 @@ export class MobileMembersComponent implements OnInit {
       email: (member.email || '').trim(),
       gender: formatGender(member.gender),
       birthDate: formatBirthDate(member.birthDate),
-      customFieldEntries: Object.entries(member.customFields || {}).map(([label, value]) => ({
-        label,
-        value,
-        icon: FIELD_ICON_PATHS[fieldIconKind(label)]
-      })),
+      customFieldEntries: Object.entries(member.customFields || {}).map(([label, value]) => {
+        const kind = fieldIconKind(label);
+        return { label: canonicalLabel(kind) ?? label, value, icon: FIELD_ICON_PATHS[kind] };
+      }),
       search: [
         fullName,
         member.profession,

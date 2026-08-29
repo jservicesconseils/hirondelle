@@ -41,6 +41,26 @@ export function fieldIconKind(label: string): FieldIconKind {
   return match ? match[1] : 'generic';
 }
 
+/**
+ * Libellé court à afficher pour un champ reconnu — « Numéro de téléphone » ou
+ * « Tél. cellulaire » deviennent tous deux « Téléphone », plutôt que de reprendre
+ * l'en-tête exact du fichier, verbeux ou inconsistant d'un import à l'autre.
+ * `null` pour un champ générique : celui-là garde son en-tête d'origine, seul
+ * repère possible pour un champ propre à une communauté (« Ministère »...).
+ */
+export function canonicalLabel(kind: FieldIconKind): string | null {
+  switch (kind) {
+    case 'city': return 'Ville';
+    case 'address': return 'Adresse';
+    case 'gender': return 'Genre';
+    case 'phone': return 'Téléphone';
+    case 'email': return 'Email';
+    case 'birthdate': return 'Date de naissance';
+    case 'group': return 'Groupe';
+    default: return null;
+  }
+}
+
 /** Classe PrimeIcons correspondante, pour les tableaux et listes du site. */
 export function primeIconFor(kind: FieldIconKind): string {
   switch (kind) {
