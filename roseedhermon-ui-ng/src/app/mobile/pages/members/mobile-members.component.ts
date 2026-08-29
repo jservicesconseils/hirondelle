@@ -225,6 +225,18 @@ export class MobileMembersComponent implements OnInit {
     const role = (member.profession || '').trim();
     const subgroup = (member.subgroup || '').trim();
 
+    /**
+     * Un fichier qui a nommé sa colonne autrement que l'en-tête reconnu par
+     * l'assistant d'import (ou importé avant que Téléphone ne le redevienne)
+     * laisse le numéro dans customFields plutôt que sur le champ structuré :
+     * Appeler/WhatsApp restaient alors invisibles bien que la fiche ait un
+     * numéro, affiché en toutes lettres juste au-dessus. On le retrouve ici
+     * pour que les boutons se comportent comme sur n'importe quelle fiche.
+     */
+    const customFields = member.customFields || {};
+    const phoneEntry = Object.entries(customFields).find(([label]) => fieldIconKind(label) === 'phone');
+    const phone = (member.phoneNumber || phoneEntry?.[1] || '').trim();
+
     return {
       member,
       fullName,
@@ -235,16 +247,20 @@ export class MobileMembersComponent implements OnInit {
       role,
       subgroup,
       showSubgroupBadge: !!subgroup && subgroup.toLowerCase() !== role.toLowerCase(),
-      phone: (member.phoneNumber || '').trim(),
+      phone,
       city: (member.city || '').trim(),
       address: (member.address || '').trim(),
       email: (member.email || '').trim(),
       gender: formatGender(member.gender),
       birthDate: formatBirthDate(member.birthDate),
-      customFieldEntries: Object.entries(member.customFields || {}).map(([label, value]) => {
-        const kind = fieldIconKind(label);
-        return { label: canonicalLabel(kind) ?? label, value, icon: FIELD_ICON_PATHS[kind] };
-      }),
+      // Le numéro repris ci-dessus pour les boutons ne s'affiche pas en plus en texte :
+      // une fiche avec un vrai champ téléphone ne montre pas non plus son numéro ici.
+      customFieldEntries: Object.entries(customFields)
+        .filter(([label]) => label !== phoneEntry?.[0])
+        .map(([label, value]) => {
+          const kind = fieldIconKind(label);
+          return { label: canonicalLabel(kind) ?? label, value, icon: FIELD_ICON_PATHS[kind] };
+        }),
       search: [
         fullName,
         member.profession,

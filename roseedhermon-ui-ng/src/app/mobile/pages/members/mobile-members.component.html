@@ -140,23 +140,9 @@
               </svg>
             </button>
 
-            <!-- Orange : la même couleur que le repli courriel des lignes d'info au-dessus. -->
-            <button type="button" class="act mail" *ngIf="row.email" (click)="openEmail(row)"
-                    [attr.aria-label]="'Écrire à ' + row.fullName">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
-              </svg>
-            </button>
-
-            <!-- Violet : reste distinct des trois autres. Icône plutôt que texte — avec
-                 quatre boutons sur une carte à deux colonnes, « Message » en toutes
-                 lettres n'a plus la place de tenir. -->
-            <button type="button" class="act sms" (click)="row.phone ? openSms(row) : openEmail(row)"
-                    [attr.aria-label]="'Envoyer un message à ' + row.fullName">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM7 9h10v2H7V9zm7 5H7v-2h7v2zm3-6H7V6h10v2z" />
-              </svg>
-            </button>
+            <!-- Ouvre le SMS s'il y a un téléphone, sinon le courriel — jamais les deux
+                 boutons à la fois, un large bouton texte suffit ici. -->
+            <button type="button" class="msg-btn" (click)="row.phone ? openSms(row) : openEmail(row)">Message</button>
           </div>
         </article>
       </div>
