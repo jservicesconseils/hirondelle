@@ -4,6 +4,10 @@ import {
   authGuard,
   eventsGuard,
   membersGuard,
+  mobileContactsGuard,
+  mobileEventsGuard,
+  mobileProfileGuard,
+  mobileTicketsGuard,
   superAdminGuard
 } from './app/core/auth/auth.guard';
 import { AppLayout } from './app/layout/component/app.layout';
@@ -15,6 +19,7 @@ import { LoginComponent } from './app/web/pages/auth/login.component';
 import { OauthCallbackComponent } from './app/web/pages/auth/oauth-callback.component';
 import { Dashboard } from './app/web/pages/dashboard/dashboard';
 import { GroupsComponent } from './app/web/pages/groups/groups.component';
+import { WebSettingsComponent } from './app/web/pages/settings/web-settings.component';
 import { HomeComponent } from './app/web/pages/home/home.component';
 import { WebEventDetailComponent } from './app/web/pages/events/web-event-detail/web-event-detail.component';
 import { WebReservationComponent } from './app/web/pages/events/web-reservation/web-reservation.component';
@@ -80,25 +85,26 @@ export const appRoutes: Routes = [
             { path: 'members', component: ListMemberComponent, canActivate: [membersGuard] },
             { path: 'events', component: ListEventsComponent, canActivate: [eventsGuard] },
             { path: 'groups', component: GroupsComponent, canActivate: [superAdminGuard] },
+            { path: 'settings', component: WebSettingsComponent, canActivate: [superAdminGuard] },
         ]
     },
-    
+
     // Routes mobiles
     {
         path: 'mobile',
         component: MobileTabsComponent,
         children: [
             { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-            { path: 'dashboard', component: MobileDashboardComponent },
-            { path: 'events', component: MobileEventsComponent },
-            { path: 'events/:id', component: MobileEventDetailComponent },
+            { path: 'dashboard', component: MobileDashboardComponent, canActivate: [mobileEventsGuard] },
+            { path: 'events', component: MobileEventsComponent, canActivate: [mobileEventsGuard] },
+            { path: 'events/:id', component: MobileEventDetailComponent, canActivate: [mobileEventsGuard] },
             { path: 'reservation/:id', component: MobileReservationComponent },
             { path: 'payment/:id', component: MobilePaymentComponent },
             { path: 'ticket/:id', component: MobileTicketComponent },
-            { path: 'tickets', component: MobileTicketsComponent, canActivate: [authGuard] },
+            { path: 'tickets', component: MobileTicketsComponent, canActivate: [authGuard, mobileTicketsGuard] },
             { path: 'login', component: MobileLoginComponent },
-            { path: 'members', component: MobileMembersComponent, canActivate: [authGuard, membersGuard] },
-            { path: 'profile', component: MobileProfileComponent, canActivate: [authGuard] },
+            { path: 'members', component: MobileMembersComponent, canActivate: [authGuard, membersGuard, mobileContactsGuard] },
+            { path: 'profile', component: MobileProfileComponent, canActivate: [authGuard, mobileProfileGuard] },
         ]
     },
     

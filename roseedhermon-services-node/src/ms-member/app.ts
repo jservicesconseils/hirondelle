@@ -5,6 +5,7 @@ import { authRouter } from './routes/auth.routes';
 import { groupRouter } from './routes/group.routes';
 import { memberRouter } from './routes/member.routes';
 import { meRouter } from './routes/me.routes';
+import { settingsRouter } from './routes/settings.routes';
 
 export function createApp(): Express {
   const app = createBaseApp();
@@ -22,6 +23,7 @@ export function createApp(): Express {
   app.use('/api/v1/groups', groupRouter);
   app.use('/api/v1/me', meRouter);
   app.use('/api/v1/auth', authRouter);
+  app.use('/api/v1/settings', settingsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler(config.serviceName));

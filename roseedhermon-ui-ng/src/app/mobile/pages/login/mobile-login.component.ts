@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CognitoUser } from 'amazon-cognito-identity-js';
 
 import { AuthService, GroupRequiredError, NewPasswordRequiredError } from '../../../core/auth/auth.service';
+import { firstAvailableMobileRoute, PlatformSettingsService } from '../../../core/platform-settings.service';
 import { CurrentUser } from '../../../core/auth/auth.model';
 import { MOCK_ACCOUNTS, MockAccount, MOCK_PASSWORD } from '../../../core/auth/mock-accounts';
 import { GroupEntity } from '../../../shared/services/api/model/groupEntity';
@@ -65,7 +66,8 @@ export class MobileLoginComponent implements OnInit {
     public auth: AuthService,
     private directory: MockDirectoryService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private settings: PlatformSettingsService
   ) {}
 
   ngOnInit(): void {
@@ -332,14 +334,17 @@ export class MobileLoginComponent implements OnInit {
     this.error = (error as Error)?.message || 'La connexion a échoué.';
   }
 
-  private leave(_user: CurrentUser): void {
+  private async leave(_user: CurrentUser): Promise<void> {
     if (this.redirect) {
       this.router.navigateByUrl(this.redirect);
       return;
     }
     // Même un administrateur reste sur le mobile après s'y être connecté :
-    // l'espace de gestion est prévu pour un écran large.
-    this.router.navigate(['/mobile/dashboard']);
+    // l'espace de gestion est prévu pour un écran large. La destination précise
+    // dépend des modules que le super admin a laissés ouverts (Accueil est le
+    // fil des événements : rien à y montrer si ce module est coupé).
+    const modules = await this.settings.ready();
+    this.router.navigate([firstAvailableMobileRoute(modules)]);
   }
 }
 

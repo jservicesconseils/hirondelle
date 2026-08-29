@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { Feature, FEATURES, Role, ROLES } from './auth.model';
+import { firstAvailableMobileRoute, MobileModules, PlatformSettingsService } from '../platform-settings.service';
 
 /**
  * Exige une session ouverte.
@@ -97,8 +98,33 @@ function loginRouteFor(url: string): string {
   return url.startsWith('/mobile') ? '/mobile/login' : '/login';
 }
 
+/**
+ * Exige qu'un module mobile soit activé par le super administrateur.
+ *
+ * Un interrupteur global (voir `PlatformSettingsService`), indépendant des
+ * modules ouverts au groupe (`featureGuard`) : là où celui-ci répond « votre
+ * communauté n'a pas ce module », celui-là répond « ce module est
+ * temporairement coupé pour tout le monde ». S'applique même sans connexion,
+ * puisqu'on peut parcourir le mobile sans compte.
+ */
+export function moduleGuard(module: keyof MobileModules): CanActivateFn {
+  return async () => {
+    const settings = inject(PlatformSettingsService);
+    const router = inject(Router);
+
+    const modules = await settings.ready();
+    if (modules[module]) return true;
+
+    return router.createUrlTree([firstAvailableMobileRoute(modules)]);
+  };
+}
+
 /** Raccourcis lisibles dans la table de routes. */
 export const superAdminGuard: CanActivateFn = roleGuard(ROLES.SUPER_ADMIN);
 export const adminGuard: CanActivateFn = roleGuard(ROLES.SUPER_ADMIN, ROLES.GROUP_ADMIN);
 export const eventsGuard: CanActivateFn = featureGuard(FEATURES.EVENTS);
 export const membersGuard: CanActivateFn = featureGuard(FEATURES.MEMBERS);
+export const mobileEventsGuard: CanActivateFn = moduleGuard('mobileEvents');
+export const mobileTicketsGuard: CanActivateFn = moduleGuard('mobileTickets');
+export const mobileContactsGuard: CanActivateFn = moduleGuard('mobileContacts');
+export const mobileProfileGuard: CanActivateFn = moduleGuard('mobileProfile');

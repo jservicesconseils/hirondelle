@@ -4,6 +4,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { PlatformSettingsService } from '../../core/platform-settings.service';
 
 /**
  * Barre de navigation basse : rail bleu profond flottant, l'onglet courant
@@ -19,8 +20,11 @@ import { AuthService } from '../../core/auth/auth.service';
   imports: [CommonModule],
   template: `
     <nav class="bottom-nav">
+      <!-- Coupée pour tout le monde par le super admin, l'onglet Accueil (le fil des
+           événements) disparaît comme les autres — voir PlatformSettingsService. -->
       <button type="button"
               class="nav-item"
+              *ngIf="settings.modules().mobileEvents"
               [class.active]="isActive('/mobile/dashboard')"
               (click)="go('/mobile/dashboard')">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -29,10 +33,11 @@ import { AuthService } from '../../core/auth/auth.service';
         <span>Accueil</span>
       </button>
 
-      <!-- L'annuaire n'existe que pour les groupes auxquels le module est attribué. -->
+      <!-- L'annuaire n'existe que pour les groupes auxquels le module est attribué,
+           et seulement si le super admin ne l'a pas coupé pour toute l'application. -->
       <button type="button"
               class="nav-item"
-              *ngIf="auth.canSeeMembers()"
+              *ngIf="auth.canSeeMembers() && settings.modules().mobileContacts"
               [class.active]="isActive('/mobile/members')"
               (click)="go('/mobile/members')">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -43,6 +48,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
       <button type="button"
               class="nav-item"
+              *ngIf="settings.modules().mobileTickets"
               [class.active]="isActive('/mobile/tickets')"
               (click)="go('/mobile/tickets')">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -53,6 +59,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
       <button type="button"
               class="nav-item"
+              *ngIf="settings.modules().mobileProfile"
               [class.active]="isActive('/mobile/profile')"
               (click)="go('/mobile/profile')">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -181,7 +188,8 @@ export class MobileFooterComponent implements OnInit {
 
   constructor(
     private router: Router,
-    public auth: AuthService
+    public auth: AuthService,
+    public settings: PlatformSettingsService
   ) {}
 
   ngOnInit(): void {

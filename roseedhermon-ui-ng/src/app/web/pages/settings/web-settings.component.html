@@ -1,0 +1,59 @@
+<div class="settings-page">
+
+  <!-- Bandeau, même dégradé et même typographie que les autres pages d'administration -->
+  <header class="head">
+    <div class="head-inner">
+      <div class="head-text">
+        <span class="eyebrow">
+          <span class="eyebrow-bar"></span>
+          Réglages
+        </span>
+
+        <h1>Paramètres</h1>
+
+        <p class="lead">
+          Activez ou désactivez des modules de l'application mobile pour tout le monde,
+          d'un coup. Un module désactivé disparaît de la barre du bas dès la prochaine
+          ouverture de l'application ; y accéder directement par un lien renvoie vers
+          un autre onglet encore actif.
+        </p>
+      </div>
+    </div>
+
+    <ul class="head-stats">
+      <li>
+        <strong>{{ activeCount }}</strong>
+        <span>Module(s) actif(s) sur {{ toggles.length }}</span>
+      </li>
+    </ul>
+  </header>
+
+  <div class="body">
+    <p class="state" *ngIf="loading">Chargement des réglages…</p>
+
+    <section class="toggle-card" *ngIf="!loading">
+      <article class="toggle-row" *ngFor="let toggle of toggles">
+        <span class="toggle-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path [attr.d]="toggle.icon" /></svg></span>
+
+        <div class="toggle-text">
+          <strong>{{ toggle.label }}</strong>
+          <span>{{ toggle.description }}</span>
+        </div>
+
+        <button
+          type="button"
+          class="switch"
+          role="switch"
+          [attr.aria-checked]="modules[toggle.key]"
+          [attr.aria-label]="toggle.label"
+          [class.on]="modules[toggle.key]"
+          [disabled]="!!saving"
+          (click)="onToggle(toggle)">
+          <span class="switch-knob"></span>
+        </button>
+      </article>
+    </section>
+  </div>
+
+  <p-toast></p-toast>
+</div>

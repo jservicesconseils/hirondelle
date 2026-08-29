@@ -1,0 +1,88 @@
+// Le bandeau vient de `admin-head`, commun aux pages d'administration ; cette page
+// n'a besoin de rien d'autre de `list-page` (pas de tableau, pas de tiroir).
+@use '../admin-head' as *;
+@use '../../styles/public-theme' as theme;
+
+.settings-page {
+  background: theme.$paper;
+  color: theme.$text;
+  font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+}
+
+.toggle-card {
+  max-width: 720px;
+  background: #fff;
+  border: 1px solid theme.$line;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(16, 28, 48, 0.06);
+  overflow: hidden;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid theme.$line;
+
+  &:last-child { border-bottom: none; }
+}
+
+.toggle-icon {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: theme.$sky;
+  color: theme.$blue-deep;
+
+  svg { width: 22px; height: 22px; }
+}
+
+.toggle-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  strong { font-size: 0.98rem; font-weight: 800; color: theme.$ink; }
+  span { font-size: 0.84rem; color: theme.$muted; line-height: 1.4; }
+}
+
+/** Interrupteur pilule, à la façon iOS : le repère le plus lisible pour un on/off. */
+.switch {
+  flex: 0 0 auto;
+  position: relative;
+  width: 46px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #d5dae2;
+  cursor: pointer;
+  transition: background 0.18s ease;
+
+  &:disabled { opacity: 0.6; cursor: default; }
+
+  &.on { background: theme.$accent; }
+}
+
+.switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(16, 28, 48, 0.3);
+  transition: transform 0.18s ease;
+}
+
+.switch.on .switch-knob {
+  transform: translateX(20px);
+}

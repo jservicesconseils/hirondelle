@@ -386,7 +386,7 @@ export class AppSidebar {
     },
     {
       label: 'Réglages',
-      items: [{ label: 'Paramètres', icon: ICONS.settings }]
+      items: [{ label: 'Paramètres', icon: ICONS.settings, route: '/app/settings', roles: [ROLES.SUPER_ADMIN] }]
     }
   ];
 }
