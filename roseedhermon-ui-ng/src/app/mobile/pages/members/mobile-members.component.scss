@@ -453,11 +453,6 @@
   &.whatsapp {
     background: linear-gradient(135deg, #1faa59 0%, #128c4a 100%);
   }
-
-  /* Repli quand la fiche n'a pas de téléphone : orange, pour rester distinct des deux autres. */
-  &.mail {
-    background: linear-gradient(135deg, #ff7a4d 0%, theme.$accent 100%);
-  }
 }
 
 .msg-btn {
