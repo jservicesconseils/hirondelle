@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { asyncHandler, requireAuth } from '../../common';
 import { findEmailByPhone, findPhoneByEmail, registerAccountPhone } from '../services/account-phone.service';
+import { findMemberByPhone } from '../services/member.service';
 
 /**
  * Résolution téléphone ↔ compte, montée sur `/api/v1/auth`.
@@ -51,15 +52,27 @@ authRouter.post(
  * Ouvert sans session, comme la première étape de « mot de passe oublié » :
  * c'est justement parce que la personne n'est pas encore connectée qu'elle a
  * besoin de ce courriel.
+ *
+ * D'abord sur un compte déjà lié (`account_phones`, posé à une connexion
+ * précédente) ; à défaut, sur une fiche déjà importée mais jamais encore
+ * utilisée pour se connecter — son numéro y figure déjà, seul le compte
+ * Cognito reste à créer, ce que le client fait dans la foulée.
  */
 authRouter.get(
   '/phone/:phone',
   asyncHandler(async (req, res) => {
-    const email = await findEmailByPhone(req.params.phone);
-    if (!email) {
-      res.status(404).json({ error: "Aucun compte n'est rattaché à ce numéro." });
+    const linked = await findEmailByPhone(req.params.phone);
+    if (linked) {
+      res.json({ email: linked });
       return;
     }
-    res.json({ email });
+
+    const member = await findMemberByPhone(req.params.phone);
+    if (member?.email) {
+      res.json({ email: member.email });
+      return;
+    }
+
+    res.status(404).json({ error: "Aucun compte n'est rattaché à ce numéro." });
   }),
 );

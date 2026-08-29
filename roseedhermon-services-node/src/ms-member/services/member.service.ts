@@ -76,6 +76,31 @@ export async function findMemberByEmail(email: string): Promise<MemberDocument |
   );
 }
 
+/**
+ * Retrouve un membre par son numéro : pour la connexion par téléphone d'une
+ * personne déjà importée mais qui ne s'est encore jamais connectée — sa fiche
+ * existe, mais rien ne relie encore son numéro à un compte (voir
+ * `account-phone.service.ts`, qui ne sait faire ce lien qu'après une première
+ * connexion). Compare sur les dix derniers chiffres : peu importe que le
+ * fichier ait gardé le "+1", des espaces ou des tirets.
+ */
+export async function findMemberByPhone(phone: string): Promise<MemberDocument | null> {
+  const needle = phone.replace(/\D/g, '').slice(-10);
+  if (needle.length < 7) return null;
+
+  const matches = (value: unknown): boolean =>
+    typeof value === 'string' && value.replace(/\D/g, '').slice(-10) === needle;
+
+  const candidates = await MemberModel.find().exec();
+  return (
+    candidates.find(
+      (candidate) =>
+        matches(candidate.phoneNumber) ||
+        Object.values((candidate.customFields as Record<string, string> | undefined) ?? {}).some(matches),
+    ) ?? null
+  );
+}
+
 export async function getMemberById(id: string): Promise<MemberDocument | null> {
   return MemberModel.findOne(springIdFilter(id)).exec();
 }

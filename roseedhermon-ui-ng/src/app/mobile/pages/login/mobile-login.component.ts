@@ -29,9 +29,21 @@ export class MobileLoginComponent implements OnInit {
   email = '';
   password = '';
 
+  /** Connexion : par courriel/mot de passe, ou par le seul numéro pour une fiche déjà importée. */
+  signinMethod: 'password' | 'phone' = 'password';
+
   /** Inscription : par téléphone (sans mot de passe) ou par courriel — même bascule que sur le site. */
   signupMethod: 'phone' | 'email' = 'email';
   phone = '';
+
+  /**
+   * Quel mécanisme Cognito l'étape « confirm » doit finaliser, une fois le code
+   * saisi : `signup` pour une inscription classique, `reset` pour la connexion
+   * par téléphone d'une fiche déjà importée (voir `requestPhoneLogin`) — les deux
+   * envoient un code par courriel qui se ressemble en tout point à l'écran, mais
+   * ne se confirment pas du tout de la même façon côté Cognito.
+   */
+  private phoneLoginPending: 'reset' | 'signup' | null = null;
 
   // Identité : demandée à l'inscription, quelle que soit la méthode choisie.
   firstName = '';
@@ -102,6 +114,9 @@ export class MobileLoginComponent implements OnInit {
     if (this.challenge) return 'Remplacez le mot de passe reçu par texto.';
     if (this.view === 'signup') return "Un compte suffit pour retrouver vos événements et vos billets.";
     if (this.view === 'confirm') return `Saisissez le code à six chiffres envoyé à ${this.email.trim()}.`;
+    if (this.view === 'signin' && this.signinMethod === 'phone') {
+      return 'Déjà dans notre annuaire ? Indiquez le numéro déjà au dossier : nous vous enverrons un code par courriel.';
+    }
     return 'Connectez-vous pour retrouver votre groupe, vos événements et vos billets.';
   }
 
@@ -110,6 +125,7 @@ export class MobileLoginComponent implements OnInit {
     if (this.challenge) return 'Enregistrer';
     if (this.view === 'signup') return 'Créer mon compte';
     if (this.view === 'confirm') return 'Confirmer';
+    if (this.view === 'signin' && this.signinMethod === 'phone') return 'Recevoir mon code';
     return 'Se connecter';
   }
 
@@ -126,6 +142,18 @@ export class MobileLoginComponent implements OnInit {
     this.view = view;
     this.error = '';
     this.notice = '';
+  }
+
+  /** Bascule entre les deux façons de se connecter ; chacune n'utilise que ses propres champs. */
+  chooseSigninMethod(method: 'password' | 'phone'): void {
+    this.signinMethod = method;
+    this.error = '';
+    if (method === 'phone') {
+      this.email = '';
+      this.password = '';
+    } else {
+      this.phone = '';
+    }
   }
 
   /** Bascule entre les deux façons de créer un compte ; chacune n'utilise que ses propres champs. */
@@ -161,6 +189,8 @@ export class MobileLoginComponent implements OnInit {
         await (this.signupMethod === 'phone' ? this.doSignUpByPhone() : this.doSignUpByEmail());
       } else if (this.view === 'confirm') {
         await this.doConfirmSignUp();
+      } else if (this.view === 'signin' && this.signinMethod === 'phone' && !this.challenge) {
+        await this.requestPhoneLogin();
       } else {
         const user = this.challenge ? await this.completeChallenge() : await this.signIn();
         if (user) this.leave(user);
@@ -195,6 +225,7 @@ export class MobileLoginComponent implements OnInit {
     }
     if (!this.passwordsAgree()) return;
 
+    this.phoneLoginPending = 'signup';
     const { needsConfirmation } = await this.auth.signUp(email, this.newPassword);
     // Conservé pour la connexion automatique une fois le compte confirmé.
     this.password = this.newPassword;
@@ -224,8 +255,63 @@ export class MobileLoginComponent implements OnInit {
     }
 
     this.password = randomTempPassword();
+    this.phoneLoginPending = 'signup';
     const { needsConfirmation } = await this.auth.signUp(email, this.password, phone);
     await this.afterSignUp(email, needsConfirmation);
+  }
+
+  /**
+   * Connexion sans mot de passe, pour une fiche déjà dans l'annuaire (importée
+   * par un administrateur) même si la personne ne s'est encore jamais connectée.
+   *
+   * Le numéro retrouve son courriel côté serveur (`/api/v1/auth/phone/:phone`,
+   * qui regarde d'abord un compte déjà lié, puis la fiche elle-même). Reste
+   * ensuite à savoir si un compte Cognito existe déjà pour ce courriel : le cas
+   * échéant, on réinitialise son mot de passe (comme sur le site) ; sinon, ce
+   * numéro n'a encore jamais servi à se connecter et on crée le compte à la
+   * volée, exactement comme l'inscription par téléphone juste au-dessus. Les
+   * deux envoient un code à six chiffres par courriel, l'écran qui suit est le
+   * même — seule la façon de le confirmer diffère (`phoneLoginPending`).
+   */
+  private async requestPhoneLogin(): Promise<void> {
+    const phone = toE164(this.phone.trim());
+    if (!phone) {
+      this.error = 'Indiquez un numéro de téléphone valide.';
+      return;
+    }
+    if (!this.auth.configured) {
+      this.error = 'La connexion par téléphone requiert Cognito.';
+      return;
+    }
+
+    let email: string;
+    try {
+      email = await this.auth.lookupEmailByPhone(phone);
+    } catch {
+      this.error = "Aucune fiche n'est rattachée à ce numéro. Vérifiez-le, ou créez un compte.";
+      return;
+    }
+    this.email = email;
+
+    try {
+      await this.auth.forgotPassword(email);
+      this.phoneLoginPending = 'reset';
+    } catch (error) {
+      if ((error as { code?: string })?.code !== 'UserNotFoundException') {
+        this.handle(error);
+        return;
+      }
+      // Fiche importée, jamais encore connectée : pas de compte Cognito à
+      // réinitialiser, on le crée — le mot de passe restera toujours inconnu
+      // de la personne, `signInAfterSignUp` enchaîne dessus après le code.
+      this.password = randomTempPassword();
+      this.phoneLoginPending = 'signup';
+      await this.auth.signUp(email, this.password);
+    }
+
+    this.code = '';
+    this.show('confirm');
+    this.notice = `Un code à six chiffres a été envoyé à ${email}.`;
   }
 
   private async afterSignUp(email: string, needsConfirmation: boolean): Promise<void> {
@@ -244,7 +330,19 @@ export class MobileLoginComponent implements OnInit {
       this.error = 'Saisissez le code reçu par courriel.';
       return;
     }
-    await this.auth.confirmSignUp(this.email.trim(), this.code.trim());
+
+    const email = this.email.trim();
+    const code = this.code.trim();
+
+    if (this.phoneLoginPending === 'reset') {
+      // Le mot de passe temporaire de `requestPhoneLogin` n'a pas survécu si la
+      // personne a quitté l'écran entre-temps ; un nouveau ne coûte rien de plus.
+      this.password = randomTempPassword();
+      await this.auth.confirmPassword(email, code, this.password);
+    } else {
+      await this.auth.confirmSignUp(email, code);
+    }
+
     await this.signInAfterSignUp();
   }
 
@@ -255,7 +353,11 @@ export class MobileLoginComponent implements OnInit {
     this.error = '';
     this.notice = '';
     try {
-      await this.auth.resendSignUpCode(this.email.trim());
+      if (this.phoneLoginPending === 'reset') {
+        await this.auth.forgotPassword(this.email.trim());
+      } else {
+        await this.auth.resendSignUpCode(this.email.trim());
+      }
       this.notice = `Un nouveau code a été envoyé à ${this.email.trim()}. Pensez à vérifier vos indésirables.`;
     } catch (error) {
       this.error = (error as Error)?.message || "L'envoi du code a échoué.";
@@ -267,15 +369,20 @@ export class MobileLoginComponent implements OnInit {
   private async signInAfterSignUp(): Promise<void> {
     const user = await this.auth.signIn(this.email.trim(), this.password);
 
-    // Best-effort, comme le numéro juste en dessous : la connexion ne doit pas
-    // échouer si l'écriture du nom échoue, la personne pourra le corriger sur son profil.
-    try {
-      await this.auth.updateName(this.firstName.trim(), this.lastName.trim());
-    } catch (error) {
-      console.warn("Le nom n'a pas pu être enregistré à l'inscription", error);
+    // Rien à écrire pour la connexion par téléphone d'une fiche déjà importée :
+    // Prénom/Nom n'ont jamais été demandés, et le nom est déjà sur la fiche.
+    // Écrire ces champs vides écraserait celui déjà enregistré à l'import.
+    if (this.firstName.trim() || this.lastName.trim()) {
+      // Best-effort, comme le numéro juste en dessous : la connexion ne doit pas
+      // échouer si l'écriture du nom échoue, la personne pourra le corriger sur son profil.
+      try {
+        await this.auth.updateName(this.firstName.trim(), this.lastName.trim());
+      } catch (error) {
+        console.warn("Le nom n'a pas pu être enregistré à l'inscription", error);
+      }
     }
 
-    // Ce qui permettra la prochaine connexion par téléphone à retrouver ce compte.
+    // Ce qui permettra la prochaine connexion par téléphone d'aller plus vite.
     const phone = toE164(this.phone.trim());
     if (phone) this.auth.registerAccountPhone(phone).catch(() => undefined);
 
