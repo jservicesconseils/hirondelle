@@ -1,0 +1,56 @@
+{
+  "language": {
+    "title": "Choisissez votre langue",
+    "subtitle": "Vous pourrez la changer plus tard depuis votre profil.",
+    "french": "Français",
+    "english": "English",
+    "continue": "Continuer"
+  },
+  "nav": {
+    "home": "Accueil",
+    "contacts": "Contacts",
+    "tickets": "Billets",
+    "profile": "Profil"
+  },
+  "login": {
+    "byEmail": "Par courriel",
+    "alreadyListed": "Déjà dans l'annuaire",
+    "byPhone": "Par téléphone",
+    "submitSignin": "Se connecter",
+    "submitSignup": "Créer mon compte",
+    "createAccount": "Créer un compte",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "browse": "Parcourir sans compte",
+    "backToLogin": "Revenir à la connexion",
+    "testAccounts": "Comptes de test"
+  },
+  "profile": {
+    "loading": "Chargement…",
+    "title": "Mon profil",
+    "subtitle": "Gérez vos infos personnelles",
+    "identity": "Identité",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "gender": "Genre",
+    "birthDate": "Date de naissance",
+    "contact": "Contact",
+    "phone": "Téléphone",
+    "email": "Courriel",
+    "address": "Adresse",
+    "addressCard": "Adresse",
+    "city": "Ville",
+    "activity": "Activité",
+    "profession": "Profession ou service",
+    "community": "Ma communauté",
+    "language": "Langue",
+    "save": "Enregistrer mes informations",
+    "saving": "Enregistrement…",
+    "signOut": "Se déconnecter",
+    "loadError": "Impossible de charger votre profil ({{status}}).",
+    "photoNotImage": "Choisissez un fichier image.",
+    "photoTooLarge": "Ce fichier est trop lourd pour être une photo.",
+    "photoFailed": "L'image n'a pas pu être traitée.",
+    "saved": "Vos informations ont été enregistrées.",
+    "saveFailed": "L'enregistrement a échoué ({{status}})."
+  }
+}

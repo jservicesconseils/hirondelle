@@ -2,12 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { MemberService } from '../../../shared/services/members/members.service';
 import { Member } from '../../../shared/services/api/model/member';
 import { IdentityService } from '../../services/identity.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { compressImageToDataUrl } from '../../../shared/utils/image-compression';
+import { AppLanguage, LanguageService } from '../../../core/language.service';
 
 const GENDERS = ['Homme', 'Femme'];
 
@@ -23,11 +25,11 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
 @Component({
   selector: 'app-mobile-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
     <div class="profile-screen">
 
-      <p class="state" *ngIf="loading">Chargement…</p>
+      <p class="state" *ngIf="loading">{{ 'profile.loading' | translate }}</p>
       <p class="state error" *ngIf="loadError">{{ loadError }}</p>
 
       <!-- Profil -->
@@ -44,8 +46,8 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
             <input type="file" accept="image/*" (change)="onPhotoSelected($event)" hidden />
           </label>
 
-          <h1>Mon profil</h1>
-          <p>Gérez vos infos personnelles</p>
+          <h1>{{ 'profile.title' | translate }}</h1>
+          <p>{{ 'profile.subtitle' | translate }}</p>
           <p class="photo-error" *ngIf="photoError">{{ photoError }}</p>
         </header>
 
@@ -54,22 +56,22 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
           <section class="card">
             <h2 class="card-title violet">
               <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg></span>
-              Identité
+              {{ 'profile.identity' | translate }}
             </h2>
 
             <div class="field-row">
               <label class="field">
-                <span>Prénom</span>
+                <span>{{ 'profile.firstName' | translate }}</span>
                 <input type="text" name="firstName" [(ngModel)]="form.firstName" />
               </label>
               <label class="field">
-                <span>Nom</span>
+                <span>{{ 'profile.lastName' | translate }}</span>
                 <input type="text" name="lastName" [(ngModel)]="form.lastName" />
               </label>
             </div>
 
             <label class="field">
-              <span>Genre</span>
+              <span>{{ 'profile.gender' | translate }}</span>
               <div class="chip-choice">
                 <button type="button"
                         *ngFor="let option of genders"
@@ -82,7 +84,7 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
             </label>
 
             <label class="field">
-              <span>Date de naissance</span>
+              <span>{{ 'profile.birthDate' | translate }}</span>
               <input type="date" name="birthDate" [(ngModel)]="form.birthDate" />
             </label>
           </section>
@@ -90,16 +92,16 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
           <section class="card">
             <h2 class="card-title blue">
               <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" /></svg></span>
-              Contact
+              {{ 'profile.contact' | translate }}
             </h2>
 
             <label class="field">
-              <span>Téléphone</span>
+              <span>{{ 'profile.phone' | translate }}</span>
               <input type="tel" name="phoneNumber" inputmode="tel" [(ngModel)]="form.phoneNumber" />
             </label>
 
             <label class="field">
-              <span>Courriel</span>
+              <span>{{ 'profile.email' | translate }}</span>
               <input type="email" name="email" inputmode="email" [(ngModel)]="form.email" />
               <em class="error" *ngIf="form.email && !emailValid">Adresse de courriel invalide.</em>
             </label>
@@ -108,16 +110,16 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
           <section class="card">
             <h2 class="card-title coral">
               <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" /></svg></span>
-              Adresse
+              {{ 'profile.addressCard' | translate }}
             </h2>
 
             <label class="field">
-              <span>Adresse</span>
+              <span>{{ 'profile.address' | translate }}</span>
               <input type="text" name="address" [(ngModel)]="form.address" />
             </label>
 
             <label class="field">
-              <span>Ville</span>
+              <span>{{ 'profile.city' | translate }}</span>
               <input type="text" name="city" [(ngModel)]="form.city" />
             </label>
           </section>
@@ -125,11 +127,11 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
           <section class="card">
             <h2 class="card-title green">
               <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-4V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm-6 0h-4V4h4v2z" /></svg></span>
-              Activité
+              {{ 'profile.activity' | translate }}
             </h2>
 
             <label class="field">
-              <span>Profession ou service</span>
+              <span>{{ 'profile.profession' | translate }}</span>
               <input type="text" name="profession" [(ngModel)]="form.profession" />
             </label>
           </section>
@@ -138,7 +140,7 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
           <section class="card" *ngIf="member?.groupId && customFieldEntries.length">
             <h2 class="card-title orange">
               <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg></span>
-              Ma communauté
+              {{ 'profile.community' | translate }}
             </h2>
 
             <label class="field" *ngFor="let entry of customFieldEntries">
@@ -147,13 +149,37 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
             </label>
           </section>
 
+          <!-- Bascule FR/EN : s'applique immédiatement, sans reconstruction ni
+               redémarrage — voir LanguageService. -->
+          <section class="card">
+            <h2 class="card-title violet">
+              <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z" /></svg></span>
+              {{ 'profile.language' | translate }}
+            </h2>
+
+            <div class="chip-choice">
+              <button type="button"
+                      [class.on]="language.lang() === 'fr'"
+                      (click)="setLanguage('fr')">
+                <span class="chip-dot" *ngIf="language.lang() === 'fr'"></span>
+                Français
+              </button>
+              <button type="button"
+                      [class.on]="language.lang() === 'en'"
+                      (click)="setLanguage('en')">
+                <span class="chip-dot" *ngIf="language.lang() === 'en'"></span>
+                English
+              </button>
+            </div>
+          </section>
+
           <p class="feedback ok" *ngIf="savedMessage">{{ savedMessage }}</p>
           <p class="feedback ko" *ngIf="saveError">{{ saveError }}</p>
 
           <div class="save-bar">
             <button type="submit" class="save" [disabled]="saving || !canSave">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-              {{ saving ? 'Enregistrement…' : 'Enregistrer mes informations' }}
+              {{ (saving ? 'profile.saving' : 'profile.save') | translate }}
             </button>
           </div>
         </form>
@@ -164,7 +190,7 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
             <path d="M16 17l5-5-5-5" />
             <path d="M21 12H9" />
           </svg>
-          Se déconnecter
+          {{ 'profile.signOut' | translate }}
         </button>
       </ng-container>
     </div>
@@ -452,8 +478,14 @@ export class MobileProfileComponent implements OnInit {
     private memberService: MemberService,
     private identity: IdentityService,
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    public language: LanguageService,
+    private translate: TranslateService
   ) {}
+
+  setLanguage(lang: AppLanguage): void {
+    this.language.setLanguage(lang);
+  }
 
   ngOnInit(): void {
     // La fiche du compte connecté fait foi ; l'identifiant local n'est qu'un repli
@@ -484,7 +516,7 @@ export class MobileProfileComponent implements OnInit {
           this.identity.memberId = '';
         } else {
           console.error('Erreur lors du chargement du profil', error);
-          this.loadError = `Impossible de charger votre profil (${error?.status || 'réseau'}).`;
+          this.loadError = this.translate.instant('profile.loadError', { status: error?.status || 'réseau' });
         }
         this.loading = false;
       }
@@ -516,11 +548,11 @@ export class MobileProfileComponent implements OnInit {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      this.photoError = 'Choisissez un fichier image.';
+      this.photoError = this.translate.instant('profile.photoNotImage');
       return;
     }
     if (file.size > MAX_SOURCE_PHOTO_BYTES) {
-      this.photoError = 'Ce fichier est trop lourd pour être une photo.';
+      this.photoError = this.translate.instant('profile.photoTooLarge');
       return;
     }
 
@@ -531,7 +563,7 @@ export class MobileProfileComponent implements OnInit {
       this.form.photo = await compressImageToDataUrl(file);
     } catch (error) {
       console.error('Compression de la photo impossible', error);
-      this.photoError = "L'image n'a pas pu être traitée.";
+      this.photoError = this.translate.instant('profile.photoFailed');
     }
   }
 
@@ -579,12 +611,12 @@ export class MobileProfileComponent implements OnInit {
         this.customFieldEntries = Object.entries(this.member.customFields || {}).map(([key, value]) => ({ key, value }));
         if (this.member.id) this.identity.memberId = this.member.id;
         this.saving = false;
-        this.savedMessage = 'Vos informations ont été enregistrées.';
+        this.savedMessage = this.translate.instant('profile.saved');
       },
       error: (error: any) => {
         console.error('Enregistrement du profil impossible', error);
         this.saving = false;
-        this.saveError = `L'enregistrement a échoué (${error?.status || 'réseau'}).`;
+        this.saveError = this.translate.instant('profile.saveFailed', { status: error?.status || 'réseau' });
       }
     });
   }

@@ -1,0 +1,56 @@
+{
+  "language": {
+    "title": "Choose your language",
+    "subtitle": "You can change it later from your profile.",
+    "french": "Français",
+    "english": "English",
+    "continue": "Continue"
+  },
+  "nav": {
+    "home": "Home",
+    "contacts": "Contacts",
+    "tickets": "Tickets",
+    "profile": "Profile"
+  },
+  "login": {
+    "byEmail": "By email",
+    "alreadyListed": "Already in the directory",
+    "byPhone": "By phone",
+    "submitSignin": "Sign in",
+    "submitSignup": "Create my account",
+    "createAccount": "Create an account",
+    "noAccount": "Don't have an account?",
+    "browse": "Browse without an account",
+    "backToLogin": "Back to sign in",
+    "testAccounts": "Test accounts"
+  },
+  "profile": {
+    "loading": "Loading…",
+    "title": "My profile",
+    "subtitle": "Manage your personal info",
+    "identity": "Identity",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "gender": "Gender",
+    "birthDate": "Date of birth",
+    "contact": "Contact",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "addressCard": "Address",
+    "city": "City",
+    "activity": "Activity",
+    "profession": "Profession or occupation",
+    "community": "My community",
+    "language": "Language",
+    "save": "Save my information",
+    "saving": "Saving…",
+    "signOut": "Log out",
+    "loadError": "Could not load your profile ({{status}}).",
+    "photoNotImage": "Choose an image file.",
+    "photoTooLarge": "This file is too large to be a photo.",
+    "photoFailed": "The image could not be processed.",
+    "saved": "Your information has been saved.",
+    "saveFailed": "Saving failed ({{status}})."
+  }
+}
