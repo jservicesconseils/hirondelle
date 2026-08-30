@@ -311,6 +311,32 @@ export class AuthService {
     });
   }
 
+  /**
+   * Remplace le mot de passe de la session en cours par celui que la personne
+   * vient de choisir — dernière étape de la réclamation d'une fiche déjà
+   * importée (voir `doSignUpByPhone` côté mobile) : le compte a été créé et
+   * confirmé avec un mot de passe provisoire jamais montré, cet appel le
+   * remplace par celui que la personne réutilisera à chaque connexion.
+   */
+  changePassword(oldPassword: string, newPassword: string): Promise<void> {
+    if (!this.pool) return Promise.reject(new Error("Cognito n'est pas configuré."));
+    const user = this.pool.getCurrentUser();
+    if (!user) return Promise.reject(new Error('Aucune session active.'));
+
+    return new Promise((resolve, reject) => {
+      user.getSession((sessionError: Error | null) => {
+        if (sessionError) {
+          reject(sessionError);
+          return;
+        }
+        user.changePassword(oldPassword, newPassword, (error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
+    });
+  }
+
   /** Deuxième étape lorsque Cognito impose un nouveau mot de passe. */
   completeNewPassword(user: CognitoUser, password: string): Promise<CurrentUser> {
     return new Promise<CurrentUser>((resolve, reject) => {

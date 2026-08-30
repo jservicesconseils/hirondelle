@@ -34,12 +34,10 @@
         </div>
 
         <p class="method-hint" *ngIf="view === 'signin' && signinMethod === 'phone'">
-          Votre communauté vous a déjà ajouté à l'annuaire, mais vous ne vous êtes encore jamais
-          connecté&nbsp;? Indiquez le numéro déjà au dossier&nbsp;: un code à six chiffres partira
-          au courriel qui y est associé.
+          Le numéro déjà au dossier, et le mot de passe choisi la première fois.
         </p>
 
-        <!-- Numéro : seul champ de la connexion pour une fiche déjà importée -->
+        <!-- Numéro et mot de passe : connexion pour une fiche déjà importée -->
         <label class="field" *ngIf="view === 'signin' && signinMethod === 'phone'">
           <span>Téléphone</span>
           <span class="with-prefix">
@@ -54,29 +52,34 @@
           </span>
         </label>
 
-        <!-- Deux façons de créer un compte, ou de se connecter au sien -->
+        <label class="field" *ngIf="view === 'signin' && signinMethod === 'phone'">
+          <span>Mot de passe</span>
+          <input type="password" name="phonePassword" autocomplete="current-password" [(ngModel)]="password" />
+        </label>
+
+        <!-- Deux façons de créer un compte : une personne nouvelle, ou une fiche déjà importée -->
         <div class="method-toggle" *ngIf="view === 'signup'">
-          <button
-            type="button"
-            [class.is-active]="signupMethod === 'phone'"
-            (click)="chooseSignupMethod('phone')">
-            <i class="pi pi-mobile"></i> Par téléphone
-          </button>
           <button
             type="button"
             [class.is-active]="signupMethod === 'email'"
             (click)="chooseSignupMethod('email')">
-            <i class="pi pi-envelope"></i> Par courriel
+            <i class="pi pi-envelope"></i> Nouveau membre
+          </button>
+          <button
+            type="button"
+            [class.is-active]="signupMethod === 'phone'"
+            (click)="chooseSignupMethod('phone')">
+            <i class="pi pi-mobile"></i> Déjà dans l'annuaire
           </button>
         </div>
 
         <p class="method-hint" *ngIf="view === 'signup' && signupMethod === 'phone'">
-          Aucun mot de passe à choisir&nbsp;: un code à six chiffres, envoyé par courriel, suffira
-          à vous connecter la prochaine fois.
+          Le numéro et le courriel doivent correspondre à la même fiche&nbsp;: un code de
+          vérification confirmera ensuite que ce courriel est bien le vôtre.
         </p>
 
-        <!-- Identité : commune aux deux façons de s'inscrire -->
-        <div class="field-row" *ngIf="view === 'signup'">
+        <!-- Identité : uniquement pour une personne qui n'est pas encore dans l'annuaire -->
+        <div class="field-row" *ngIf="view === 'signup' && signupMethod === 'email'">
           <label class="field">
             <span>Prénom</span>
             <input type="text" name="firstName" autocomplete="given-name" [(ngModel)]="firstName" />
@@ -87,7 +90,7 @@
           </label>
         </div>
 
-        <!-- Numéro : seul champ de l'inscription par téléphone -->
+        <!-- Numéro : identifie la fiche à réclamer, avec le courriel juste en dessous -->
         <label class="field" *ngIf="view === 'signup' && signupMethod === 'phone'">
           <span>Téléphone</span>
           <span class="with-prefix">
@@ -154,6 +157,20 @@
             [(ngModel)]="code"
             placeholder="••••••" />
         </label>
+
+        <!-- Dernière étape de la réclamation d'une fiche : le mot de passe qui servira désormais -->
+        <ng-container *ngIf="view === 'claimPassword'">
+          <label class="field">
+            <span>Mot de passe</span>
+            <input type="password" name="newPassword" autocomplete="new-password" [(ngModel)]="newPassword" />
+            <em class="hint">Huit caractères au minimum.</em>
+          </label>
+
+          <label class="field">
+            <span>Confirmation</span>
+            <input type="password" name="confirmation" autocomplete="new-password" [(ngModel)]="confirmation" />
+          </label>
+        </ng-container>
       </ng-container>
 
       <ng-container *ngIf="challenge">
@@ -180,7 +197,7 @@
       <button
         type="button"
         class="link centered"
-        *ngIf="!challenge && (view === 'signup' || view === 'confirm')"
+        *ngIf="!challenge && (view === 'signup' || view === 'confirm' || view === 'claimPassword')"
         (click)="show('signin')">
         Revenir à la connexion
       </button>
