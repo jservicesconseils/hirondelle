@@ -10,6 +10,7 @@ import { IdentityService } from '../../services/identity.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { compressImageToDataUrl } from '../../../shared/utils/image-compression';
 import { AppLanguage, LanguageService } from '../../../core/language.service';
+import { fieldIconKind, mergedFieldValue, MERGED_KINDS } from '../../../shared/utils/field-icons';
 
 const GENDERS = ['Homme', 'Femme'];
 
@@ -502,9 +503,7 @@ export class MobileProfileComponent implements OnInit {
     this.memberService.getMember(memberId).subscribe({
       next: (member: Member) => {
         if (member?.id) {
-          this.member = member;
-          this.form = { ...member };
-          this.customFieldEntries = Object.entries(member.customFields || {}).map(([key, value]) => ({ key, value }));
+          this.applyMember(member);
         } else {
           this.identity.memberId = '';
         }
@@ -538,6 +537,32 @@ export class MobileProfileComponent implements OnInit {
 
   initialsOf(member: ProfileForm): string {
     return `${(member.firstName || '').charAt(0)}${(member.lastName || '').charAt(0)}`.toUpperCase() || '?';
+  }
+
+  /**
+   * Un fichier importé avant que Ville/Adresse/Genre/Téléphone ne deviennent
+   * des champs structurés (ou qui les a nommés autrement que l'en-tête exact
+   * attendu) laisse la valeur dans `customFields` : sans ce repli, le champ
+   * structuré du formulaire apparaissait vide alors que la vraie valeur était
+   * là, un peu plus bas, dans « Ma communauté » — la personne ne la retapait
+   * que dans le champ vide et les deux copies restaient en désaccord.
+   *
+   * « Ma communauté » ne garde donc que les colonnes réellement propres à la
+   * communauté (Ministère, Profession détaillée...), jamais un doublon de ces
+   * quatre-là — comme sur la fiche d'édition du site.
+   */
+  private applyMember(member: Member): void {
+    this.member = member;
+    this.form = {
+      ...member,
+      gender: mergedFieldValue(member.customFields, member.gender, 'gender'),
+      phoneNumber: mergedFieldValue(member.customFields, member.phoneNumber, 'phone'),
+      city: mergedFieldValue(member.customFields, member.city, 'city'),
+      address: mergedFieldValue(member.customFields, member.address, 'address'),
+    };
+    this.customFieldEntries = Object.entries(member.customFields || {})
+      .filter(([key]) => !MERGED_KINDS.includes(fieldIconKind(key)))
+      .map(([key, value]) => ({ key, value }));
   }
 
   async onPhotoSelected(event: Event): Promise<void> {
@@ -595,9 +620,9 @@ export class MobileProfileComponent implements OnInit {
 
     // On repart de la fiche d'origine pour ne perdre aucun champ non affiché.
     const payload = { ...(this.member || {}), ...this.form } as Member;
-    if (this.customFieldEntries.length) {
-      payload.customFields = Object.fromEntries(this.customFieldEntries.map((entry) => [entry.key, entry.value]));
-    }
+    // Toujours réassigné, même vide : sinon un ancien doublon Ville/Adresse/Genre/
+    // Téléphone resté dans customFields (voir applyMember) survivrait à l'enregistrement.
+    payload.customFields = Object.fromEntries(this.customFieldEntries.map((entry) => [entry.key, entry.value]));
 
     // Fiche existante : mise à jour. Sinon, première sauvegarde : on la crée.
     const request = this.member?.id
@@ -606,10 +631,8 @@ export class MobileProfileComponent implements OnInit {
 
     request.subscribe({
       next: (saved: Member) => {
-        this.member = saved?.id ? saved : payload;
-        this.form = { ...this.member };
-        this.customFieldEntries = Object.entries(this.member.customFields || {}).map(([key, value]) => ({ key, value }));
-        if (this.member.id) this.identity.memberId = this.member.id;
+        this.applyMember(saved?.id ? saved : payload);
+        if (this.member?.id) this.identity.memberId = this.member.id;
         this.saving = false;
         this.savedMessage = this.translate.instant('profile.saved');
       },

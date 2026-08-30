@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MemberService } from '../../../shared/services/members/members.service';
 import { Member } from '../../../shared/services/api/model/member';
 import { AuthService } from '../../../core/auth/auth.service';
-import { canonicalLabel, fieldIconKind, FieldIconKind } from '../../../shared/utils/field-icons';
+import { canonicalLabel, fieldIconKind, FieldIconKind, mergedFieldValue, MERGED_KINDS } from '../../../shared/utils/field-icons';
 
 /** Tracé SVG (`viewBox="0 0 24 24"`) adapté au sens du champ, pas à sa provenance. */
 const FIELD_ICON_PATHS: Record<FieldIconKind, string> = {
@@ -227,15 +227,16 @@ export class MobileMembersComponent implements OnInit {
 
     /**
      * Un fichier qui a nommé sa colonne autrement que l'en-tête reconnu par
-     * l'assistant d'import (ou importé avant que Téléphone ne le redevienne)
-     * laisse le numéro dans customFields plutôt que sur le champ structuré :
-     * Appeler/WhatsApp restaient alors invisibles bien que la fiche ait un
-     * numéro, affiché en toutes lettres juste au-dessus. On le retrouve ici
-     * pour que les boutons se comportent comme sur n'importe quelle fiche.
+     * l'assistant d'import (ou importé avant que Ville/Adresse/Genre/Téléphone
+     * ne deviennent des champs structurés) laisse la valeur dans customFields
+     * plutôt que sur le champ structuré — Appeler/WhatsApp restaient alors
+     * invisibles bien que la fiche ait un numéro, et Ville/Adresse/Genre
+     * disparaissaient complètement de la ligne du haut une fois leur doublon
+     * retiré de « Ma communauté ». On les retrouve tous ici, comme sur la
+     * fiche d'édition du site.
      */
     const customFields = member.customFields || {};
-    const phoneEntry = Object.entries(customFields).find(([label]) => fieldIconKind(label) === 'phone');
-    const phone = (member.phoneNumber || phoneEntry?.[1] || '').trim();
+    const phone = mergedFieldValue(customFields, member.phoneNumber, 'phone');
 
     return {
       member,
@@ -248,15 +249,17 @@ export class MobileMembersComponent implements OnInit {
       subgroup,
       showSubgroupBadge: !!subgroup && subgroup.toLowerCase() !== role.toLowerCase(),
       phone,
-      city: (member.city || '').trim(),
-      address: (member.address || '').trim(),
+      city: mergedFieldValue(customFields, member.city, 'city'),
+      address: mergedFieldValue(customFields, member.address, 'address'),
       email: (member.email || '').trim(),
-      gender: formatGender(member.gender),
+      gender: formatGender(mergedFieldValue(customFields, member.gender, 'gender')),
       birthDate: formatBirthDate(member.birthDate),
-      // Le numéro repris ci-dessus pour les boutons ne s'affiche pas en plus en texte :
-      // une fiche avec un vrai champ téléphone ne montre pas non plus son numéro ici.
+      // Ville, Adresse, Genre et Téléphone ont déjà leur ligne structurée
+      // ci-dessus (au besoin reprise ici même depuis customFields, comme le
+      // numéro) : les repasser en plus dans « Ma communauté » les dupliquerait
+      // à l'écran, sous le nom exact de la colonne importée cette fois.
       customFieldEntries: Object.entries(customFields)
-        .filter(([label]) => label !== phoneEntry?.[0])
+        .filter(([label]) => !MERGED_KINDS.includes(fieldIconKind(label)))
         .map(([label, value]) => {
           const kind = fieldIconKind(label);
           return { label: canonicalLabel(kind) ?? label, value, icon: FIELD_ICON_PATHS[kind] };

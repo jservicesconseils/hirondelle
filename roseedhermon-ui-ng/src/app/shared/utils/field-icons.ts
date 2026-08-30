@@ -61,6 +61,33 @@ export function canonicalLabel(kind: FieldIconKind): string | null {
   }
 }
 
+/**
+ * Concepts qui ont déjà leur champ structuré sur la fiche (Ville, Adresse,
+ * Genre, Téléphone) : un fichier importé avant que ces colonnes ne deviennent
+ * des champs structurés — ou qui les a nommées autrement que l'en-tête exact
+ * attendu — les a laissées dans `customFields`. Une fois la valeur retrouvée
+ * là (voir `mergedFieldValue`), elle ne doit plus apparaître une seconde fois
+ * comme un champ personnalisé générique : ni dans une colonne de tableau, ni
+ * dans une carte, ni comme entrée éditable séparée d'un formulaire.
+ */
+export const MERGED_KINDS: FieldIconKind[] = ['city', 'address', 'gender', 'phone'];
+
+/**
+ * Valeur d'un champ reconnu (Ville, Adresse, Genre, Téléphone...) : celle du
+ * champ structuré si elle existe, sinon celle du premier champ personnalisé
+ * qui désigne le même concept — voir `MERGED_KINDS`.
+ */
+export function mergedFieldValue(
+  customFields: Record<string, string> | undefined,
+  structured: string | undefined,
+  kind: FieldIconKind,
+  fallback = ''
+): string {
+  if (structured) return structured;
+  const entry = Object.entries(customFields || {}).find(([key]) => fieldIconKind(key) === kind);
+  return entry ? entry[1] : fallback;
+}
+
 /** Classe PrimeIcons correspondante, pour les tableaux et listes du site. */
 export function primeIconFor(kind: FieldIconKind): string {
   switch (kind) {
