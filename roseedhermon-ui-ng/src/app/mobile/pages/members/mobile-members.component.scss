@@ -427,7 +427,7 @@
   // étire déjà à la même hauteur — sans ce `auto` les boutons suivraient le contenu et
   // ne s'aligneraient jamais entre deux cartes voisines.
   margin-top: auto;
-  padding-top: 0.65rem;
+  padding-top: 1rem;
   border-top: 1px solid theme.$line;
 }
 
