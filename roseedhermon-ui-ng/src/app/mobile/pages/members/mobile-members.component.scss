@@ -66,6 +66,14 @@
   }
 }
 
+/* Prénom de la personne connectée, comme sur l'accueil : petit texte pâle au-dessus du repère. */
+.hello {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -413,6 +421,13 @@
   &.custom strong {
     color: theme.$blue-deep;
     font-weight: 700;
+  }
+
+  // Dernier des champs reconnus (Genre • Date de naissance) : un peu plus
+  // d'air avant ce qui suit — colonnes de la communauté, ou trait des
+  // boutons d'action quand la fiche n'en a aucune.
+  &.gender {
+    margin-bottom: 0.55rem;
   }
 }
 

@@ -108,6 +108,17 @@ export class MobileMembersComponent implements OnInit {
     return this.auth.user().group?.name?.trim() || 'Hirondelle';
   }
 
+  /**
+   * Prénom de la personne connectée, s'il est connu.
+   *
+   * Rien n'est inventé : sans session (ou sans fiche liée), l'annuaire ne
+   * salue simplement personne plutôt que d'afficher un prénom d'emprunt.
+   */
+  get greeting(): string {
+    const firstName = this.auth.user().member?.firstName?.trim();
+    return firstName ? `Bonjour, ${firstName}` : '';
+  }
+
   /** Villes distinctes, comptées sur les fiches réellement chargées. */
   get cityCount(): number {
     return new Set(this.rows.map((row) => row.city).filter(Boolean)).size;
