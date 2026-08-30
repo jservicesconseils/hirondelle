@@ -117,12 +117,13 @@
     gap: 0.35rem;
   }
 
+  // Simple pastille, sans halo : le contour translucide qu'on avait ici
+  // ressortait comme un fond flou collé devant le chiffre.
   .dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: #3ddc84;
-    box-shadow: 0 0 0 3px rgba(61, 220, 132, 0.25);
   }
 }
 
