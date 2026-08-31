@@ -33,9 +33,17 @@ export class GroupService {
 
   constructor(private http: HttpClient) {}
 
-  /** Le backend limite déjà la liste au groupe de l'appelant. */
+  /** Le backend limite déjà la liste aux groupes que l'appelant administre. */
   getGroups(): Observable<GroupEntity[]> {
     return this.http.get<GroupEntity[]>(this.baseUrl);
+  }
+
+  /**
+   * Bascule la communauté active du compte. Le jeton en cours ne le reflète
+   * qu'après `AuthService.refreshSession()`, à appeler juste ensuite.
+   */
+  activateGroup(id: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${id}/activate`, {});
   }
 
   getGroup(id: string): Observable<GroupEntity> {

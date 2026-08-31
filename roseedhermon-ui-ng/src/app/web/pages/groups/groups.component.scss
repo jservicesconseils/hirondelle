@@ -151,7 +151,8 @@
 .group-foot {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 0.6rem;
   // Colle le pied en bas quelle que soit la longueur du nom.
   margin-top: auto;
   padding-top: 0.9rem;
@@ -172,8 +173,35 @@
   cursor: pointer;
 
   &:hover { color: theme.$accent-dark; }
+  &:disabled { opacity: 0.6; cursor: default; }
 
   i { font-size: 0.72rem; }
+}
+
+/* Bouton de bascule : discret, contour seulement — ce n'est pas l'action principale de la carte. */
+.group-foot .cta.ghost {
+  padding: 0.3rem 0.7rem;
+  border: 1.5px solid theme.$line;
+  border-radius: 999px;
+  color: theme.$muted;
+  font-size: 0.82rem;
+
+  &:hover { border-color: theme.$accent; color: theme.$accent; }
+}
+
+/* Communauté active : simple étiquette, rien à cliquer. */
+.active-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: #e8f7ee;
+  color: #17804a;
+  font-size: 0.82rem;
+  font-weight: 700;
+
+  i { font-size: 0.85rem; }
 }
 
 .load-state,

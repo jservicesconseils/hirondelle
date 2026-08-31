@@ -434,6 +434,35 @@ export class AuthService {
     });
   }
 
+  /**
+   * Force un nouveau jeton Cognito, sans nouvelle saisie du mot de passe —
+   * `refreshSession` relit les attributs du compte à l'instant présent,
+   * `custom:groupId` compris. Sert après une bascule de communauté active
+   * (voir `activateGroup`), pour que la session en tienne compte tout de
+   * suite plutôt qu'à la prochaine reconnexion.
+   */
+  async refreshSession(): Promise<CurrentUser> {
+    const user = this.pool?.getCurrentUser();
+    if (!user) return this.loadCurrentUser();
+
+    return new Promise<CurrentUser>((resolve, reject) => {
+      user.getSession((error: Error | null, session: CognitoUserSession | null) => {
+        if (error || !session) {
+          reject(error ?? new Error('Aucune session active.'));
+          return;
+        }
+        user.refreshSession(session.getRefreshToken(), (refreshError: Error | null, newSession: CognitoUserSession) => {
+          if (refreshError) {
+            reject(refreshError);
+            return;
+          }
+          this.cachedToken = newSession.getIdToken().getJwtToken();
+          this.loadCurrentUser().then(resolve).catch(reject);
+        });
+      });
+    });
+  }
+
   signOut(): void {
     this.pool?.getCurrentUser()?.signOut();
     this.cachedToken = '';

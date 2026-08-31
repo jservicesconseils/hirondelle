@@ -13,9 +13,11 @@ import { PublicFooterComponent } from '../../components/public-footer.component'
 const TYPE_CHOICES = ['Association', 'Club', 'Famille', 'Communauté religieuse', 'École', 'Entreprise', 'Autre'];
 
 /**
- * Un compte sans groupe ouvre sa propre communauté ici. La demande doit être
- * approuvée par un super administrateur avant que le compte ne devienne
- * administrateur de ce groupe — voir `POST /groups/request` côté serveur.
+ * N'importe quel compte ouvre sa propre communauté ici, qu'il en administre
+ * déjà une ou pas — voir `POST /groups/request` côté serveur. La demande doit
+ * être approuvée par un super administrateur avant de devenir active ; une
+ * fois approuvée, elle s'ajoute aux communautés que le compte administre
+ * (page Groupes) sans déloger celle déjà active pour la session en cours.
  */
 @Component({
   selector: 'app-web-group-request',
@@ -43,12 +45,9 @@ export class WebGroupRequestComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Un compte déjà rattaché à un groupe n'a rien à demander.
-    if (this.auth.user().groupId) {
-      this.loading = false;
-      return;
-    }
-
+    // Un compte déjà rattaché à un groupe peut tout aussi bien en demander un
+    // autre — seule une demande déjà en attente bloque la suivante, ce que
+    // `getMyRequest()` reflète ci-dessous.
     this.groupService.getMyRequest().subscribe({
       next: (request) => {
         this.request = request;

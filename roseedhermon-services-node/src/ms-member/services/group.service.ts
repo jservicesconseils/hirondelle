@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import {
+  ApiError,
   forgetGroupFeatures,
+  getAccountGroupId,
   promoteToGroupAdmin,
   runtimeError,
   setAccountGroupId,
@@ -69,6 +71,11 @@ export async function getPendingGroups(): Promise<GroupDocument[]> {
  * La plus récente demande de ce compte, quel que soit son statut — pour que
  * son propre écran sache s'il doit montrer le formulaire, une attente, ou un
  * refus. `null` si le compte n'a jamais rien demandé.
+ *
+ * Ne reflète que la dernière : un compte qui administre déjà une première
+ * communauté approuvée et en redemande une seconde verra cette nouvelle
+ * demande prendre le relais ici, la précédente restant consultable via
+ * `getGroupsAdministeredBy`.
  */
 export async function getMyGroupRequest(email: string): Promise<GroupDocument | null> {
   return GroupModel.findOne({ requestedByEmail: email.trim().toLowerCase() })
@@ -77,9 +84,28 @@ export async function getMyGroupRequest(email: string): Promise<GroupDocument | 
 }
 
 /**
- * Un membre sans groupe ouvre sa propre communauté. Elle reste invisible de
- * tous — y compris de lui — tant qu'un super administrateur ne l'a pas
- * approuvée : `getAllGroups` l'exclut explicitement.
+ * Groupes qu'un compte administre — sa communauté active comme celles,
+ * approuvées, qu'il a pu ouvrir en plus (voir `adminEmails`). Alimente
+ * l'écran Groupes pour un administrateur de groupe, et la bascule entre
+ * communautés.
+ */
+export async function getGroupsAdministeredBy(email: string): Promise<GroupDocument[]> {
+  const needle = email.trim().toLowerCase();
+  return GroupModel.find({
+    status: { $nin: ['PENDING', 'REJECTED'] },
+    $or: [
+      { adminEmails: needle },
+      // Groupe approuvé avant `adminEmails` (voir `approveGroup`) : son auteur
+      // reste reconnu comme administrateur sans migration de données.
+      { adminEmails: { $exists: false }, requestedByEmail: needle },
+    ],
+  }).exec();
+}
+
+/**
+ * Un membre sans groupe ouvre sa propre communauté ; un administrateur qui en
+ * a déjà une peut tout aussi bien en ouvrir une seconde — seule une demande
+ * déjà en attente bloque la suivante, le temps qu'elle soit tranchée.
  */
 export async function requestGroup(requesterEmail: string, body: Record<string, unknown>): Promise<GroupDocument> {
   const email = requesterEmail.trim().toLowerCase();
@@ -95,13 +121,20 @@ export async function requestGroup(requesterEmail: string, body: Record<string, 
     status: 'PENDING',
     requestedByEmail: email,
     requestedAt: new Date(),
+    adminEmails: [email],
   });
 }
 
 /**
  * Approuve la demande : le groupe devient une communauté normale, et son
- * auteur en devient l'administrateur — dans Cognito (rôle, groupe
- * d'appartenance) comme dans le jeton qu'il obtiendra à sa prochaine connexion.
+ * auteur en devient l'administrateur — un rôle Cognito qui, une fois acquis,
+ * couvre toutes les communautés qu'il administre.
+ *
+ * Sa toute première communauté devient d'emblée active (comme avant, pour ne
+ * rien changer au parcours déjà en place — voir le panneau « Demande
+ * approuvée » côté client, qui invite à se reconnecter). À partir de la
+ * deuxième, celle déjà active le reste : le compte choisit lui-même quand
+ * basculer, depuis l'écran Groupes (`activateGroupForAccount`).
  */
 export async function approveGroup(id: string, decidedByEmail: string): Promise<GroupDocument> {
   const group = await GroupModel.findOne(springIdFilter(id)).exec();
@@ -113,14 +146,46 @@ export async function approveGroup(id: string, decidedByEmail: string): Promise<
   group.set('status', 'APPROVED');
   group.set('decidedByEmail', decidedByEmail.trim().toLowerCase());
   group.set('decidedAt', new Date());
+  const admins = new Set<string>(
+    Array.isArray(group.get('adminEmails')) ? (group.get('adminEmails') as string[]) : [],
+  );
+  admins.add(requester);
+  group.set('adminEmails', [...admins]);
   await group.save();
 
   const groupId = String(group._id);
   await promoteToGroupAdmin(requester);
-  await setAccountGroupId(requester, groupId);
+  const currentlyActive = await getAccountGroupId(requester);
+  if (!currentlyActive) await setAccountGroupId(requester, groupId);
   forgetGroupFeatures(groupId);
 
   return group;
+}
+
+/**
+ * Bascule : le compte choisit, parmi les communautés qu'il administre déjà,
+ * laquelle devient active. Le super administrateur, qui les voit toutes sans
+ * en dépendre, peut activer n'importe laquelle ; les autres doivent déjà
+ * figurer dans `adminEmails` du groupe visé.
+ */
+export async function activateGroupForAccount(
+  email: string,
+  groupId: string,
+  isSuperAdmin: boolean,
+): Promise<void> {
+  if (!isSuperAdmin) {
+    const needle = email.trim().toLowerCase();
+    const group = await GroupModel.findOne(springIdFilter(groupId)).exec();
+    const admins = group?.get('adminEmails');
+    // Groupe approuvé avant `adminEmails` : son auteur reste reconnu, comme
+    // dans `getGroupsAdministeredBy`.
+    const allowed = Array.isArray(admins)
+      ? admins.includes(needle)
+      : toStringOrNull(group?.get('requestedByEmail')) === needle;
+    if (!allowed) throw new ApiError("Ce compte n'administre pas ce groupe.", 403);
+  }
+
+  await setAccountGroupId(email.trim().toLowerCase(), groupId);
 }
 
 export async function rejectGroup(
@@ -190,12 +255,15 @@ export async function updateGroup(id: string, body: Record<string, unknown>): Pr
   const document = toDocument(body);
 
   /**
-   * Seule entorse au remplacement intégral : `features` et `showPublicCatalog`
-   * portent des droits. Une modification qui ne les mentionne pas — l'écran
-   * d'identité du groupe, par exemple — reconduit la valeur enregistrée
-   * plutôt que de l'effacer, ce qui reviendrait à tout rouvrir par omission.
+   * Seule entorse au remplacement intégral : `features`, `showPublicCatalog`
+   * et `adminEmails` portent des droits. Une modification qui ne les
+   * mentionne pas — l'écran d'identité du groupe, par exemple — reconduit la
+   * valeur enregistrée plutôt que de l'effacer, ce qui reviendrait à tout
+   * rouvrir par omission. `adminEmails` n'est d'ailleurs jamais transmis par
+   * aucun écran : cette route ne le touche jamais, seules `requestGroup`,
+   * `approveGroup` et `activateGroupForAccount` en écrivent.
    */
-  if (body.features === undefined || body.showPublicCatalog === undefined) {
+  {
     const existing = await GroupModel.findOne(springIdFilter(id)).exec();
 
     if (body.features === undefined) {
@@ -207,6 +275,9 @@ export async function updateGroup(id: string, body: Record<string, unknown>): Pr
       const kept = existing?.get('showPublicCatalog');
       if (kept !== undefined) document.showPublicCatalog = kept;
     }
+
+    const keptAdmins = existing?.get('adminEmails');
+    if (Array.isArray(keptAdmins)) document.adminEmails = keptAdmins;
   }
 
   const replaced = await GroupModel.findOneAndReplace(

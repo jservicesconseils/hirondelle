@@ -84,7 +84,10 @@ export const appRoutes: Routes = [
             // annuaire n'a pas de page d'événements, et réciproquement.
             { path: 'members', component: ListMemberComponent, canActivate: [membersGuard] },
             { path: 'events', component: ListEventsComponent, canActivate: [eventsGuard] },
-            { path: 'groups', component: GroupsComponent, canActivate: [superAdminGuard] },
+            // Un administrateur de groupe y voit et y active ses propres communautés ;
+            // création, approbation et modules restent réservés au super administrateur
+            // (voir les gardes internes au composant).
+            { path: 'groups', component: GroupsComponent, canActivate: [adminGuard] },
             { path: 'settings', component: WebSettingsComponent, canActivate: [superAdminGuard] },
         ]
     },

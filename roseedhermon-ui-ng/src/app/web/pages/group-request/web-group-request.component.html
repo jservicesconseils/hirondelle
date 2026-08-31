@@ -19,82 +19,82 @@
     <p class="state" *ngIf="loading">Chargement…</p>
 
     <ng-container *ngIf="!loading">
-      <!-- Déjà rattaché à un groupe -->
-      <div class="panel notice-panel" *ngIf="auth.user().groupId">
-        <i class="pi pi-check-circle"></i>
-        <p>Votre compte appartient déjà à un groupe — inutile d'en demander un autre.</p>
+      <!-- En attente -->
+      <div class="panel status-panel is-pending" *ngIf="request?.status === 'PENDING'">
+        <i class="pi pi-clock"></i>
+        <h2>Demande envoyée</h2>
+        <p>
+          <strong>{{ request?.name }}</strong> est en attente d'approbation par un super administrateur.
+          Vous serez averti — revenez consulter cette page plus tard.
+        </p>
       </div>
 
-      <ng-container *ngIf="!auth.user().groupId">
-        <!-- En attente -->
-        <div class="panel status-panel is-pending" *ngIf="request?.status === 'PENDING'">
-          <i class="pi pi-clock"></i>
-          <h2>Demande envoyée</h2>
-          <p>
-            <strong>{{ request?.name }}</strong> est en attente d'approbation par un super administrateur.
-            Vous serez averti — revenez consulter cette page plus tard.
-          </p>
-        </div>
+      <!-- Approuvée -->
+      <div class="panel status-panel is-approved" *ngIf="request?.status === 'APPROVED'">
+        <i class="pi pi-verified"></i>
+        <h2>Demande approuvée</h2>
+        <p>
+          <strong>{{ request?.name }}</strong> est maintenant active, et vous en êtes l'administrateur.
+          <ng-container *ngIf="!auth.user().groupId">Reconnectez-vous pour que votre session en tienne compte.</ng-container>
+          <ng-container *ngIf="auth.user().groupId">
+            Retrouvez-la sur la page Groupes pour l'activer quand vous le souhaitez.
+          </ng-container>
+        </p>
+        <button type="button" class="submit" *ngIf="!auth.user().groupId" (click)="signOutAndReturn()">
+          Se reconnecter
+        </button>
+        <button type="button" class="submit" *ngIf="auth.user().groupId" (click)="startOver()">
+          Demander une autre communauté
+        </button>
+      </div>
 
-        <!-- Approuvée, mais la session n'a pas encore le nouveau rôle -->
-        <div class="panel status-panel is-approved" *ngIf="request?.status === 'APPROVED'">
-          <i class="pi pi-verified"></i>
-          <h2>Demande approuvée</h2>
-          <p>
-            <strong>{{ request?.name }}</strong> est maintenant active, et vous en êtes l'administrateur.
-            Reconnectez-vous pour que votre session en tienne compte.
-          </p>
-          <button type="button" class="submit" (click)="signOutAndReturn()">Se reconnecter</button>
-        </div>
+      <!-- Refusée -->
+      <div class="panel status-panel is-rejected" *ngIf="request?.status === 'REJECTED'">
+        <i class="pi pi-times-circle"></i>
+        <h2>Demande refusée</h2>
+        <p>
+          La demande pour <strong>{{ request?.name }}</strong> n'a pas été retenue.
+          <span *ngIf="request?.rejectionReason">Motif&nbsp;: {{ request?.rejectionReason }}</span>
+        </p>
+        <button type="button" class="submit" (click)="startOver()">Faire une nouvelle demande</button>
+      </div>
 
-        <!-- Refusée -->
-        <div class="panel status-panel is-rejected" *ngIf="request?.status === 'REJECTED'">
-          <i class="pi pi-times-circle"></i>
-          <h2>Demande refusée</h2>
-          <p>
-            La demande pour <strong>{{ request?.name }}</strong> n'a pas été retenue.
-            <span *ngIf="request?.rejectionReason">Motif&nbsp;: {{ request?.rejectionReason }}</span>
-          </p>
-          <button type="button" class="submit" (click)="startOver()">Faire une nouvelle demande</button>
-        </div>
+      <!-- Formulaire -->
+      <form class="panel" (ngSubmit)="submit()" novalidate *ngIf="!request">
+        <label class="field">
+          <span>Nom de la communauté *</span>
+          <input type="text" name="name" [(ngModel)]="form.name" placeholder="Ex : Association Les Hirondelles" />
+        </label>
 
-        <!-- Formulaire -->
-        <form class="panel" (ngSubmit)="submit()" novalidate *ngIf="!request">
-          <label class="field">
-            <span>Nom de la communauté *</span>
-            <input type="text" name="name" [(ngModel)]="form.name" placeholder="Ex : Association Les Hirondelles" />
-          </label>
+        <label class="field">
+          <span>Type</span>
+          <select name="type" [(ngModel)]="form.type">
+            <option value="" disabled>Choisissez un type</option>
+            <option *ngFor="let choice of typeChoices" [value]="choice">{{ choice }}</option>
+          </select>
+        </label>
 
-          <label class="field">
-            <span>Type</span>
-            <select name="type" [(ngModel)]="form.type">
-              <option value="" disabled>Choisissez un type</option>
-              <option *ngFor="let choice of typeChoices" [value]="choice">{{ choice }}</option>
-            </select>
-          </label>
+        <label class="field">
+          <span>Ville</span>
+          <input type="text" name="city" [(ngModel)]="form.city" />
+        </label>
 
-          <label class="field">
-            <span>Ville</span>
-            <input type="text" name="city" [(ngModel)]="form.city" />
-          </label>
+        <label class="field checkbox-field">
+          <input type="checkbox" name="showPublicCatalog" [(ngModel)]="form.showPublicCatalog" />
+          <span>
+            Montrer à mes membres les événements publics des autres communautés
+            <em class="hint">
+              Décoché, vos membres ne verront que les événements que vous organisez vous-même.
+            </em>
+          </span>
+        </label>
 
-          <label class="field checkbox-field">
-            <input type="checkbox" name="showPublicCatalog" [(ngModel)]="form.showPublicCatalog" />
-            <span>
-              Montrer à mes membres les événements publics des autres communautés
-              <em class="hint">
-                Décoché, vos membres ne verront que les événements que vous organisez vous-même.
-              </em>
-            </span>
-          </label>
+        <p class="error" *ngIf="error">{{ error }}</p>
 
-          <p class="error" *ngIf="error">{{ error }}</p>
-
-          <button type="submit" class="submit" [disabled]="!canSave">
-            {{ saving ? 'Envoi…' : 'Envoyer la demande' }}
-          </button>
-        </form>
-      </ng-container>
+        <button type="submit" class="submit" [disabled]="!canSave">
+          {{ saving ? 'Envoi…' : 'Envoyer la demande' }}
+        </button>
+      </form>
     </ng-container>
   </div>
 </main>

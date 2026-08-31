@@ -366,7 +366,8 @@ export class AppSidebar {
       label: 'Pilotage',
       items: [
         { label: 'Tableau de bord', icon: ICONS.dashboard, route: '/app/dashboard' },
-        { label: 'Groupes', icon: ICONS.groups, route: '/app/groups', roles: [ROLES.SUPER_ADMIN] }
+        // Un administrateur de groupe y voit et y active les communautés qu'il administre.
+        { label: 'Groupes', icon: ICONS.groups, route: '/app/groups', roles: [ROLES.SUPER_ADMIN, ROLES.GROUP_ADMIN] }
       ]
     },
     {

@@ -14,7 +14,7 @@
         <p class="lead">
           {{ auth.isSuperAdmin() || !auth.configured
             ? 'Toutes les communautés de la plateforme, leurs effectifs et les modules qui leur sont ouverts.'
-            : 'Votre communauté, son effectif et les modules qui lui sont ouverts.' }}
+            : 'Les communautés que vous administrez — activez celle sur laquelle vous voulez travailler.' }}
         </p>
       </div>
 
@@ -122,6 +122,7 @@
       </div>
 
       <p class="feature-error" *ngIf="featureError">{{ featureError }}</p>
+      <p class="feature-error" *ngIf="activateError">{{ activateError }}</p>
 
       <div class="content-row" [class.with-drawer]="selectedGroup">
         <div class="content-main">
@@ -176,10 +177,31 @@
                   </button>
                 </div>
 
+                <!--
+                  Le super administrateur voit n'importe quel groupe sans en dépendre
+                  (`canReach` le laisse passer). Un administrateur de groupe, lui, n'a de
+                  droits que sur l'active des communautés qu'il administre : « Voir les
+                  membres » n'a donc de sens que sur celle-ci, les autres ne proposent que
+                  de basculer dessus.
+                -->
                 <div class="group-foot">
-                  <button type="button" class="cta" (click)="openGroup(group)">
-                    Voir les membres <i class="pi pi-arrow-right"></i>
-                  </button>
+                  <ng-container *ngIf="auth.isSuperAdmin() || isActiveGroup(group); else notActive">
+                    <span class="active-pill" *ngIf="isActiveGroup(group)">
+                      <i class="pi pi-check-circle"></i> Active
+                    </span>
+                    <span *ngIf="!isActiveGroup(group)"></span>
+                    <button type="button" class="cta" (click)="openGroup(group)">
+                      Voir les membres <i class="pi pi-arrow-right"></i>
+                    </button>
+                  </ng-container>
+                  <ng-template #notActive>
+                    <span></span>
+                    <button type="button" class="cta ghost"
+                            [disabled]="activatingId === group.id"
+                            (click)="activate(group)">
+                      {{ activatingId === group.id ? 'Activation…' : 'Activer cette communauté' }}
+                    </button>
+                  </ng-template>
                 </div>
               </div>
             </article>

@@ -47,6 +47,15 @@ const groupSchema = new Schema(
     requestedAt: { type: Date },
     decidedByEmail: { type: String },
     decidedAt: { type: Date },
+    /**
+     * Champ additif : comptes autorisés à administrer ce groupe — au moins son
+     * auteur, une fois la demande approuvée. Un compte peut figurer dans
+     * `adminEmails` de plusieurs groupes à la fois (une personne peut créer
+     * plusieurs communautés) ; `custom:groupId` côté Cognito ne retient que
+     * celui actif pour la session en cours — voir `activateGroupForAccount`.
+     * Absent sur un document antérieur à cette fonctionnalité.
+     */
+    adminEmails: { type: [String] },
     rejectionReason: { type: String },
     _class: { type: String, default: GROUP_CLASS },
   },

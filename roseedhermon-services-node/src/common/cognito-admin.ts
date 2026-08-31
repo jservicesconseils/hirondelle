@@ -1,5 +1,6 @@
 import {
   AdminAddUserToGroupCommand,
+  AdminGetUserCommand,
   AdminUpdateUserAttributesCommand,
   CognitoIdentityProviderClient,
 } from '@aws-sdk/client-cognito-identity-provider';
@@ -49,4 +50,22 @@ export async function setAccountGroupId(email: string, groupId: string): Promise
       UserAttributes: [{ Name: 'custom:groupId', Value: groupId }],
     }),
   );
+}
+
+/**
+ * Groupe actif du compte, ou `null` s'il n'en a encore aucun.
+ *
+ * Sert à décider, à l'approbation d'une nouvelle demande, s'il faut l'activer
+ * d'emblée (première communauté du compte) ou la laisser simplement
+ * disponible pour bascule ultérieure (le compte en administre déjà une
+ * autre) — voir `approveGroup`.
+ */
+export async function getAccountGroupId(email: string): Promise<string | null> {
+  if (!USER_POOL_ID) return null;
+
+  const user = await getClient().send(
+    new AdminGetUserCommand({ UserPoolId: USER_POOL_ID, Username: email }),
+  );
+  const attribute = user.UserAttributes?.find((entry) => entry.Name === 'custom:groupId');
+  return attribute?.Value || null;
 }

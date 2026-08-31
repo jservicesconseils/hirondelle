@@ -34,18 +34,15 @@ groupRouter.post(
 );
 
 /**
- * Un membre sans groupe ouvre sa propre communauté. `requireRole` n'est pas
- * de mise ici : c'est justement l'absence de rôle d'administration qui amène
- * quelqu'un vers cette route, pas une condition qui l'y autoriserait.
+ * Un membre sans groupe ouvre sa propre communauté ; un administrateur qui en
+ * a déjà une peut tout aussi bien en ouvrir une autre — `requestGroup`
+ * refuse déjà une deuxième demande tant qu'une première reste en attente,
+ * seul frein réellement nécessaire ici.
  */
 groupRouter.post(
   '/request',
   requireAuth,
   asyncHandler(async (req, res) => {
-    if (req.auth?.groupId) {
-      res.status(409).json({ error: 'Ce compte appartient déjà à un groupe.' });
-      return;
-    }
     const email = req.auth?.email;
     if (!email) {
       res.status(401).json({ error: 'Authentification requise.' });
@@ -53,6 +50,25 @@ groupRouter.post(
     }
     const created = await groupService.requestGroup(email, req.body ?? {});
     res.status(201).json(groupToJson(created));
+  }),
+);
+
+/**
+ * Bascule la communauté active du compte, parmi celles qu'il administre.
+ * Le jeton en cours ne reflète le changement qu'au prochain rafraîchissement
+ * de session — voir `AuthService.refreshSession` côté client.
+ */
+groupRouter.post(
+  '/:id/activate',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const email = req.auth?.email;
+    if (!email) {
+      res.status(401).json({ error: 'Authentification requise.' });
+      return;
+    }
+    await groupService.activateGroupForAccount(email, req.params.id, isSuperAdmin(req));
+    res.status(204).end();
   }),
 );
 
@@ -94,8 +110,9 @@ groupRouter.post(
 );
 
 /**
- * Liste des groupes : tous pour le super administrateur, uniquement le sien
- * pour les autres.
+ * Liste des groupes : tous pour le super administrateur, celles qu'il
+ * administre — sa communauté active comme les autres qu'il a pu ouvrir en
+ * plus — pour les autres.
  */
 groupRouter.get(
   '/',
@@ -106,11 +123,11 @@ groupRouter.get(
       return res.json(groups.map(groupToJson));
     }
 
-    const groupId = req.auth?.groupId;
-    if (!groupId) return res.json([]);
+    const email = req.auth?.email;
+    if (!email) return res.json([]);
 
-    const group = await groupService.getGroupById(groupId);
-    return res.json(group ? [groupToJson(group)] : []);
+    const groups = await groupService.getGroupsAdministeredBy(email);
+    return res.json(groups.map(groupToJson));
   }),
 );
 

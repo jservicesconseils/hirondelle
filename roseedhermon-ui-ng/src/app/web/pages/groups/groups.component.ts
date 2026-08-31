@@ -378,6 +378,49 @@ export class GroupsComponent implements OnInit {
     return !!group.id && this.featureSaving.has(group.id);
   }
 
+  // --- Communauté active -------------------------------------------------------------
+
+  /** Un compte peut désormais administrer plusieurs communautés : celle-ci est celle en cours. */
+  isActiveGroup(group: GroupEntity): boolean {
+    return !!group.id && group.id === this.auth.user().groupId;
+  }
+
+  activatingId: string | null = null;
+  activateError = '';
+
+  /**
+   * Bascule vers une autre communauté administrée par ce compte. Le jeton en
+   * cours ne la reflète qu'après `refreshSession()` — la liste, elle, se
+   * remet à jour tout de suite pour que l'étiquette « Active » suive le clic.
+   */
+  activate(group: GroupWithCount): void {
+    if (!group.id || this.activatingId) return;
+    this.activatingId = group.id;
+    this.activateError = '';
+
+    this.groupService.activateGroup(group.id).subscribe({
+      next: () => {
+        this.auth.refreshSession()
+          .then(() => {
+            this.activatingId = null;
+            this.load();
+          })
+          .catch((error) => {
+            console.error('La session n’a pas pu être rafraîchie après la bascule', error);
+            this.activatingId = null;
+            this.activateError = 'Bascule enregistrée, mais la session locale n’a pas pu être rafraîchie — reconnectez-vous.';
+          });
+      },
+      error: (error) => {
+        this.activatingId = null;
+        this.activateError =
+          error?.status === 403
+            ? "Vous n'administrez pas ce groupe."
+            : `La bascule a échoué (${error?.status || 'réseau'}).`;
+      }
+    });
+  }
+
   closeForm(): void {
     this.formVisible = false;
   }
