@@ -225,7 +225,7 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
 
 
     .hero h1 { margin: 14px 0 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; color: #fff; }
-    .hero p { margin: 4px 0 0; font-size: 14px; color: rgba(255, 255, 255, 0.8); }
+    .hero p { margin: 4px 0 10px; font-size: 14px; color: rgba(255, 255, 255, 0.8); }
     .hero .photo-error { margin-top: 8px; font-size: 13px; color: #ffe0d6; font-weight: 600; }
 
     .switch {
