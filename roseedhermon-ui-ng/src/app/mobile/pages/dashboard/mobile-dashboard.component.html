@@ -13,13 +13,8 @@
         <h1>{{ displayName }}</h1>
       </div>
 
-      <!-- Initiales réelles ; un pictogramme neutre si l'on ne sait pas qui c'est -->
-      <button type="button" class="hero-avatar" (click)="goToProfile()" aria-label="Mon profil">
-        <ng-container *ngIf="initials">{{ initials }}</ng-container>
-        <svg *ngIf="!initials" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" />
-        </svg>
-      </button>
+      <!-- Nom, photo et lien vers le profil : le badge fixe de la coquille mobile
+           (app-mobile-tabs) les affiche déjà en haut à droite, partout. -->
     </div>
   </header>
 

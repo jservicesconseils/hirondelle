@@ -179,7 +179,7 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
 
           <div class="save-bar">
             <button type="submit" class="save" [disabled]="saving || !canSave">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.2 14.5-4.3-4.3 1.41-1.41 2.89 2.88 6.09-6.09 1.41 1.42-7.5 7.5z" /></svg>
               {{ (saving ? 'profile.saving' : 'profile.save') | translate }}
             </button>
           </div>
