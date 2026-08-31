@@ -27,11 +27,13 @@ export type MobileLoginView = 'signin' | 'signup' | 'confirm' | 'claimPassword';
 export class MobileLoginComponent implements OnInit {
   view: MobileLoginView = 'signin';
 
+  /**
+   * Connexion : un seul champ, courriel ou numéro déjà au dossier — les deux
+   * mènent au même compte, avec le même mot de passe. `signIn()` reconnaît
+   * lequel des deux a été saisi.
+   */
   email = '';
   password = '';
-
-  /** Connexion : par courriel ou par le numéro déjà au dossier — un mot de passe dans les deux cas. */
-  signinMethod: 'password' | 'phone' = 'password';
 
   /** Inscription : nouvelle personne (par courriel) ou fiche déjà importée à réclamer par téléphone. */
   signupMethod: 'phone' | 'email' = 'email';
@@ -132,9 +134,6 @@ export class MobileLoginComponent implements OnInit {
     }
     if (this.view === 'signup') return "Un compte suffit pour retrouver vos événements et vos billets.";
     if (this.view === 'confirm') return `Saisissez le code à six chiffres envoyé à ${this.email.trim()}.`;
-    if (this.view === 'signin' && this.signinMethod === 'phone') {
-      return 'Connectez-vous avec le numéro déjà au dossier et votre mot de passe.';
-    }
     return 'Connectez-vous pour retrouver votre groupe, vos événements et vos billets.';
   }
 
@@ -161,20 +160,6 @@ export class MobileLoginComponent implements OnInit {
     this.view = view;
     this.error = '';
     this.notice = '';
-  }
-
-  /**
-   * Bascule entre les deux façons de se connecter ; le mot de passe sert aux
-   * deux, seul l'identifiant change (courriel, ou numéro déjà au dossier).
-   */
-  chooseSigninMethod(method: 'password' | 'phone'): void {
-    this.signinMethod = method;
-    this.error = '';
-    if (method === 'phone') {
-      this.email = '';
-    } else {
-      this.phone = '';
-    }
   }
 
   /** Bascule entre les deux façons de créer un compte ; chacune n'utilise que ses propres champs. */
@@ -229,11 +214,14 @@ export class MobileLoginComponent implements OnInit {
    * différence pour une fiche déjà importée.
    */
   private async signIn(): Promise<CurrentUser> {
-    if (!this.auth.configured) return this.auth.signInMock(this.email, this.password, this.groupId);
+    const identifier = this.email.trim();
+    if (!this.auth.configured) return this.auth.signInMock(identifier, this.password, this.groupId);
 
-    if (this.signinMethod === 'phone') {
-      const phone = toE164(this.phone.trim());
-      if (!phone) throw new Error('Indiquez un numéro de téléphone valide.');
+    // Un « @ » ne trompe pas : sinon on tente le numéro déjà au dossier, sa
+    // seule autre forme possible ici — un même mot de passe sert aux deux.
+    if (!identifier.includes('@')) {
+      const phone = toE164(identifier);
+      if (!phone) throw new Error('Indiquez un courriel ou un numéro de téléphone valide.');
       try {
         this.email = await this.auth.lookupEmailByPhone(phone);
       } catch {

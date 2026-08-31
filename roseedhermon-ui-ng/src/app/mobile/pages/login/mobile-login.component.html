@@ -17,44 +17,29 @@
   <section class="sheet">
     <form (ngSubmit)="submit()" novalidate>
       <ng-container *ngIf="!challenge">
-        <!-- Deux façons de se connecter à un compte existant -->
-        <div class="method-toggle" *ngIf="view === 'signin'">
-          <button
-            type="button"
-            [class.is-active]="signinMethod === 'password'"
-            (click)="chooseSigninMethod('password')">
-            <i class="pi pi-envelope"></i> Par courriel
-          </button>
-          <button
-            type="button"
-            [class.is-active]="signinMethod === 'phone'"
-            (click)="chooseSigninMethod('phone')">
-            <i class="pi pi-mobile"></i> Déjà dans l'annuaire
-          </button>
-        </div>
-
-        <p class="method-hint" *ngIf="view === 'signin' && signinMethod === 'phone'">
-          Le numéro déjà au dossier, et le mot de passe choisi la première fois.
-        </p>
-
-        <!-- Numéro et mot de passe : connexion pour une fiche déjà importée -->
-        <label class="field" *ngIf="view === 'signin' && signinMethod === 'phone'">
-          <span>Téléphone</span>
-          <span class="with-prefix">
-            <span class="prefix">+1</span>
-            <input
-              type="tel"
-              name="signinPhone"
-              autocomplete="tel"
-              inputmode="tel"
-              [(ngModel)]="phone"
-              placeholder="514 555-0123" />
-          </span>
+        <!-- Connexion : un seul champ, courriel ou numéro déjà au dossier — signIn() reconnaît lequel. -->
+        <label class="field" *ngIf="view === 'signin'">
+          <span>Courriel ou téléphone</span>
+          <input
+            type="text"
+            name="identifier"
+            inputmode="email"
+            autocomplete="username"
+            [(ngModel)]="email"
+            placeholder="vous@exemple.ca ou 514 555-0123" />
         </label>
 
-        <label class="field" *ngIf="view === 'signin' && signinMethod === 'phone'">
+        <label class="field" *ngIf="view === 'signin'">
           <span>Mot de passe</span>
-          <input type="password" name="phonePassword" autocomplete="current-password" [(ngModel)]="password" />
+          <input type="password" name="password" autocomplete="current-password" [(ngModel)]="password" />
+        </label>
+
+        <label class="field" *ngIf="view === 'signin' && !auth.configured && needsGroup">
+          <span>Votre groupe</span>
+          <select name="groupId" [(ngModel)]="groupId">
+            <option value="" disabled>Choisissez un groupe</option>
+            <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
+          </select>
         </label>
 
         <!-- Deux façons de créer un compte : une personne nouvelle, ou une fiche déjà importée -->
@@ -105,8 +90,8 @@
           </span>
         </label>
 
-        <!-- Courriel : connexion par mot de passe, inscription (les deux méthodes) -->
-        <label class="field" *ngIf="(view === 'signin' && signinMethod === 'password') || view === 'signup'">
+        <!-- Courriel : les deux façons de s'inscrire -->
+        <label class="field" *ngIf="view === 'signup'">
           <span>Courriel</span>
           <input
             type="email"
@@ -115,19 +100,6 @@
             autocomplete="username"
             [(ngModel)]="email"
             placeholder="vous@exemple.ca" />
-        </label>
-
-        <label class="field" *ngIf="view === 'signin' && signinMethod === 'password'">
-          <span>Mot de passe</span>
-          <input type="password" name="password" autocomplete="current-password" [(ngModel)]="password" />
-        </label>
-
-        <label class="field" *ngIf="view === 'signin' && signinMethod === 'password' && !auth.configured && needsGroup">
-          <span>Votre groupe</span>
-          <select name="groupId" [(ngModel)]="groupId">
-            <option value="" disabled>Choisissez un groupe</option>
-            <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
-          </select>
         </label>
 
         <!-- Mot de passe : uniquement l'inscription par courriel -->
