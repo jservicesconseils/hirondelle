@@ -15,6 +15,9 @@ import { AddressLookupService, AddressSuggestion } from '../../../../shared/serv
 import { Subject } from 'rxjs';
 import { debounceTime, switchMap, takeUntil } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { GroupService } from '../../../../shared/services/groups/groups.service';
+import { GroupEntity } from '../../../../shared/services/api/model/groupEntity';
 
 /** Les 5 étapes de la maquette de création d'événement. */
 interface WizardStep {
@@ -124,12 +127,22 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
   private addressQuery$ = new Subject<string>();
   private destroy$ = new Subject<void>();
 
+  /**
+   * Un événement « Réservé au groupe » n'a de sens que pour un groupe précis.
+   * Un administrateur de groupe est déjà rattaché au sien, le serveur l'impose
+   * (`ownerGroupId` côté `ms-event`) sans qu'on ait besoin de le lui demander.
+   * Le super administrateur, lui, n'en a aucun par défaut — il doit choisir.
+   */
+  groups: GroupEntity[] = [];
+
   constructor(
     private fb: FormBuilder,
     private eventService: EventService,
     private messageService: MessageService,
     private eventFileService: EventFileControllerService,
-    private addressLookup: AddressLookupService
+    private addressLookup: AddressLookupService,
+    public auth: AuthService,
+    private groupService: GroupService
   ) {
     this.eventForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
@@ -163,12 +176,21 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
       ]),
       eventType: [EventTypeEnum.PUBLIC, Validators.required],
       // Visibilité réelle de l'événement, indépendante de son type.
-      visibility: ['PUBLIC', Validators.required]
+      visibility: ['PUBLIC', Validators.required],
+      // Groupe destinataire d'un événement réservé — seul le super administrateur le choisit.
+      groupId: ['']
     });
     this.isFormReady = true;
   }
 
   ngOnInit(): void {
+    if (this.auth.isSuperAdmin()) {
+      this.groupService.getGroups().subscribe({
+        next: (groups) => (this.groups = groups),
+        error: () => (this.groups = [])
+      });
+    }
+
     // La politique d'usage de Nominatim impose de rester sous une requête par
     // seconde : d'où la temporisation, et `switchMap` qui abandonne la requête
     // précédente dès que la saisie change.
@@ -326,6 +348,10 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
       availableSeats: event.availableSeats || 1,
       lastRegistrationDate: event.lastRegistrationDate || '',
       eventType: event.eventType || 'PUBLIC',
+      // Repris de l'événement existant, sinon la bascule retombait toujours sur
+      // Public à l'édition même pour un événement réservé au groupe.
+      visibility: event.visibility || 'PUBLIC',
+      groupId: event.groupId || '',
       location: event.location || { address: '', city: '', postalCode: '', country: '' }
     };
     
@@ -419,6 +445,15 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
   onSubmit() {
     this.submitted = true;
 
+    if (this.needsGroupChoice) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Groupe manquant',
+        detail: "Choisissez le groupe destinataire de cet événement réservé."
+      });
+      return;
+    }
+
     // Vérifier et corriger les valeurs du formulaire
     this.validateAndFixFormValues();
 
@@ -460,7 +495,15 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
         presenters: formValue.presenters || [],
         availableSeats: formValue.availableSeats,
         lastRegistrationDate: formValue.lastRegistrationDate,
-        eventType: formValue.eventType
+        eventType: formValue.eventType,
+        // Sans ce champ, le serveur ne voyait jamais le choix « Réservé au
+        // groupe » et créait tout en PUBLIC (voir `applyCreationOwnership`,
+        // `ms-event/routes/event.routes.ts`) : le bouton de visibilité restait
+        // sans effet quel que soit celui sélectionné.
+        visibility: formValue.visibility,
+        // Ignoré par le serveur pour un administrateur de groupe (déjà rattaché
+        // au sien) ; c'est le super administrateur qui en a besoin.
+        groupId: formValue.groupId || null
       };
 
       console.log('=== DIAGNOSTIC DE SOUMISSION ===');
@@ -834,7 +877,12 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
    * qu'aux membres du groupe organisateur.
    */
   setVisibility(type: 'PUBLIC' | 'PRIVATE') {
-    this.eventForm.patchValue({ visibility: type });
+    this.eventForm.patchValue({ visibility: type, groupId: type === 'PUBLIC' ? '' : this.eventForm.value.groupId });
+  }
+
+  /** Bloque la création tant que le super administrateur n'a pas choisi de groupe pour un événement réservé. */
+  get needsGroupChoice(): boolean {
+    return this.auth.isSuperAdmin() && this.eventForm.value.visibility !== 'PUBLIC' && !this.eventForm.value.groupId;
   }
 
   /** « Laissez 0 € pour un événement gratuit » : `free` suit le montant saisi. */

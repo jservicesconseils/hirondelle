@@ -1,10 +1,13 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as XLSX from 'xlsx';
 
 import { Member } from '../../../../shared/services/api/model/member';
 import { MemberService } from '../../../../shared/services/members/members.service';
+import { GroupEntity } from '../../../../shared/services/api/model/groupEntity';
+import { GroupService } from '../../../../shared/services/groups/groups.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 /** Sentinelle : la colonne devient un champ personnalisé, importé tel quel sous son en-tête. */
 const CUSTOM_FIELD = '__custom__';
@@ -57,7 +60,7 @@ interface RejectedRow {
   styleUrls: ['./import-wizard.component.scss'],
   imports: [CommonModule, FormsModule]
 })
-export class ImportWizardComponent {
+export class ImportWizardComponent implements OnInit {
   /** Membres déjà enregistrés : sert à repérer les doublons d'email. */
   @Input() existingMembers: Member[] = [];
   @Input() visible = false;
@@ -83,7 +86,34 @@ export class ImportWizardComponent {
   duplicateCount = 0;
   rejectedRows: RejectedRow[] = [];
 
-  constructor(private memberService: MemberService) {}
+  /**
+   * Un administrateur de groupe importe forcément dans le sien, le serveur
+   * l'impose déjà (`member.routes.ts`, `scopeGroupId`) sans qu'on ait besoin
+   * de le lui demander. Le super administrateur, lui, n'en a aucun par
+   * défaut — il doit choisir la destination, sans quoi les fiches importées
+   * n'appartiendraient à aucun groupe.
+   */
+  groups: GroupEntity[] = [];
+  selectedGroupId = '';
+
+  constructor(
+    private memberService: MemberService,
+    private groupService: GroupService,
+    public auth: AuthService
+  ) {}
+
+  ngOnInit(): void {
+    if (!this.auth.isSuperAdmin()) return;
+    this.groupService.getGroups().subscribe({
+      next: (groups) => (this.groups = groups),
+      error: () => (this.groups = [])
+    });
+  }
+
+  /** Bloque l'import tant que le super administrateur n'a pas choisi de groupe. */
+  get needsGroupChoice(): boolean {
+    return this.auth.isSuperAdmin() && !this.selectedGroupId;
+  }
 
   get mappedColumns(): number {
     return Object.values(this.mapping).filter((field) => !!field).length;
@@ -224,6 +254,8 @@ export class ImportWizardComponent {
 
   /** Construit les membres, écarte doublons et lignes incomplètes, puis crée le reste. */
   confirmMapping() {
+    if (this.needsGroupChoice) return;
+
     const emails = new Set(
       this.existingMembers.map((member) => (member.email || '').toLowerCase()).filter(Boolean)
     );
@@ -249,6 +281,10 @@ export class ImportWizardComponent {
       });
 
       if (Object.keys(customFields).length) member.customFields = customFields;
+
+      // Un administrateur de groupe n'a rien à préciser : le serveur impose
+      // déjà le sien. Le super administrateur choisit sa destination ici.
+      if (this.selectedGroupId) member.groupId = this.selectedGroupId;
 
       const label = `${member.firstName || ''} ${member.lastName || ''}`.trim() || `Ligne ${index + 2}`;
       const missing = REQUIRED_FIELDS.filter((field) => !member[field]);
@@ -337,6 +373,9 @@ export class ImportWizardComponent {
     this.createdCount = 0;
     this.duplicateCount = 0;
     this.rejectedRows = [];
+    // Repartir sans groupe choisi : mieux vaut le redemander qu'importer, par
+    // inertie, un second fichier dans un groupe qui n'est plus le bon.
+    this.selectedGroupId = '';
   }
 }
 

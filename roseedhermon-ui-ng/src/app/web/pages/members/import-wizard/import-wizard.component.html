@@ -62,6 +62,16 @@
         <h3 class="step-title">Étape 2 : Associer les colonnes</h3>
         <p class="step-sub">Aperçu des premières lignes de <strong>{{ fileName }}</strong> — vérifiez la correspondance.</p>
 
+        <!-- Réservé au super administrateur : un administrateur de groupe importe
+             forcément dans le sien, le serveur s'en charge déjà. -->
+        <label class="group-picker" *ngIf="auth.isSuperAdmin()">
+          <span>Importer dans le groupe</span>
+          <select [(ngModel)]="selectedGroupId">
+            <option value="" disabled>Choisissez un groupe</option>
+            <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
+          </select>
+        </label>
+
         <div class="mapping-card">
           <div class="mapping-head">
             <span>Colonne du fichier</span>
@@ -89,10 +99,13 @@
 
         <div class="step-actions">
           <button type="button" class="btn-outline" (click)="backToUpload()">Retour</button>
-          <button type="button" class="btn-gradient" (click)="confirmMapping()" [disabled]="!mappedColumns">
+          <button type="button" class="btn-gradient" (click)="confirmMapping()" [disabled]="!mappedColumns || needsGroupChoice">
             Lancer l'import <i class="pi pi-arrow-right"></i>
           </button>
         </div>
+        <p class="mapping-summary" *ngIf="needsGroupChoice">
+          <i class="pi pi-exclamation-triangle"></i> Choisissez d'abord le groupe destinataire, ci-dessus.
+        </p>
       </section>
 
       <!-- Étape 3 : résultat -->

@@ -206,6 +206,17 @@
                             </div>
                         </div>
 
+                        <!-- Réservé au super administrateur : un administrateur de groupe est
+                             déjà rattaché au sien, le serveur s'en charge. -->
+                        <div class="wizard-field span-2" *ngIf="auth.isSuperAdmin() && f['visibility'].value !== 'PUBLIC'">
+                            <label for="event-groupId">Groupe destinataire</label>
+                            <span class="field-hint">À qui cet événement réservé appartient-il ?</span>
+                            <select id="event-groupId" formControlName="groupId">
+                                <option value="" disabled>Choisissez un groupe</option>
+                                <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
+                            </select>
+                        </div>
+
                         <div class="wizard-field span-2">
                             <label for="event-amount">Prix d'entrée (€)</label>
                             <span class="field-hint">Laissez 0 € pour un événement gratuit</span>
@@ -352,7 +363,7 @@
             <button type="button" class="btn-next" *ngIf="activeStep < steps.length - 1" (click)="nextStep()">
                 Suivant <i class="pi pi-arrow-right"></i>
             </button>
-            <button type="submit" class="btn-next" *ngIf="activeStep === steps.length - 1">
+            <button type="submit" class="btn-next" *ngIf="activeStep === steps.length - 1" [disabled]="needsGroupChoice">
                 <i class="pi pi-check-circle"></i> {{ eventToEdit ? 'Enregistrer les modifications' : 'Créer l\'événement' }}
             </button>
         </footer>

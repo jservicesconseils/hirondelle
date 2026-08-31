@@ -321,6 +321,35 @@ $blue-soft: #fff0ea;
   i { color: $blue; margin-right: 0.35rem; }
 }
 
+/* Choix du groupe destinataire : réservé au super administrateur, voir le composant. */
+.group-picker {
+  display: block;
+  margin: 0 0 1rem;
+
+  span {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: $ink;
+  }
+
+  select {
+    width: 100%;
+    border: 1.5px solid $border;
+    background: $blue-soft;
+    color: $indigo;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-radius: 10px;
+    padding: 0.65rem 0.8rem;
+    cursor: pointer;
+    outline: none;
+
+    &:focus { border-color: $indigo; }
+  }
+}
+
 /* ---------- Étape 3 ---------- */
 
 .result {
