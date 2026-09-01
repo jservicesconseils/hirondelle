@@ -80,12 +80,12 @@ import { PlatformSettingsService } from '../../core/platform-settings.service';
 
     /* Bandeau plat, collé au bord — plus de rail flottant ni de marge autour :
        le fond va jusqu'au vrai bas de l'écran, la zone sûre n'étant qu'un
-       padding à l'intérieur de la barre elle-même. */
+       padding à l'intérieur de la barre elle-même. Même bleu que les bandeaux
+       d'en-tête, pour que le bas et le haut de l'écran se répondent. */
     .bottom-nav {
       display: flex;
       align-items: stretch;
-      background: #fff;
-      border-top: 1px solid #e8eaf0;
+      background: linear-gradient(135deg, #16346b 0%, #2b5fb8 62%, #3d78d6 100%);
       padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
       font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
@@ -101,7 +101,7 @@ import { PlatformSettingsService } from '../../core/platform-settings.service';
       padding: 6px 2px;
       border: none;
       background: none;
-      color: #8b93a1;
+      color: rgba(255, 255, 255, 0.65);
       font: inherit;
       cursor: pointer;
       transition: color 0.15s ease;
@@ -118,10 +118,10 @@ import { PlatformSettingsService } from '../../core/platform-settings.service';
       max-width: 100%;
     }
 
-    /* Onglet courant : la couleur de la charte suffit à le distinguer, comme
-       dans le modèle — pas de pastille, pas de fond, juste la teinte qui change. */
+    /* Onglet courant : blanc plein (au lieu du blanc atténué des autres),
+       pas de pastille ni de fond — juste l'opacité qui change. */
     .nav-item.active {
-      color: #f4551d;
+      color: #fff;
     }
   `]
 })
