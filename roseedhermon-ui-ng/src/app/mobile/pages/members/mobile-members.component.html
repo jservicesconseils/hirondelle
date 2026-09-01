@@ -15,15 +15,39 @@
 
       <!-- Chiffres calculés sur les fiches réellement chargées -->
       <ul class="hero-stats" *ngIf="!loading && !loadError && rows.length">
-        <li><strong>{{ rows.length }}</strong><span>Membres</span></li>
-        <li *ngIf="cityCount"><strong>{{ cityCount }}</strong><span>{{ cityCount > 1 ? 'Villes' : 'Ville' }}</span></li>
-        <li class="reachable" *ngIf="reachableCount"><strong><i class="dot"></i>{{ reachableCount }}</strong><span>Joignables</span></li>
+        <li>
+          <span class="stat-top">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+            </svg>
+            <strong>{{ rows.length }}</strong>
+          </span>
+          <span>Membres</span>
+        </li>
+        <li *ngIf="cityCount">
+          <span class="stat-top">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
+            </svg>
+            <strong>{{ cityCount }}</strong>
+          </span>
+          <span>{{ cityCount > 1 ? 'Villes' : 'Ville' }}</span>
+        </li>
+        <li class="reachable" *ngIf="reachableCount">
+          <span class="stat-top"><i class="dot"></i><strong>{{ reachableCount }}</strong></span>
+          <span>Joignables</span>
+        </li>
       </ul>
     </div>
   </header>
 
   <div class="search-row">
     <div class="search">
+      <span class="search-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z" />
+        </svg>
+      </span>
       <input type="search"
              placeholder="Rechercher un membre"
              [(ngModel)]="searchTerm"
@@ -35,19 +59,14 @@
           <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
         </svg>
       </button>
-      <span class="search-icon" *ngIf="!searchTerm">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z" />
-        </svg>
-      </span>
-    </div>
 
-    <!-- Repart d'un annuaire non filtré : recherche vidée, sous-groupe désélectionné. -->
-    <button type="button" class="filter-btn" (click)="resetFilters()" aria-label="Réinitialiser les filtres">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <path d="M4 6h16M7 12h10M10 18h4" />
-      </svg>
-    </button>
+      <!-- Repart d'un annuaire non filtré : recherche vidée, sous-groupe désélectionné. -->
+      <button type="button" class="filter-btn" (click)="resetFilters()" aria-label="Réinitialiser les filtres">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- Sous-groupes réels de l'annuaire : une fonction distincte par onglet, jamais une catégorie inventée. -->
@@ -88,40 +107,18 @@
             <span class="role subgroup" *ngIf="row.showSubgroupBadge">{{ row.subgroup }}</span>
           </div>
 
-          <span class="line" *ngIf="row.city">
+          <!-- La ville, seule information visible d'emblée, ouvre le détail (adresse,
+               courriel, genre, colonnes propres à la communauté) au lieu de tout étaler.
+               Sans ville, le même bouton reste utile — « Détails » plutôt qu'un nom de ville
+               absent — tant qu'il reste quelque chose à y montrer. -->
+          <button type="button" class="city-btn"
+                  *ngIf="row.city || row.address || row.email || row.gender || row.birthDate || row.customFieldEntries.length"
+                  (click)="openDetails(row)">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
             </svg>
-            {{ row.city }}
-          </span>
-          <span class="line" *ngIf="row.address">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 3 4 9v12h5v-7h6v7h5V9z" />
-            </svg>
-            {{ row.address }}
-          </span>
-
-          <span class="line" *ngIf="row.email">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
-            </svg>
-            {{ row.email }}
-          </span>
-
-          <span class="line gender" *ngIf="row.gender || row.birthDate">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z" />
-            </svg>
-            {{ row.gender }}<ng-container *ngIf="row.gender && row.birthDate"> • </ng-container>{{ row.birthDate }}
-          </span>
-
-          <!-- Colonnes propres à cette communauté : affichées telles quelles, sous leur en-tête exact. -->
-          <span class="line custom" *ngFor="let field of row.customFieldEntries">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path [attr.d]="field.icon" />
-            </svg>
-            <strong>{{ field.label }}&nbsp;:</strong> {{ field.value }}
-          </span>
+            {{ row.city || 'Détails' }}
+          </button>
 
           <!-- Un bouton par moyen de contact réellement disponible sur la fiche : jamais
                les quatre à la fois si elle n'a par exemple pas de courriel. -->
@@ -157,4 +154,69 @@
       </div>
     </ng-container>
   </main>
+
+  <!-- Détail d'une fiche, ouvert depuis le bouton Ville de sa carte. -->
+  <div class="detail-mask" *ngIf="selectedRow as row" (click)="closeDetails()">
+    <div class="detail-sheet" (click)="$event.stopPropagation()">
+      <button type="button" class="detail-close" (click)="closeDetails()" aria-label="Fermer">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+        </svg>
+      </button>
+
+      <span class="detail-avatar" [style.background]="row.photo ? null : row.color">
+        <img *ngIf="row.photo" [src]="row.photo" [alt]="row.fullName" />
+        <ng-container *ngIf="!row.photo">{{ row.initials }}</ng-container>
+      </span>
+
+      <strong class="detail-name">{{ row.fullName }}</strong>
+      <div class="badges" *ngIf="row.role || row.subgroup">
+        <span class="role" *ngIf="row.role">{{ row.role }}</span>
+        <span class="role subgroup" *ngIf="row.showSubgroupBadge">{{ row.subgroup }}</span>
+      </div>
+
+      <div class="detail-list">
+        <span class="detail-row" *ngIf="row.city">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" /></svg>
+          <span><small>Ville</small>{{ row.city }}</span>
+        </span>
+        <span class="detail-row" *ngIf="row.address">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 4 9v12h5v-7h6v7h5V9z" /></svg>
+          <span><small>Adresse</small>{{ row.address }}</span>
+        </span>
+        <span class="detail-row" *ngIf="row.email">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" /></svg>
+          <span><small>Courriel</small>{{ row.email }}</span>
+        </span>
+        <span class="detail-row" *ngIf="row.gender || row.birthDate">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z" /></svg>
+          <span>
+            <small>{{ row.gender && row.birthDate ? 'Genre • Naissance' : row.gender ? 'Genre' : 'Naissance' }}</small>
+            {{ row.gender }}<ng-container *ngIf="row.gender && row.birthDate"> • </ng-container>{{ row.birthDate }}
+          </span>
+        </span>
+        <!-- Colonnes propres à cette communauté : affichées telles quelles, sous leur en-tête exact. -->
+        <span class="detail-row" *ngFor="let field of row.customFieldEntries">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path [attr.d]="field.icon" /></svg>
+          <span><small>{{ field.label }}</small>{{ field.value }}</span>
+        </span>
+      </div>
+
+      <div class="card-actions" *ngIf="row.phone || row.email">
+        <button type="button" class="act call" *ngIf="row.phone" (click)="call(row)"
+                [attr.aria-label]="'Appeler ' + row.fullName">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+          </svg>
+        </button>
+        <button type="button" class="act whatsapp" *ngIf="row.phone" (click)="openWhatsApp(row)"
+                [attr.aria-label]="'Écrire à ' + row.fullName + ' sur WhatsApp'">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M12.05 21.785h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884" />
+          </svg>
+        </button>
+        <button type="button" class="msg-btn" (click)="row.phone ? openSms(row) : openEmail(row)">Message</button>
+      </div>
+    </div>
+  </div>
 </div>

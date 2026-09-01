@@ -107,9 +107,21 @@ import { PlatformSettingsService } from '../../core/platform-settings.service';
       transition: color 0.15s ease;
     }
 
-    .nav-item svg { width: 22px; height: 22px; flex-shrink: 0; }
+    /* Contour tant que l'onglet n'est pas actif ; le même tracé repasse en plein
+       une fois actif (voir .active plus bas) — sans dessiner deux jeux d'icônes. */
+    .nav-item svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.6;
+      stroke-linejoin: round;
+    }
 
     .nav-item span {
+      position: relative;
+      padding-bottom: 5px;
       font-size: 10.5px;
       font-weight: 700;
       white-space: nowrap;
@@ -118,10 +130,27 @@ import { PlatformSettingsService } from '../../core/platform-settings.service';
       max-width: 100%;
     }
 
-    /* Onglet courant : blanc plein (au lieu du blanc atténué des autres),
-       pas de pastille ni de fond — juste l'opacité qui change. */
+    /* Onglet courant : icône pleine plutôt qu'en contour, blanc plein plutôt
+       qu'atténué, et un petit trait sous le libellé — comme le modèle. */
     .nav-item.active {
       color: #fff;
+    }
+
+    .nav-item.active svg {
+      fill: currentColor;
+      stroke: none;
+    }
+
+    .nav-item.active span::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 16px;
+      height: 2px;
+      border-radius: 2px;
+      background: #fff;
+      transform: translateX(-50%);
     }
   `]
 })

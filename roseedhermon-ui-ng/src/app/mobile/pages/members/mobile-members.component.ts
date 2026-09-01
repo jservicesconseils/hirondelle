@@ -76,6 +76,9 @@ export class MobileMembersComponent implements OnInit {
   loading = true;
   loadError = '';
 
+  /** Fiche dont le bouton Ville a été touché : ouvre le détail par-dessus la grille. */
+  selectedRow: MemberRow | null = null;
+
   /** Nombre de fiches ajoutées à chaque « Charger plus ». */
   private readonly pageSize = 12;
   private visibleCount = this.pageSize;
@@ -226,6 +229,15 @@ export class MobileMembersComponent implements OnInit {
     if (!row.email) return;
     const subject = `Message depuis ${this.groupName}`;
     window.location.href = `mailto:${row.email}?subject=${encodeURIComponent(subject)}`;
+  }
+
+  /** Le bouton Ville ouvre le détail : adresse, courriel, genre et colonnes propres à la communauté. */
+  openDetails(row: MemberRow): void {
+    this.selectedRow = row;
+  }
+
+  closeDetails(): void {
+    this.selectedRow = null;
   }
 
   // --- Construction ------------------------------------------------------------------
