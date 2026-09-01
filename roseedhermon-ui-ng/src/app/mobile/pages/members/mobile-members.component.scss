@@ -233,6 +233,12 @@
   padding: 0.1rem 1.15rem 0.65rem;
   overflow-x: auto;
   scrollbar-width: none;
+  // Ombre fixe sur les deux bords : elle ne défile pas avec le contenu (l'ombre
+  // porte sur le cadre, pas sur ce qu'il contient), et signale qu'il y a encore
+  // des onglets hors champ, quel que soit l'endroit où on a déjà fait glisser.
+  box-shadow:
+    inset 14px 0 12px -10px rgba(16, 28, 48, 0.16),
+    inset -14px 0 12px -10px rgba(16, 28, 48, 0.16);
 
   &::-webkit-scrollbar { display: none; }
 }
@@ -407,13 +413,16 @@
  * qu'au clic, dans le détail (`.detail-sheet`).
  */
 .city-btn {
-  display: flex;
+  display: inline-flex;
+  align-self: center;
   align-items: center;
   justify-content: center;
   gap: 0.3rem;
-  width: 100%;
-  margin-bottom: 0.6rem;
-  padding: 0.4rem 0.6rem;
+  max-width: 100%;
+  // Avant et après plutôt qu'un seul côté : sans les lignes d'adresse/courriel/genre
+  // qu'il remplace, la carte raccourcissait trop pour rester alignée avec sa voisine.
+  margin: 0.55rem auto 0.9rem;
+  padding: 0.4rem 0.9rem;
   border: 0;
   border-radius: 999px;
   background: theme.$sky;
