@@ -8,12 +8,11 @@ import { AuthService } from '../../core/auth/auth.service';
 import { PlatformSettingsService } from '../../core/platform-settings.service';
 
 /**
- * Barre de navigation basse : rail bleu profond flottant, l'onglet courant
- * prenant la forme d'une pastille claire où l'icône et le libellé se placent
- * côte à côte.
- *
- * Le bleu profond répond au menu vertical de l'administration : c'est la même
- * famille de navigation, sur les deux plateformes.
+ * Barre de navigation basse : bandeau plat collé au bord de l'écran, comme les
+ * grandes applications de magasinage (icône au-dessus du libellé, l'onglet
+ * courant se distinguant par la couleur plutôt que par une pastille flottante).
+ * Nos propres couleurs — le bleu profond de l'entête, l'orange de la charte
+ * pour l'onglet actif — plutôt que celles du modèle.
  */
 @Component({
   selector: 'app-mobile-footer',
@@ -69,9 +68,6 @@ import { PlatformSettingsService } from '../../core/platform-settings.service';
         <span>{{ 'nav.profile' | translate }}</span>
       </button>
     </nav>
-
-    <!-- Purement décoratif : un repère de bas d'écran, comme le modèle. -->
-    <span class="handle"></span>
   `,
   styles: [`
     /* Dernier élément de la colonne de la coquille mobile : aucun positionnement
@@ -80,23 +76,17 @@ import { PlatformSettingsService } from '../../core/platform-settings.service';
       flex: 0 0 auto;
       display: block;
       z-index: 900;
-      padding: 6px 14px calc(12px + env(safe-area-inset-bottom, 0px));
-      background: linear-gradient(180deg, rgba(253, 246, 241, 0) 0%, rgba(253, 246, 241, 0.92) 55%);
     }
 
-    /* Rail bleu profond, comme le menu vertical de l'administration. */
+    /* Bandeau plat, collé au bord — plus de rail flottant ni de marge autour :
+       le fond va jusqu'au vrai bas de l'écran, la zone sûre n'étant qu'un
+       padding à l'intérieur de la barre elle-même. */
     .bottom-nav {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 4px;
-      padding: 7px;
-      background: rgba(15, 45, 92, 0.95);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 26px;
-      box-shadow: 0 14px 34px rgba(16, 28, 48, 0.35);
+      align-items: stretch;
+      background: #fff;
+      border-top: 1px solid #e8eaf0;
+      padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
       font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
@@ -107,23 +97,20 @@ import { PlatformSettingsService } from '../../core/platform-settings.service';
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
-      padding: 9px 4px;
+      gap: 3px;
+      padding: 6px 2px;
       border: none;
       background: none;
-      border-radius: 20px;
-      color: rgba(255, 255, 255, 0.62);
+      color: #8b93a1;
       font: inherit;
       cursor: pointer;
-      transition: color 0.2s ease, background 0.2s ease;
+      transition: color 0.15s ease;
     }
 
-    .nav-item:active { color: #fff; }
-
-    .nav-item svg { width: 23px; height: 23px; flex-shrink: 0; }
+    .nav-item svg { width: 22px; height: 22px; flex-shrink: 0; }
 
     .nav-item span {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
@@ -131,56 +118,10 @@ import { PlatformSettingsService } from '../../core/platform-settings.service';
       max-width: 100%;
     }
 
-    /**
-     * Onglet courant : pastille bleu vif, icône et libellé sur une même ligne.
-     * Le bleu vif sur le rail bleu profond se distingue à la volée, comme le
-     * modèle — sans recourir au blanc, réservé aux cartes du contenu.
-     */
+    /* Onglet courant : la couleur de la charte suffit à le distinguer, comme
+       dans le modèle — pas de pastille, pas de fond, juste la teinte qui change. */
     .nav-item.active {
-      flex: 0 0 auto;
-      flex-direction: row;
-      gap: 7px;
-      padding: 10px 16px;
-      background: #2563eb;
-      color: #fff;
-      box-shadow: 0 4px 14px -2px rgba(37, 99, 235, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
-    }
-
-    .nav-item.active span {
-      font-size: 14px;
-      font-weight: 800;
-      color: #fff;
-    }
-
-    /* Un point orange sous la pastille : l'accent de la charte, sans la dominer. */
-    .nav-item.active::after {
-      content: '';
-      position: absolute;
-      left: 50%;
-      bottom: -6px;
-      width: 16px;
-      height: 3px;
-      border-radius: 2px;
-      background: #f4551d;
-      transform: translateX(-50%);
-    }
-
-    .nav-item { position: relative; }
-
-    /* Purement décoratif : le repère de bas d'écran qu'on trouve sous les barres
-       flottantes des applications mobiles. */
-    .handle {
-      display: block;
-      width: 32px;
-      height: 4px;
-      margin: 10px auto 0;
-      border-radius: 999px;
-      background: rgba(15, 45, 92, 0.16);
-    }
-
-    @media (max-width: 360px) {
-      .nav-item.active span { font-size: 13px; }
-      .nav-item span { font-size: 10px; }
+      color: #f4551d;
     }
   `]
 })
