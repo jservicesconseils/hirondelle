@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MobileFooterComponent } from './mobile-footer.component';
 import { AppLanguage, LanguageService } from '../../core/language.service';
-import { AuthService } from '../../core/auth/auth.service';
 
 /**
  * Coquille des écrans mobiles : elle occupe exactement la fenêtre, la page défile
@@ -25,16 +24,6 @@ import { AuthService } from '../../core/auth/auth.service';
       </div>
       <app-mobile-footer></app-mobile-footer>
     </div>
-
-    <!-- Personne connectée : nom et photo, toujours visibles en haut à droite,
-         quel que soit l'écran — cliquer y mène directement au profil. -->
-    <button type="button" class="user-badge" *ngIf="auth.isAuthenticated() && displayName" (click)="goToProfile()">
-      <span class="badge-name">{{ displayName }}</span>
-      <span class="badge-avatar">
-        <img *ngIf="photo" [src]="photo" alt="" />
-        <ng-container *ngIf="!photo">{{ initials }}</ng-container>
-      </span>
-    </button>
 
     <!-- Premier lancement uniquement : disparaît dès qu'une langue est choisie
          (LanguageService.hasChosenLanguage), et ne réapparaît plus ensuite. -->
@@ -109,91 +98,17 @@ import { AuthService } from '../../core/auth/auth.service';
     }
 
     .lang-options button:active { background: #2563eb; color: #fff; border-color: transparent; }
-
-    /* Personne connectée, en haut à droite : par-dessus tout le reste, sur
-       n'importe quel écran, où que la page en soit défilée. */
-    .user-badge {
-      position: fixed;
-      top: calc(env(safe-area-inset-top, 0px) + 12px);
-      right: 12px;
-      z-index: 1200;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      border: none;
-      padding: 5px 6px 5px 12px;
-      background: rgba(255, 255, 255, 0.94);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 999px;
-      box-shadow: 0 8px 20px rgba(16, 28, 48, 0.18);
-      cursor: pointer;
-      max-width: 62vw;
-    }
-
-    .badge-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #1a1c22;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .badge-avatar {
-      flex: 0 0 auto;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 800;
-      overflow: hidden;
-    }
-
-    .badge-avatar img { width: 100%; height: 100%; object-fit: cover; }
   `]
 })
 export class MobileTabsComponent {
   languageChosen: boolean;
 
-  constructor(
-    private language: LanguageService,
-    public auth: AuthService,
-    private router: Router
-  ) {
+  constructor(private language: LanguageService) {
     this.languageChosen = this.language.hasChosenLanguage();
   }
 
   pick(lang: AppLanguage): void {
     this.language.setLanguage(lang);
     this.languageChosen = true;
-  }
-
-  /** Prénom et nom de la personne connectée ; rien d'inventé sans fiche liée. */
-  get displayName(): string {
-    const member = this.auth.user().member;
-    const full = `${member?.firstName ?? ''} ${member?.lastName ?? ''}`.trim();
-    if (full) return full;
-    return this.auth.user().email?.split('@')[0] || '';
-  }
-
-  get photo(): string {
-    return (this.auth.user().member?.photo || '').trim();
-  }
-
-  get initials(): string {
-    const member = this.auth.user().member;
-    const letters = `${member?.firstName?.charAt(0) ?? ''}${member?.lastName?.charAt(0) ?? ''}`.trim();
-    if (letters) return letters.toUpperCase();
-    return (this.auth.user().email?.charAt(0) ?? '').toUpperCase();
-  }
-
-  goToProfile(): void {
-    this.router.navigate(['/mobile/profile']);
   }
 }
