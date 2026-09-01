@@ -50,6 +50,13 @@ interface Subgroup {
 /** Teintes des initiales, quand aucune photo n'est déposée sur la fiche. */
 const AVATAR_COLORS = ['#dc4a22', '#6d3be4', '#0e8f72', '#2360d4', '#c07a06', '#c42e6b'];
 
+/**
+ * Classes de pastille de rôle, une par teinte — voir `roleColor`. Les mêmes
+ * couleurs que les cartes « Ma communauté » du profil mobile et de
+ * l'administration (violet, bleu, corail, vert), pour rester dans la charte.
+ */
+const ROLE_COLORS = ['c-violet', 'c-blue', 'c-coral', 'c-green'];
+
 @Component({
   selector: 'app-mobile-members',
   standalone: true,
@@ -203,6 +210,19 @@ export class MobileMembersComponent implements OnInit {
 
   trackByRow(_index: number, row: MemberRow): string {
     return row.member.id || row.fullName;
+  }
+
+  /**
+   * Teinte d'une pastille de rôle — reprise des couleurs déjà utilisées ailleurs
+   * dans l'appli (site d'administration, sections « Ma communauté ») plutôt que
+   * d'en introduire de nouvelles. Tirée du texte lui-même : « Administrateur »
+   * porte donc toujours la même teinte, sur toutes les fiches et à chaque
+   * chargement, sans dépendre de l'ordre d'arrivée des rôles.
+   */
+  roleColor(text: string): string {
+    let hash = 0;
+    for (let index = 0; index < text.length; index++) hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
+    return ROLE_COLORS[hash % ROLE_COLORS.length];
   }
 
   // --- Actions -----------------------------------------------------------------------

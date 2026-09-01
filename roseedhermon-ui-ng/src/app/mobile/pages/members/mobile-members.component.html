@@ -102,9 +102,11 @@
           </span>
 
           <strong class="name">{{ row.fullName }}</strong>
+          <!-- Une teinte par rôle (voir roleColor) : reconnaître une fonction d'un
+               coup d'œil compte plus une fois l'annuaire passé une centaine de fiches. -->
           <div class="badges" *ngIf="row.role || row.subgroup">
-            <span class="role" *ngIf="row.role">{{ row.role }}</span>
-            <span class="role subgroup" *ngIf="row.showSubgroupBadge">{{ row.subgroup }}</span>
+            <span class="role" [class]="roleColor(row.role)" *ngIf="row.role">{{ row.role }}</span>
+            <span class="role" [class]="roleColor(row.subgroup)" *ngIf="row.showSubgroupBadge">{{ row.subgroup }}</span>
           </div>
 
           <!-- La ville, seule information visible d'emblée, ouvre le détail (adresse,
@@ -171,8 +173,8 @@
 
       <strong class="detail-name">{{ row.fullName }}</strong>
       <div class="badges" *ngIf="row.role || row.subgroup">
-        <span class="role" *ngIf="row.role">{{ row.role }}</span>
-        <span class="role subgroup" *ngIf="row.showSubgroupBadge">{{ row.subgroup }}</span>
+        <span class="role" [class]="roleColor(row.role)" *ngIf="row.role">{{ row.role }}</span>
+        <span class="role" [class]="roleColor(row.subgroup)" *ngIf="row.showSubgroupBadge">{{ row.subgroup }}</span>
       </div>
 
       <div class="detail-list">

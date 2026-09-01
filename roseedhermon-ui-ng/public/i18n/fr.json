@@ -8,8 +8,8 @@
   },
   "nav": {
     "home": "Accueil",
-    "contacts": "Contacts",
-    "tickets": "Billets",
+    "contacts": "Annuaire",
+    "tickets": "Événements",
     "profile": "Profil"
   },
   "login": {

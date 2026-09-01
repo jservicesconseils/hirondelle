@@ -228,7 +228,7 @@
 
 .tabs {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.6rem;
   margin: 1rem 0 0;
   padding: 0.1rem 1.15rem 0.65rem;
   overflow-x: auto;
@@ -248,8 +248,8 @@
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.55rem 0.95rem;
+  gap: 0.4rem;
+  padding: 0.62rem 1.1rem;
   border: 1px solid theme.$line;
   border-radius: 999px;
   background: #fff;
@@ -388,6 +388,13 @@
   margin-bottom: 0.5rem;
 }
 
+/**
+ * Une teinte par rôle plutôt qu'une seule pour tous (voir `roleColor` côté
+ * composant) — reconnaître une fonction d'un coup d'œil compte plus une fois
+ * l'annuaire passé une centaine de fiches. Les quatre teintes reprennent
+ * celles déjà en place ailleurs dans l'appli (cartes « Ma communauté »,
+ * administration), aucune couleur nouvelle n'est introduite.
+ */
 .role {
   align-self: flex-start;
   max-width: 100%;
@@ -401,10 +408,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 
-  &.subgroup {
-    background: rgba(244, 85, 29, 0.12);
-    color: #f4551d;
-  }
+  &.c-blue { background: theme.$sky; color: theme.$blue-deep; }
+  &.c-coral { background: rgba(244, 85, 29, 0.12); color: #f4551d; }
+  &.c-violet { background: rgba(168, 107, 240, 0.14); color: #7b3fd4; }
+  &.c-green { background: rgba(23, 160, 92, 0.12); color: #17a05c; }
 }
 
 /**
