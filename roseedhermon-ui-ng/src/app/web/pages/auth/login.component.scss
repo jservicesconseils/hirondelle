@@ -279,6 +279,18 @@
   line-height: 1.6;
 }
 
+// ---------------------------------------------------------------- prénom + nom sur une même ligne
+
+.field-row {
+  display: flex;
+  gap: 0.8rem;
+
+  .field {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
 // ---------------------------------------------------------------- méthode de connexion et d'inscription
 
 .method-toggle {
