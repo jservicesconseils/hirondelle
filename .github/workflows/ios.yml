@@ -74,7 +74,10 @@ jobs:
   #   APPSTORE_TEAM_ID                  identifiant d'équipe (developer.apple.com > Membership)
   #   APPSTORE_ISSUER_ID                clé API App Store Connect — Issuer ID
   #   APPSTORE_KEY_ID                   clé API App Store Connect — Key ID
-  #   APPSTORE_PRIVATE_KEY              clé API App Store Connect — contenu du fichier .p8
+  #   APPSTORE_PRIVATE_KEY              clé API App Store Connect — fichier .p8 encodé en base64
+  #                                      (base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy) ; un collage
+  #                                      multi-lignes brut du .p8 est trop fragile (retours à la
+  #                                      ligne/espaces altérés au copier-coller dans le secret)
   #
   # Préalables côté Apple Developer / App Store Connect, une fois pour toutes :
   #   1. Enregistrer l'App ID ca.jservicesconseils.hirondelle.
@@ -246,7 +249,7 @@ jobs:
           APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "$APPSTORE_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APPSTORE_KEY_ID.p8
+          echo "$APPSTORE_PRIVATE_KEY" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$APPSTORE_KEY_ID.p8
 
           xcrun altool --upload-app \
             --type ios \
