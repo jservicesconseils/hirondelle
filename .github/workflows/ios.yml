@@ -217,6 +217,8 @@ jobs:
             <string>$APPSTORE_TEAM_ID</string>
             <key>signingStyle</key>
             <string>manual</string>
+            <key>signingCertificate</key>
+            <string>Apple Distribution</string>
             <key>provisioningProfiles</key>
             <dict>
               <key>$BUNDLE_ID</key>
@@ -225,6 +227,9 @@ jobs:
           </dict>
           </plist>
           PLIST
+
+          echo "--- exportOptions.plist ---"
+          cat "$RUNNER_TEMP/exportOptions.plist"
 
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/App-release.xcarchive" \
