@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.roseedhermon.app',
+  appId: 'ca.jservicesconseils.hirondelle',
   appName: 'Hirondelle',
   webDir: 'dist/sakai-ng/browser',
   server: {

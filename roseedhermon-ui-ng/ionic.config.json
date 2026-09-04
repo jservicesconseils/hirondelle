@@ -1,6 +1,6 @@
 {
   "name": "roseed-hermon",
-  "app_id": "com.roseedhermon.app",
+  "app_id": "ca.jservicesconseils.hirondelle",
   "type": "angular-standalone",
   "integrations": {
     "capacitor": {}

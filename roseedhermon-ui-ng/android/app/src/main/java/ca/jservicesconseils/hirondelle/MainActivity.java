@@ -1,4 +1,4 @@
-package com.roseedhermon.app;
+package ca.jservicesconseils.hirondelle;
 
 import com.getcapacitor.BridgeActivity;
 

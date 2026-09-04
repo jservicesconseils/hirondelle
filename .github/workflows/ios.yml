@@ -37,9 +37,9 @@ jobs:
       - name: Synchronisation Capacitor
         run: npx cap sync ios
 
-      # Archive non signée : elle prouve que le projet compile. La production d'un
-      # .ipa distribuable demande un certificat et un profil de provisionnement,
-      # à déposer en secrets du dépôt (voir le bloc commenté plus bas).
+      # Archive non signée : elle prouve que le projet compile, même sans les
+      # secrets de signature ci-dessous. Le job « release » construit le
+      # véritable .ipa envoyé à TestFlight quand ces secrets existent.
       - name: Archive iOS (sans signature)
         working-directory: roseedhermon-ui-ng/ios/App
         run: |
@@ -59,14 +59,186 @@ jobs:
           path: ${{ runner.temp }}/App.xcarchive
           if-no-files-found: error
 
-# Pour produire un .ipa signé et l'envoyer à TestFlight, ajouter les secrets
-# suivants au dépôt, puis remplacer l'étape d'archive ci-dessus :
-#
-#   IOS_CERTIFICATE_BASE64        certificat de distribution (.p12) encodé en base64
-#   IOS_CERTIFICATE_PASSWORD      mot de passe du .p12
-#   IOS_PROVISIONING_PROFILE_BASE64  profil de provisionnement encodé en base64
-#   APPSTORE_ISSUER_ID / APPSTORE_KEY_ID / APPSTORE_PRIVATE_KEY
-#                                 clé App Store Connect pour l'envoi
-#
-# Ces éléments viennent du compte Apple Developer (99 $ US par an), qui est
-# indispensable à toute distribution, y compris en test interne.
+  # Paquet signé, envoyé à TestFlight. Ne s'exécute que si les secrets de
+  # signature existent — sinon ce job se contente de le signaler et s'arrête
+  # là, sans faire échouer le workflow (le job « build » ci-dessus a déjà
+  # prouvé que le projet compile).
+  #
+  # Secrets à déposer dans Settings > Secrets and variables > Actions,
+  # tous issus du compte Apple Developer (99 USD/an) :
+  #
+  #   IOS_CERTIFICATE_BASE64            certificat de distribution (.p12), encodé en base64
+  #                                      (base64 -i Certificats.p12 | pbcopy)
+  #   IOS_CERTIFICATE_PASSWORD          mot de passe du .p12
+  #   IOS_PROVISIONING_PROFILE_BASE64   profil de provisionnement « App Store », encodé en base64
+  #   APPSTORE_TEAM_ID                  identifiant d'équipe (developer.apple.com > Membership)
+  #   APPSTORE_ISSUER_ID                clé API App Store Connect — Issuer ID
+  #   APPSTORE_KEY_ID                   clé API App Store Connect — Key ID
+  #   APPSTORE_PRIVATE_KEY              clé API App Store Connect — contenu du fichier .p8
+  #
+  # Préalables côté Apple Developer / App Store Connect, une fois pour toutes :
+  #   1. Enregistrer l'App ID ca.jservicesconseils.hirondelle.
+  #   2. Créer un certificat de distribution et un profil de provisionnement
+  #      « App Store » pour cet App ID.
+  #   3. Créer la fiche de l'app dans App Store Connect avec ce même bundle ID.
+  #   4. Créer une clé API App Store Connect (rôle « App Manager » suffit à l'envoi).
+  release:
+    runs-on: macos-15
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    defaults:
+      run:
+        working-directory: roseedhermon-ui-ng
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: roseedhermon-ui-ng/package-lock.json
+
+      - name: Secrets de signature présents ?
+        id: check
+        env:
+          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          APPSTORE_TEAM_ID: ${{ secrets.APPSTORE_TEAM_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+        run: |
+          if [ -z "$IOS_CERTIFICATE_BASE64" ] || [ -z "$IOS_PROVISIONING_PROFILE_BASE64" ] || \
+             [ -z "$APPSTORE_TEAM_ID" ] || [ -z "$APPSTORE_ISSUER_ID" ]; then
+            echo "::warning::Secrets de signature manquants (voir le commentaire en tête du job « release ») — build signé ignoré, seule l'archive non signée du job « build » est disponible."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: npm ci
+        if: steps.check.outputs.ready == 'true'
+
+      - name: Build web de production
+        if: steps.check.outputs.ready == 'true'
+        run: npm run build:web
+
+      - name: Synchronisation Capacitor
+        if: steps.check.outputs.ready == 'true'
+        run: npx cap sync ios
+
+      # Trousseau temporaire et dédié : plus sûr que d'importer le certificat
+      # dans le trousseau par défaut de l'exécuteur, et il disparaît avec la VM.
+      - name: Installer le certificat de distribution
+        if: steps.check.outputs.ready == 'true'
+        env:
+          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "$IOS_CERTIFICATE_BASE64" | base64 --decode -o "$RUNNER_TEMP/certificate.p12"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$KEYCHAIN_PATH" \
+            -P "$IOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          EXISTING_KEYCHAINS=$(security list-keychains -d user | sed 's/[" ]//g')
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $EXISTING_KEYCHAINS
+
+      # Le profil doit exister dans le dossier que Xcode surveille, sous le nom
+      # de son UUID — c'est ce format qu'il attend, pas le nom lisible qu'Apple
+      # lui donne au téléchargement.
+      - name: Installer le profil de provisionnement
+        if: steps.check.outputs.ready == 'true'
+        id: profile
+        env:
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          PROFILE_DIR=~/Library/MobileDevice/Provisioning\ Profiles
+          mkdir -p "$PROFILE_DIR"
+
+          echo "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode -o "$RUNNER_TEMP/profile.mobileprovision"
+
+          security cms -D -i "$RUNNER_TEMP/profile.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" "$RUNNER_TEMP/profile.plist")
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/profile.plist")
+
+          cp "$RUNNER_TEMP/profile.mobileprovision" "$PROFILE_DIR/$PROFILE_UUID.mobileprovision"
+
+          echo "name=$PROFILE_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Archive iOS signée
+        if: steps.check.outputs.ready == 'true'
+        working-directory: roseedhermon-ui-ng/ios/App
+        env:
+          APPSTORE_TEAM_ID: ${{ secrets.APPSTORE_TEAM_ID }}
+          PROFILE_NAME: ${{ steps.profile.outputs.name }}
+        run: |
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/App-release.xcarchive" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            DEVELOPMENT_TEAM="$APPSTORE_TEAM_ID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            archive
+
+      # Xcode 16 attend « app-store-connect » (l'ancien nom « app-store » reste
+      # accepté avec un avertissement) : si `xcodebuild -exportArchive` rejette
+      # cette valeur sur une image future, revenir à « app-store ».
+      - name: Exporter le .ipa
+        if: steps.check.outputs.ready == 'true'
+        env:
+          APPSTORE_TEAM_ID: ${{ secrets.APPSTORE_TEAM_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/exportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>teamID</key>
+            <string>$APPSTORE_TEAM_ID</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+          </dict>
+          </plist>
+          PLIST
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App-release.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/exportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export"
+
+      # `altool` cherche la clé API à cet emplacement précis par défaut — pas
+      # besoin de la passer autrement en ligne de commande.
+      - name: Envoyer à TestFlight
+        if: steps.check.outputs.ready == 'true'
+        env:
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$APPSTORE_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$APPSTORE_KEY_ID.p8
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$RUNNER_TEMP/export/App.ipa" \
+            --apiKey "$APPSTORE_KEY_ID" \
+            --apiIssuer "$APPSTORE_ISSUER_ID"
+
+      - uses: actions/upload-artifact@v4
+        if: steps.check.outputs.ready == 'true'
+        with:
+          name: App-signed-ipa
+          path: ${{ runner.temp }}/export/*.ipa
+          if-no-files-found: error
