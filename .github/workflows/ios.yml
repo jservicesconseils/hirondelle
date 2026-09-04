@@ -202,6 +202,9 @@ jobs:
         if: steps.check.outputs.ready == 'true'
         env:
           APPSTORE_TEAM_ID: ${{ secrets.APPSTORE_TEAM_ID }}
+          PROFILE_NAME: ${{ steps.profile.outputs.name }}
+          # Doit rester identique à `appId` dans capacitor.config.ts.
+          BUNDLE_ID: ca.jservicesconseils.hirondelle
         run: |
           cat > "$RUNNER_TEMP/exportOptions.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
@@ -214,6 +217,11 @@ jobs:
             <string>$APPSTORE_TEAM_ID</string>
             <key>signingStyle</key>
             <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>$BUNDLE_ID</key>
+              <string>$PROFILE_NAME</string>
+            </dict>
           </dict>
           </plist>
           PLIST
