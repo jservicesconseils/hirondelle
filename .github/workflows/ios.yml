@@ -86,6 +86,11 @@ jobs:
     runs-on: macos-15
     needs: build
     if: github.event_name == 'workflow_dispatch'
+    # Les 7 secrets de signature sont posés dans l'environnement `deployer_aws_prod`,
+    # comme tous les autres secrets de déploiement du projet (voir deploy-backend.yml,
+    # deploy-frontend.yml, cognito-setup.yml) — sans cette ligne, `secrets.*` restent
+    # vides ici et l'étape de vérification plus bas les croit absents.
+    environment: deployer_aws_prod
     defaults:
       run:
         working-directory: roseedhermon-ui-ng
