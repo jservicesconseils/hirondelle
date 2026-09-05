@@ -1,14 +1,15 @@
 name: Build iOS
 
-# Capacitor 7 exige Xcode 16, qui réclame macOS 14 ou plus. Le MacBook Pro de 2015
-# du projet plafonne à macOS 12 : la compilation iOS se fait donc ici, sur un
-# exécuteur macOS fourni par GitHub.
+# Apple exige depuis le SDK iOS 26 (Xcode 26) pour tout envoi à App Store
+# Connect. Le MacBook Pro de 2015 du projet plafonne à macOS 12 et ne peut de
+# toute façon pas faire tourner Xcode 16+ : la compilation iOS se fait donc
+# ici, sur un exécuteur macOS fourni par GitHub.
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
     defaults:
       run:
         working-directory: roseedhermon-ui-ng
@@ -22,7 +23,7 @@ jobs:
           cache: npm
           cache-dependency-path: roseedhermon-ui-ng/package-lock.json
 
-      # L'image macos-15 fournit Xcode 16 par défaut ; on trace la version
+      # L'image macos-26 fournit Xcode 26 par défaut ; on trace la version
       # utilisée pour que tout écart soit visible dans le journal.
       - name: Version de Xcode
         run: xcodebuild -version
@@ -86,7 +87,7 @@ jobs:
   #   3. Créer la fiche de l'app dans App Store Connect avec ce même bundle ID.
   #   4. Créer une clé API App Store Connect (rôle « App Manager » suffit à l'envoi).
   release:
-    runs-on: macos-15
+    runs-on: macos-26
     needs: build
     if: github.event_name == 'workflow_dispatch'
     # Les 7 secrets de signature sont posés dans l'environnement `deployer_aws_prod`,
