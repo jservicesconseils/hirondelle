@@ -23,10 +23,21 @@ jobs:
           cache: npm
           cache-dependency-path: roseedhermon-ui-ng/package-lock.json
 
-      # L'image macos-26 fournit Xcode 26 par défaut ; on trace la version
-      # utilisée pour que tout écart soit visible dans le journal.
-      - name: Version de Xcode
-        run: xcodebuild -version
+      # L'image macos-26 conserve plusieurs Xcode installés en parallèle
+      # (dont d'anciennes versions type 16.x) ; sans sélection explicite,
+      # xcodebuild/xcrun peuvent utiliser une version antérieure à Xcode 26,
+      # ce qu'Apple rejette désormais à l'envoi (SDK iOS 26 minimum requis).
+      - name: Sélectionner Xcode 26
+        run: |
+          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE_PATH" ]; then
+            echo "::error::Aucun Xcode 26.x trouvé sur cet exécuteur."
+            ls /Applications | grep -i xcode
+            exit 1
+          fi
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          echo "DEVELOPER_DIR=$XCODE_PATH/Contents/Developer" >> "$GITHUB_ENV"
+          xcodebuild -version
 
       - run: npm ci
 
@@ -107,6 +118,21 @@ jobs:
           node-version: '20'
           cache: npm
           cache-dependency-path: roseedhermon-ui-ng/package-lock.json
+
+      # Voir le commentaire équivalent dans le job « build » : sans cette
+      # sélection explicite, l'image macos-26 peut utiliser un Xcode
+      # antérieur à la version 26 pour l'archive et l'envoi à TestFlight.
+      - name: Sélectionner Xcode 26
+        run: |
+          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE_PATH" ]; then
+            echo "::error::Aucun Xcode 26.x trouvé sur cet exécuteur."
+            ls /Applications | grep -i xcode
+            exit 1
+          fi
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          echo "DEVELOPER_DIR=$XCODE_PATH/Contents/Developer" >> "$GITHUB_ENV"
+          xcodebuild -version
 
       - name: Secrets de signature présents ?
         id: check
