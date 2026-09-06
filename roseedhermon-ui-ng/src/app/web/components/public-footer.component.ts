@@ -35,6 +35,7 @@ import { scrollToAnchor } from './public-header.component';
 
       <div class="shell footer-legal">
         <small>© {{ year }} · Version 1.0.0</small>
+        <a routerLink="/web/confidentialite">Politique de confidentialité</a>
       </div>
     </footer>
   `,

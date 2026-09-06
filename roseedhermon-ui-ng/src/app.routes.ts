@@ -29,6 +29,7 @@ import { WebMyEventsComponent } from './app/web/pages/events/web-my-events/web-m
 import { WebProfileComponent } from './app/web/pages/profile/web-profile.component';
 import { WebGroupRequestComponent } from './app/web/pages/group-request/web-group-request.component';
 import { VisitorEventsComponent } from './app/web/pages/visitor-events/visitor-events';
+import { ConfidentialiteComponent } from './app/web/pages/confidentialite/confidentialite.component';
 import { MobileEventsComponent } from './app/mobile/pages/events/mobile-events.component';
 import { MobileMembersComponent } from './app/mobile/pages/members/mobile-members.component';
 import { MobileProfileComponent } from './app/mobile/pages/profile/mobile-profile.component';
@@ -49,6 +50,7 @@ export const appRoutes: Routes = [
     // Routes web
     { path: 'web', component: HomeComponent },
     { path: 'web/decouvrir', component: VisitorEventsComponent },
+    { path: 'web/confidentialite', component: ConfidentialiteComponent },
     // L'annuaire n'est visible que connecté, et seulement si le groupe gère ses
     // membres. Le serveur applique les deux mêmes règles.
     { path: 'web/membres', component: WebMembersComponent, canActivate: [authGuard, membersGuard] },
