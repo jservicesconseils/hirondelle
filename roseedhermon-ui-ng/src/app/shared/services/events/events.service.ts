@@ -69,4 +69,28 @@ export class EventService {
     const feedbackEndpoint = this.apiUrl + '/feedback';
     return this.httpClient.post<EventFeedbackDTO>(feedbackEndpoint, feedback);
   }
+
+  // --- Paiement : override du compte de destination pour cet événement --------------
+
+  /** Lien d'onboarding hébergé, à usage unique — à ouvrir aussitôt reçu. */
+  createEventOnboardingLink(eventId: string): Observable<{ url: string }> {
+    return this.httpClient.post<{ url: string }>(`${this.apiUrl}/${eventId}/stripe/onboarding-link`, {});
+  }
+
+  /** Relit l'état du compte connecté sur Stripe, au retour de l'onboarding. */
+  refreshEventAccountStatus(eventId: string): Observable<{ stripeAccountStatus: string }> {
+    return this.httpClient.post<{ stripeAccountStatus: string }>(`${this.apiUrl}/${eventId}/stripe/refresh`, {});
+  }
+
+  /** Retire l'override : l'événement retombe sur le compte du groupe organisateur. */
+  clearEventStripeAccount(eventId: string): Observable<void> {
+    return this.httpClient.delete<void>(`${this.apiUrl}/${eventId}/stripe/account`);
+  }
+
+  /** Réservé au super administrateur. `enabled: null` retire l'override (hérite du groupe). */
+  setEventApplicationFeeEnabled(eventId: string, enabled: boolean | null): Observable<{ applicationFeeEnabled: boolean | null }> {
+    return this.httpClient.patch<{ applicationFeeEnabled: boolean | null }>(`${this.apiUrl}/${eventId}/payment-fee`, {
+      applicationFeeEnabled: enabled
+    });
+  }
 } 

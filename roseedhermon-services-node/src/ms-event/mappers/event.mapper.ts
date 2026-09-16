@@ -223,6 +223,13 @@ export function eventToJson(
     createdByEmail: toStringOrNull(raw.createdByEmail),
     files: overrideFiles === undefined ? embeddedFiles : overrideFiles,
     mainPhotoId: toStringOrNull(raw.mainPhotoId),
+    // Paiement : overrides optionnels posés par des routes dédiées, jamais par
+    // le formulaire de création/édition — volontairement absents de
+    // `EventFields`/`toDocument` pour ne jamais être écrasés par le
+    // remplacement complet d'`updateEvent`. Voir `payment-destination.service.ts`.
+    stripeAccountId: toStringOrNull(raw.stripeAccountId),
+    stripeAccountStatus: toStringOrNull(raw.stripeAccountStatus) ?? 'none',
+    applicationFeeEnabled: raw.applicationFeeEnabled === undefined ? null : Boolean(raw.applicationFeeEnabled),
   };
 }
 

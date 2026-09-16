@@ -246,6 +246,51 @@
               </div>
             </div>
 
+            <!-- Paiements : devise, connexion Stripe, commission plateforme -->
+            <div class="drawer-payments">
+              <h3>Paiements</h3>
+
+              <label class="form-field">
+                <span>Devise des paiements</span>
+                <select
+                  [ngModel]="paymentStatus?.currency ?? 'CAD'"
+                  [disabled]="savingCurrency"
+                  (ngModelChange)="updateCurrency($event)">
+                  <option *ngFor="let currency of currencyChoices" [value]="currency">{{ currency }}</option>
+                </select>
+              </label>
+
+              <div class="stripe-status">
+                <span
+                  class="status-pill"
+                  [class.is-active]="paymentStatus?.stripeAccountStatus === 'active'"
+                  [class.is-pending]="paymentStatus?.stripeAccountStatus === 'pending'"
+                  [class.is-restricted]="paymentStatus?.stripeAccountStatus === 'restricted'">
+                  <ng-container [ngSwitch]="paymentStatus?.stripeAccountStatus">
+                    <span *ngSwitchCase="'active'">Compte Stripe connecté</span>
+                    <span *ngSwitchCase="'pending'">Onboarding Stripe en cours</span>
+                    <span *ngSwitchCase="'restricted'">Compte Stripe restreint</span>
+                    <span *ngSwitchDefault>Aucun compte Stripe connecté</span>
+                  </ng-container>
+                </span>
+                <button type="button" class="cta ghost" [disabled]="connectingStripe" (click)="connectStripe()">
+                  {{ connectingStripe ? 'Redirection…' : (paymentStatus?.stripeAccountStatus === 'active' ? 'Gérer sur Stripe' : 'Connecter Stripe') }}
+                </button>
+              </div>
+
+              <!-- Commission plateforme : réservée au super administrateur -->
+              <label class="form-field checkbox-field" *ngIf="auth.isSuperAdmin()">
+                <input
+                  type="checkbox"
+                  [checked]="hasApplicationFeeEnabled(selectedGroup)"
+                  [disabled]="savingFee"
+                  (change)="toggleApplicationFee($any($event.target).checked)" />
+                <span>Commission de la plateforme (10 %)</span>
+              </label>
+
+              <p class="feature-error" *ngIf="paymentError">{{ paymentError }}</p>
+            </div>
+
             <p class="drawer-note" *ngIf="membersLoading">Chargement de l'annuaire…</p>
             <p class="drawer-note" *ngIf="!membersLoading && !groupMembers.length">
               Ce groupe n'a encore aucun membre.

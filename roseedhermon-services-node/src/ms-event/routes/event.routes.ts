@@ -36,6 +36,12 @@ import {
 import { getEventStats } from '../services/event-stats.service';
 import { administers, isPrivate, isVisibleTo, ownerGroupId } from '../event-visibility';
 import { registrationRouter } from './registration.routes';
+import {
+  clearEventStripeAccount,
+  createEventOnboardingLink,
+  refreshEventAccountStatus,
+  setEventApplicationFeeEnabled,
+} from '../services/event-stripe.service';
 
 /** Routes de `EventController`, montées sur `/api/v1/events`. */
 export const eventRouter = Router();
@@ -412,5 +418,66 @@ eventRouter.delete(
     }
     await deleteEvent(String(req.params.id));
     return emptyResponse.noContent(res);
+  }),
+);
+
+// --- Paiement : override du compte de destination pour cet événement --------------
+
+/** Qui organise l'événement peut y attacher son propre compte de paiement, comme pour le groupe. */
+eventRouter.post(
+  '/:id/stripe/onboarding-link',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const event = await getEvent(String(req.params.id));
+    if (!isVisibleTo(req, event) || !administers(req, event)) {
+      return res.status(403).json({ error: 'Droits insuffisants.' });
+    }
+    const url = await createEventOnboardingLink(String(req.params.id));
+    return res.json({ url });
+  }),
+);
+
+eventRouter.post(
+  '/:id/stripe/refresh',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const event = await getEvent(String(req.params.id));
+    if (!isVisibleTo(req, event) || !administers(req, event)) {
+      return res.status(403).json({ error: 'Droits insuffisants.' });
+    }
+    const stripeAccountStatus = await refreshEventAccountStatus(String(req.params.id));
+    return res.json({ stripeAccountStatus });
+  }),
+);
+
+/** Retire l'override : l'événement retombe sur le compte du groupe organisateur. */
+eventRouter.delete(
+  '/:id/stripe/account',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const event = await getEvent(String(req.params.id));
+    if (!isVisibleTo(req, event) || !administers(req, event)) {
+      return res.status(403).json({ error: 'Droits insuffisants.' });
+    }
+    await clearEventStripeAccount(String(req.params.id));
+    return emptyResponse.noContent(res);
+  }),
+);
+
+/**
+ * Override, pour cet événement seul, de la commission plateforme. Réservé au
+ * super admin — un administrateur de groupe ne voit ni ne contrôle ce
+ * réglage, même pour ses propres événements.
+ */
+eventRouter.patch(
+  '/:id/payment-fee',
+  requireAuth,
+  requireRole(ROLES.SUPER_ADMIN),
+  asyncHandler(async (req, res) => {
+    // `null`/absent retire l'override : l'événement hérite à nouveau du groupe.
+    const value = req.body?.applicationFeeEnabled;
+    const enabled = value === null || value === undefined ? null : Boolean(value);
+    await setEventApplicationFeeEnabled(String(req.params.id), enabled);
+    return res.json({ applicationFeeEnabled: enabled });
   }),
 );

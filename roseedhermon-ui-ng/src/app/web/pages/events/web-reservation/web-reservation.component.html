@@ -69,73 +69,13 @@
 
         <!-- Paiement, seulement si un montant est fixé -->
         <article class="panel" *ngIf="requiresPayment">
-          <h2>Paiement par carte</h2>
-
-          <div class="card-preview">
-            <span class="card-brand">{{ brandLabel }}</span>
-            <span class="card-number">{{ maskedNumber }}</span>
-            <span class="card-row">
-              <small>{{ holder || 'NOM DU TITULAIRE' }}</small>
-              <small>{{ expiry || 'MM/AA' }}</small>
-            </span>
-          </div>
-
-          <label class="field">
-            <span>Numéro de carte</span>
-            <input
-              type="text"
-              name="cardNumber"
-              inputmode="numeric"
-              autocomplete="cc-number"
-              placeholder="0000 0000 0000 0000"
-              [ngModel]="cardNumber"
-              (ngModelChange)="onCardNumberChange($event)" />
-            <em class="error" *ngIf="touched && !numberValid">Ce numéro de carte est invalide.</em>
-          </label>
-
-          <label class="field">
-            <span>Titulaire</span>
-            <input
-              type="text"
-              name="holder"
-              autocomplete="cc-name"
-              placeholder="Tel qu'inscrit sur la carte"
-              [(ngModel)]="holder" />
-            <em class="error" *ngIf="touched && !holderValid">Indiquez le nom du titulaire.</em>
-          </label>
-
-          <div class="field-row">
-            <label class="field">
-              <span>Expiration</span>
-              <input
-                type="text"
-                name="expiry"
-                inputmode="numeric"
-                autocomplete="cc-exp"
-                placeholder="MM/AA"
-                [ngModel]="expiry"
-                (ngModelChange)="onExpiryChange($event)" />
-              <em class="error" *ngIf="touched && !expiryValid">Date invalide ou dépassée.</em>
-            </label>
-
-            <label class="field">
-              <span>Code de sécurité</span>
-              <input
-                type="text"
-                name="cvc"
-                inputmode="numeric"
-                autocomplete="cc-csc"
-                [placeholder]="brand === 'amex' ? '4 chiffres' : '3 chiffres'"
-                [ngModel]="cvc"
-                (ngModelChange)="onCvcChange($event)" />
-              <em class="error" *ngIf="touched && !cvcValid">Code incomplet.</em>
-            </label>
-          </div>
+          <h2>Paiement</h2>
 
           <p class="demo-notice">
-            <i class="pi pi-exclamation-triangle"></i>
-            Aucune passerelle de paiement n'est branchée : ces informations sont
-            vérifiées puis abandonnées, et <strong>aucun débit n'est effectué</strong>.
+            <i class="pi pi-lock"></i>
+            Vous serez redirigé vers la page de paiement sécurisée de Stripe
+            après avoir confirmé vos coordonnées. Votre place n'est réservée
+            qu'une fois le paiement effectué.
           </p>
         </article>
       </div>

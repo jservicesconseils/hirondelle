@@ -16,6 +16,8 @@ export interface GroupInput {
   features: Feature[] | null;
   /** `null` = non transmis, à distinguer de `false` (voir `groupFromBody`). */
   showPublicCatalog: boolean | null;
+  /** Devise ISO 4217 des paiements du groupe (ex. "CAD"), choisie par son admin. */
+  currency: string | null;
 }
 
 export type GroupStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -42,6 +44,12 @@ export function groupToJson(doc: GroupDocument) {
     // Toujours explicite : le client n'a pas à deviner ce que signifie l'absence.
     features: normalizeFeatures(doc.features),
     showPublicCatalog: doc.showPublicCatalog !== false,
+    currency: doc.currency ?? 'CAD',
+    // Paiement : jamais transmis par le formulaire d'identité du groupe, voir
+    // `updateGroup`. Exposés en lecture pour l'écran « Paiements ».
+    stripeAccountId: doc.stripeAccountId ?? null,
+    stripeAccountStatus: doc.stripeAccountStatus ?? 'none',
+    applicationFeeEnabled: doc.applicationFeeEnabled !== false,
     status: normalizeStatus(doc.status),
     requestedByEmail: doc.requestedByEmail ?? null,
     requestedAt: doc.requestedAt ?? null,
@@ -69,5 +77,6 @@ export function groupFromBody(body: Record<string, unknown>): GroupInput {
      */
     features: body.features === undefined ? null : normalizeFeatures(body.features),
     showPublicCatalog: body.showPublicCatalog === undefined ? null : Boolean(body.showPublicCatalog),
+    currency: toStringOrNull(body.currency),
   };
 }

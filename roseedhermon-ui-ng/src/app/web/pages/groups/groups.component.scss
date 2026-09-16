@@ -268,6 +268,48 @@
   }
 }
 
+.drawer-payments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  margin-bottom: 0.5rem;
+  border-top: 1px solid $border;
+  border-bottom: 1px solid $border;
+
+  h3 {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+}
+
+.stripe-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: #f1ece7;
+  color: $muted;
+
+  &.is-active { background: #e8f7ee; color: #1f8a4c; }
+  &.is-pending { background: #fff4e0; color: #b9770e; }
+  &.is-restricted { background: #fdecea; color: #c0392b; }
+}
+
 .member-line {
   display: flex;
   align-items: center;

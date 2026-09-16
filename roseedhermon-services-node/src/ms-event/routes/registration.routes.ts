@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import type { Request } from 'express';
-import { asyncHandler, emptyResponse, isSuperAdmin, requireAuth, ROLES } from '../../common';
+import { ApiError, asyncHandler, emptyResponse, isSuperAdmin, requireAuth, ROLES } from '../../common';
 import { administers, isVisibleTo, ownsRegistration } from '../event-visibility';
 import { getAllEvents, getEvent } from '../services/event.service';
 import {
@@ -16,6 +16,7 @@ import {
   registerForEvent,
   registrationFromBody,
 } from '../services/event-registration.service';
+import { createCheckoutSession } from '../services/checkout.service';
 
 /** Routes de `EventRegistrationController`, montées sur `/api/v1/registrations`. */
 export const registrationRouter = Router();
@@ -104,6 +105,69 @@ registrationRouter.post(
     });
 
     res.json(created);
+  }),
+);
+
+/**
+ * Démarre le paiement d'une inscription à un événement payant : crée
+ * l'inscription en attente puis renvoie l'URL d'une Checkout Session Stripe.
+ * Reprend, avant le paiement lui-même, exactement les contrôles de `POST /` —
+ * un événement payant n'est pas moins ouvert qu'un événement gratuit.
+ */
+registrationRouter.post(
+  '/checkout-session',
+  asyncHandler(async (req, res) => {
+    const input = registrationFromBody(req.body);
+
+    if (!input.eventId) {
+      res.status(400).json({ error: "L'identifiant de l'événement est requis." });
+      return;
+    }
+
+    const event = await loadEvent(input.eventId);
+    if (event === null || !isVisibleTo(req, event)) {
+      res.status(404).json({ error: 'Événement introuvable.' });
+      return;
+    }
+
+    if (!input.firstName && !input.lastName && !input.email && !input.userId) {
+      res.status(400).json({ error: 'Indiquez au moins un nom ou un courriel.' });
+      return;
+    }
+
+    const existing = await findExistingRegistration(input.eventId, input.userId, input.email);
+    if (existing !== null) {
+      res.status(200).json({ ...existing, alreadyRegistered: true });
+      return;
+    }
+
+    const announced = Number(event.availableSeats ?? 0);
+    const requested = input.seats ?? 1;
+    if (announced > 0) {
+      const reserved = await countReservedSeats(input.eventId);
+      if (reserved + requested > announced) {
+        res.status(409).json({
+          error: 'Il ne reste pas assez de places.',
+          availableSeats: Math.max(0, announced - reserved),
+        });
+        return;
+      }
+    }
+
+    try {
+      const { url } = await createCheckoutSession(event, {
+        ...input,
+        seats: requested,
+        groupId: input.groupId ?? (event.groupId ? String(event.groupId) : null),
+      });
+      res.json({ url });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        res.status(error.status).json({ error: error.message });
+        return;
+      }
+      throw error;
+    }
   }),
 );
 

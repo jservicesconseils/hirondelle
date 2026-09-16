@@ -38,5 +38,11 @@ export interface GroupEntity {
     decidedByEmail?: string | null;
     decidedAt?: string | null;
     rejectionReason?: string | null;
+    /** Champs additifs — paiement (Stripe Connect). Voir `groups.component.ts`. */
+    currency?: string;
+    stripeAccountId?: string | null;
+    stripeAccountStatus?: 'none' | 'pending' | 'active' | 'restricted';
+    /** Absent ou vrai : la commission de 10 % de la plateforme s'applique. */
+    applicationFeeEnabled?: boolean;
 }
 

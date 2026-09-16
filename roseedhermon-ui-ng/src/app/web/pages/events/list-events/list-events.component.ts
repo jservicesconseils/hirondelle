@@ -93,6 +93,35 @@ export class ListEventsComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.loadEvents();
     this.loadGroups();
+    this.handleStripeReturn();
+  }
+
+  /**
+   * Retour de l'onboarding Stripe hébergé d'un compte propre à un événement
+   * (`stripeOnboarding=return&eventId=...`, voir `event-stripe.service.ts` côté
+   * serveur). On relit l'état du compte tout de suite plutôt que d'attendre le
+   * webhook `account.updated`, puis on rouvre la fiche pour que le badge de
+   * statut soit à jour sans que la personne ait à rien refaire.
+   */
+  private handleStripeReturn(): void {
+    const params = this.route.snapshot.queryParamMap;
+    if (params.get('stripeOnboarding') !== 'return') return;
+    const eventId = params.get('eventId');
+
+    this.router.navigate([], { queryParams: {}, replaceUrl: true });
+    if (!eventId) return;
+
+    this.eventService.refreshEventAccountStatus(eventId).subscribe({
+      next: () => this.reopenEventForEdit(eventId),
+      error: () => this.reopenEventForEdit(eventId)
+    });
+  }
+
+  private reopenEventForEdit(eventId: string): void {
+    this.eventService.getEvent(eventId).subscribe({
+      next: (event) => this.onEditEvent(event),
+      error: () => undefined
+    });
   }
 
   /**

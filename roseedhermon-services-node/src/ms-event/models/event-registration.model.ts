@@ -35,6 +35,14 @@ const eventRegistrationSchema = new Schema(
     groupId: String,
     createdAt: Date,
 
+    // --- Paiement ------------------------------------------------------------------
+    /** ex: not_required, pending, paid, failed. Absent = 'not_required' (événement gratuit). */
+    paymentStatus: String,
+    stripeCheckoutSessionId: String,
+    stripePaymentIntentId: String,
+    /** Montant réellement débité (dans la devise du groupe), posé par le webhook. */
+    amountPaid: Number,
+
     _class: { type: String, default: EVENT_REGISTRATION_CLASS },
   },
   {

@@ -10,18 +10,6 @@ import { EventService } from '../../../../shared/services/events/events.service'
 import { EventImageService } from '../../../../shared/services/events/event-image.service';
 import { RegistrationService } from '../../../../shared/services/events/registrations.service';
 import { EventCard, toEventCard } from '../../../../shared/utils/event-presentation';
-import {
-  brandLabel,
-  CardBrand,
-  cardNumberValid,
-  cvcValid,
-  detectBrand,
-  expiryValid,
-  formatCardNumber,
-  formatCvc,
-  formatExpiry,
-  maskedNumber
-} from '../../../../shared/utils/card';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { TicketStoreService } from '../../../../mobile/services/ticket-store.service';
 import { PublicHeaderComponent } from '../../../components/public-header.component';
@@ -56,12 +44,6 @@ export class WebReservationComponent implements OnInit {
   phoneNumber = '';
   note = '';
   seats = 1;
-
-  // Saisie de la carte, uniquement pour les événements payants.
-  cardNumber = '';
-  holder = '';
-  expiry = '';
-  cvc = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -155,73 +137,19 @@ export class WebReservationComponent implements OnInit {
     return this.firstNameValid && this.lastNameValid && this.emailValid;
   }
 
-  // --- Saisie de la carte -----------------------------------------------------------
-
-  onCardNumberChange(value: string): void {
-    this.cardNumber = formatCardNumber(value);
-  }
-
-  onExpiryChange(value: string): void {
-    this.expiry = formatExpiry(value);
-  }
-
-  onCvcChange(value: string): void {
-    this.cvc = formatCvc(value);
-  }
-
-  get brand(): CardBrand {
-    return detectBrand(this.cardNumber);
-  }
-
-  get brandLabel(): string {
-    return brandLabel(this.brand);
-  }
-
-  get maskedNumber(): string {
-    return maskedNumber(this.cardNumber);
-  }
-
-  get numberValid(): boolean {
-    return cardNumberValid(this.cardNumber);
-  }
-
-  get holderValid(): boolean {
-    return this.holder.trim().length >= 3;
-  }
-
-  get expiryValid(): boolean {
-    return expiryValid(this.expiry);
-  }
-
-  get cvcValid(): boolean {
-    return cvcValid(this.cvc, this.brand);
-  }
-
-  get paymentValid(): boolean {
-    return this.numberValid && this.holderValid && this.expiryValid && this.cvcValid;
-  }
-
   get formValid(): boolean {
-    return this.attendeeValid && (!this.requiresPayment || this.paymentValid);
+    return this.attendeeValid;
   }
 
   get submitLabel(): string {
-    if (this.submitting) return 'Enregistrement…';
+    if (this.submitting) return this.requiresPayment ? 'Redirection vers le paiement…' : 'Enregistrement…';
     if (this.requiresPayment && this.total) return `Payer ${this.total} $ et réserver`;
     return 'Confirmer ma réservation';
   }
 
   // --- Envoi ------------------------------------------------------------------------
 
-  submit(): void {
-    this.touched = true;
-    this.submitError = '';
-
-    const eventId = this.card?.id;
-    if (!eventId || !this.formValid || this.submitting) return;
-
-    this.submitting = true;
-
+  private buildPayload(eventId: string): EventRegistrationDTO {
     const payload: EventRegistrationDTO = {
       eventId,
       status: 'CONFIRMED',
@@ -237,6 +165,34 @@ export class WebReservationComponent implements OnInit {
     // Rattache la place à la fiche membre quand une session est ouverte.
     const memberId = this.auth.user().member?.id;
     if (memberId) payload.userId = memberId;
+
+    return payload;
+  }
+
+  submit(): void {
+    this.touched = true;
+    this.submitError = '';
+
+    const eventId = this.card?.id;
+    if (!eventId || !this.formValid || this.submitting) return;
+
+    this.submitting = true;
+    const payload = this.buildPayload(eventId);
+
+    if (this.requiresPayment) {
+      // Le paiement se fait sur la page hébergée de Stripe ; la réservation
+      // n'est confirmée que par le webhook, une fois le paiement réglé.
+      this.registrations.createCheckoutSession(payload).subscribe({
+        next: ({ url }) => {
+          window.location.href = url;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.submitting = false;
+          this.submitError = describeError(error);
+        }
+      });
+      return;
+    }
 
     this.registrations.register(payload).subscribe({
       next: (registration) => {
@@ -263,9 +219,12 @@ export class WebReservationComponent implements OnInit {
 function describeError(error: HttpErrorResponse): string {
   const message = typeof error?.error?.error === 'string' ? error.error.error : null;
 
-  if (error?.status === 409) {
-    const left = error.error?.availableSeats;
-    return typeof left === 'number' && left > 0
+  // 409 « places insuffisantes » (registration.routes.ts) porte `availableSeats` ;
+  // le 409 « paiement non configuré » (checkout.service.ts) ne le porte pas et
+  // doit afficher son propre message, pas celui des places.
+  if (error?.status === 409 && typeof error.error?.availableSeats === 'number') {
+    const left = error.error.availableSeats;
+    return left > 0
       ? `Il ne reste que ${left} place${left > 1 ? 's' : ''} sur cet événement.`
       : "Cet événement est complet : il ne reste plus de place.";
   }

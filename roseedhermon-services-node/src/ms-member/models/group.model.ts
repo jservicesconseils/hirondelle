@@ -57,6 +57,18 @@ const groupSchema = new Schema(
      */
     adminEmails: { type: [String] },
     rejectionReason: { type: String },
+    /**
+     * Champs additifs : paiement. `stripeAccountId` identifie le compte Stripe
+     * Express connecté du groupe (destination par défaut des paiements de ses
+     * événements) ; `stripeAccountStatus` reflète son état d'onboarding.
+     * `currency` (ISO 4217, ex. "CAD") est choisie par l'admin du groupe.
+     * `applicationFeeEnabled` (défaut true si absent) active la commission de
+     * la plateforme ; seul le super admin peut la désactiver.
+     */
+    stripeAccountId: { type: String },
+    stripeAccountStatus: { type: String },
+    currency: { type: String },
+    applicationFeeEnabled: { type: Boolean },
     _class: { type: String, default: GROUP_CLASS },
   },
   {

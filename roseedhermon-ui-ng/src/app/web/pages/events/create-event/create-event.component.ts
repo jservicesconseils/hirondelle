@@ -189,6 +189,14 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
         next: (groups) => (this.groups = groups),
         error: () => (this.groups = [])
       });
+      // La devise affichée suit le groupe choisi pour un événement réservé.
+      this.eventForm
+        .get('groupId')
+        ?.valueChanges.pipe(takeUntil(this.destroy$))
+        .subscribe((groupId) => this.loadEventGroup(groupId || null));
+    } else {
+      // Un administrateur de groupe est déjà rattaché au sien : pas de choix à faire.
+      this.loadEventGroup(this.auth.user().groupId);
     }
 
     // La politique d'usage de Nominatim impose de rester sous une requête par
@@ -359,7 +367,13 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
     
     // Appliquer le patch
     this.eventForm.patchValue(formData);
-    
+
+    // Paiement : devise du groupe organisateur et override propre à cet événement.
+    this.loadEventGroup(event.groupId || null);
+    this.eventPaymentAccountId = event.stripeAccountId ?? null;
+    this.eventPaymentAccountStatus = event.stripeAccountStatus ?? 'none';
+    this.eventApplicationFeeOverride = event.applicationFeeEnabled ?? null;
+
     // Vérifier que le patch a fonctionné
     console.log('=== VÉRIFICATION APRÈS PATCH ===');
     console.log('Formulaire après patch:', this.eventForm.value);
@@ -885,10 +899,98 @@ export class CreateEventComponent implements OnInit, AfterViewInit, OnChanges, O
     return this.auth.isSuperAdmin() && this.eventForm.value.visibility !== 'PUBLIC' && !this.eventForm.value.groupId;
   }
 
-  /** « Laissez 0 € pour un événement gratuit » : `free` suit le montant saisi. */
+  /** « Laissez 0 pour un événement gratuit » : `free` suit le montant saisi. */
   onAmountChange() {
     const amount = Number(this.eventForm.get('amount')?.value);
     this.eventForm.patchValue({ free: !amount }, { emitEvent: false });
+  }
+
+  // --- Paiement -----------------------------------------------------------------
+
+  /** Groupe organisateur, chargé pour afficher sa devise à côté du prix. */
+  eventGroup: GroupEntity | null = null;
+
+  /** `null` tant que l'événement n'a pas encore de compte propre : hérite du groupe. */
+  eventPaymentAccountId: string | null = null;
+  eventPaymentAccountStatus: 'none' | 'pending' | 'active' | 'restricted' = 'none';
+  /** `null` = hérite du réglage du groupe. Réservé au super admin. */
+  eventApplicationFeeOverride: boolean | null = null;
+
+  connectingEventStripe = false;
+  clearingEventStripe = false;
+  savingEventFee = false;
+  eventPaymentError = '';
+
+  get eventCurrency(): string {
+    return this.eventGroup?.currency || 'CAD';
+  }
+
+  private loadEventGroup(groupId: string | null | undefined): void {
+    if (!groupId) {
+      this.eventGroup = null;
+      return;
+    }
+    this.groupService.getGroup(groupId).subscribe({
+      next: (group) => (this.eventGroup = group),
+      error: () => (this.eventGroup = null)
+    });
+  }
+
+  /** Ouvre l'onboarding Stripe Connect propre à cet événement (override du compte du groupe). */
+  connectEventStripe(): void {
+    if (!this.eventToEdit?.id || this.connectingEventStripe) return;
+    this.connectingEventStripe = true;
+    this.eventPaymentError = '';
+
+    this.eventService.createEventOnboardingLink(this.eventToEdit.id).subscribe({
+      next: ({ url }) => {
+        window.location.href = url;
+      },
+      error: (error) => {
+        this.connectingEventStripe = false;
+        this.eventPaymentError = `La connexion à Stripe a échoué (${error?.status || 'réseau'}).`;
+      }
+    });
+  }
+
+  /** Retire l'override : l'événement retombe sur le compte du groupe organisateur. */
+  clearEventStripe(): void {
+    if (!this.eventToEdit?.id || this.clearingEventStripe) return;
+    this.clearingEventStripe = true;
+    this.eventPaymentError = '';
+
+    this.eventService.clearEventStripeAccount(this.eventToEdit.id).subscribe({
+      next: () => {
+        this.clearingEventStripe = false;
+        this.eventPaymentAccountId = null;
+        this.eventPaymentAccountStatus = 'none';
+      },
+      error: (error) => {
+        this.clearingEventStripe = false;
+        this.eventPaymentError = `Le retrait a échoué (${error?.status || 'réseau'}).`;
+      }
+    });
+  }
+
+  /** Réservé au super administrateur — l'écran ne le montre déjà qu'à lui, voir le gabarit. */
+  toggleEventApplicationFee(value: boolean | null): void {
+    if (!this.eventToEdit?.id || this.savingEventFee) return;
+    this.savingEventFee = true;
+    this.eventPaymentError = '';
+
+    this.eventService.setEventApplicationFeeEnabled(this.eventToEdit.id, value).subscribe({
+      next: () => {
+        this.savingEventFee = false;
+        this.eventApplicationFeeOverride = value;
+      },
+      error: (error) => {
+        this.savingEventFee = false;
+        this.eventPaymentError =
+          error?.status === 403
+            ? 'Seul un super administrateur peut modifier la commission.'
+            : `La modification a échoué (${error?.status || 'réseau'}).`;
+      }
+    });
   }
 
   /** Documents = tout ce qui n'est pas une image de présentation. */

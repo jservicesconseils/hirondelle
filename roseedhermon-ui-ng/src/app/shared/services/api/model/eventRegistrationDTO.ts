@@ -30,4 +30,11 @@ export interface EventRegistrationDTO {
      * créer une seconde — un rechargement de la confirmation, par exemple.
      */
     alreadyRegistered?: boolean;
+    /**
+     * Champs additifs — paiement. `not_required` pour un événement gratuit ;
+     * `pending` tant que la Checkout Session n'est pas réglée ; `paid` une
+     * fois le webhook Stripe traité. Voir `web-ticket.component.ts`.
+     */
+    paymentStatus?: 'not_required' | 'pending' | 'paid' | 'failed';
+    amountPaid?: number | null;
 }

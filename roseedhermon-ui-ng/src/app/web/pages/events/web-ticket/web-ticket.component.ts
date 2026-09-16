@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { switchMap } from 'rxjs/operators';
+import { Subject, timer } from 'rxjs';
+import { switchMap, takeUntil, takeWhile } from 'rxjs/operators';
 import * as QRCode from 'qrcode';
 
 import { EventDTO } from '../../../../shared/services/api/model/eventDTO';
@@ -29,7 +30,7 @@ import { PublicFooterComponent } from '../../../components/public-footer.compone
   templateUrl: './web-ticket.component.html',
   styleUrls: ['./web-ticket.component.scss']
 })
-export class WebTicketComponent implements OnInit {
+export class WebTicketComponent implements OnInit, OnDestroy {
   card: EventCard | null = null;
   registration: EventRegistrationDTO | null = null;
 
@@ -39,6 +40,16 @@ export class WebTicketComponent implements OnInit {
   cancelling = false;
   cancelled = false;
   qrDataUrl = '';
+
+  /** Vrai tant que le webhook Stripe n'a pas confirmé le paiement. */
+  get paymentPending(): boolean {
+    return this.registration?.paymentStatus === 'pending';
+  }
+
+  /** Le webhook n'est pas arrivé après le délai d'attente habituel — situation rare. */
+  paymentStillPendingAfterWait = false;
+
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private route: ActivatedRoute,
@@ -81,8 +92,12 @@ export class WebTicketComponent implements OnInit {
       .subscribe({
         next: (event: EventDTO) => {
           this.card = toEventCard(event, event.files?.length ? this.images.getEventImageUrl(event) : null);
-          this.buildQrCode();
           this.loading = false;
+          if (this.paymentPending) {
+            this.pollPaymentStatus(registrationId);
+          } else {
+            this.buildQrCode();
+          }
         },
         error: (error: HttpErrorResponse) => {
           this.loadError =
@@ -92,6 +107,50 @@ export class WebTicketComponent implements OnInit {
           this.loading = false;
         }
       });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * Le webhook `checkout.session.completed` arrive en général en quelques
+   * secondes après le retour depuis Stripe, mais pas forcément avant que
+   * cette page ne s'affiche. On relit l'inscription toutes les 3 secondes,
+   * jusqu'à 10 fois (30 secondes), pour faire apparaître le billet dès que
+   * le paiement est confirmé sans que la personne ait à recharger la page.
+   */
+  private pollPaymentStatus(registrationId: string): void {
+    let attempts = 0;
+    timer(3000, 3000)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap(() => this.registrations.get(registrationId)),
+        takeWhile(() => {
+          attempts += 1;
+          return attempts <= 10;
+        }, true)
+      )
+      .subscribe({
+        next: (registration) => {
+          this.registration = registration;
+          if (!this.paymentPending) {
+            this.buildQrCode();
+          } else if (attempts >= 10) {
+            this.paymentStillPendingAfterWait = true;
+          }
+        },
+        error: () => undefined
+      });
+  }
+
+  /** Relance manuellement la vérification, depuis le bouton affiché après l'attente. */
+  checkPaymentAgain(): void {
+    const registrationId = this.registration?.id;
+    if (!registrationId) return;
+    this.paymentStillPendingAfterWait = false;
+    this.pollPaymentStatus(registrationId);
   }
 
   /** Numéro lisible, repris des derniers caractères de l'inscription. */

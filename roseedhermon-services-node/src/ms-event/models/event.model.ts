@@ -93,6 +93,21 @@ const eventSchema = new Schema(
     createdByEmail: String,
     files: { type: [embeddedEventFileSchema], default: undefined },
     mainPhotoId: String,
+    /**
+     * Champs additifs de paiement, jamais écrits par la création/édition normale
+     * de l'événement (voir `eventToJson`, absents de `EventFields`/`toDocument`
+     * pour ne jamais être effacés par le remplacement complet d'`updateEvent`).
+     *
+     * `stripeAccountId`/`stripeAccountStatus` : compte Stripe Express propre à cet
+     * événement, qui prend le pas sur celui du groupe quand il est renseigné —
+     * posés par les routes d'onboarding dédiées, ouvertes à qui administre
+     * l'événement (comme pour le groupe).
+     * `applicationFeeEnabled` : override de la commission plateforme
+     * (`null`/absent = hérite du réglage du groupe) — réservé au super admin.
+     */
+    stripeAccountId: String,
+    stripeAccountStatus: String,
+    applicationFeeEnabled: Boolean,
     _class: { type: String, default: EVENT_CLASS },
   },
   {

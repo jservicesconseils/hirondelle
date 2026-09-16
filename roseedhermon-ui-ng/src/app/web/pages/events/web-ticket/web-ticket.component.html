@@ -14,7 +14,25 @@
   <a class="cta" routerLink="/web">Voir d'autres événements</a>
 </section>
 
-<ng-container *ngIf="!cancelled">
+
+<!-- Le webhook Stripe n'a pas encore confirmé le paiement -->
+<section class="state-block" *ngIf="!cancelled && paymentPending">
+  <h1>Confirmation du paiement…</h1>
+  <p *ngIf="!paymentStillPendingAfterWait">
+    Votre paiement est en cours de traitement. Cette page se mettra à jour
+    automatiquement dès qu'il sera confirmé — inutile de recharger.
+  </p>
+  <ng-container *ngIf="paymentStillPendingAfterWait">
+    <p>
+      La confirmation prend plus de temps que d'habitude. Si le paiement a
+      bien été accepté sur la page Stripe, votre billet apparaîtra ici sous
+      peu.
+    </p>
+    <button type="button" class="cta" (click)="checkPaymentAgain()">Vérifier à nouveau</button>
+  </ng-container>
+</section>
+
+<ng-container *ngIf="!cancelled && !paymentPending">
 <section class="ticket-page" *ngIf="card as event">
   <div class="shell">
     <header class="confirm">

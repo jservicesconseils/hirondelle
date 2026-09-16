@@ -50,4 +50,14 @@ export class RegistrationService {
   cancel(registrationId: string): Observable<void> {
     return this.http.delete<void>(`${BASE_PATH}/${registrationId}`);
   }
+
+  /**
+   * Démarre le paiement d'un événement payant : crée l'inscription en attente
+   * et renvoie l'URL d'une Checkout Session Stripe, à ouvrir aussitôt reçue.
+   * La confirmation (webhook) se fait côté serveur — `get()` reflète ensuite
+   * `paymentStatus: 'paid'` une fois le paiement réglé.
+   */
+  createCheckoutSession(registration: EventRegistrationDTO): Observable<{ url: string }> {
+    return this.http.post<{ url: string }>(`${BASE_PATH}/checkout-session`, registration);
+  }
 }

@@ -1,6 +1,13 @@
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
 
+declare module 'express-serve-static-core' {
+  interface Request {
+    /** Octets bruts du corps JSON, conservés pour la vérification de signature Stripe. */
+    rawBody?: Buffer;
+  }
+}
+
 /**
  * Erreur transportant un code HTTP explicite.
  *
@@ -44,7 +51,19 @@ export function createBaseApp(): Express {
 
   // Spring acceptait des requêtes multipart jusqu'à 50 Mo : on aligne le JSON
   // pour que `POST /events/with-photos` (photos encodées) passe aussi.
-  app.use(express.json({ limit: '50mb' }));
+  //
+  // `verify` conserve les octets bruts du corps sur `req.rawBody` : le webhook
+  // Stripe en a besoin pour vérifier sa signature (`stripe.webhooks.constructEvent`),
+  // qui doit s'appliquer aux octets exacts reçus et non au JSON re-sérialisé.
+  // N'affecte aucune route existante — le parsing JSON reste identique.
+  app.use(
+    express.json({
+      limit: '50mb',
+      verify: (req, _res, buf) => {
+        (req as Request).rawBody = buf;
+      },
+    }),
+  );
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
   return app;

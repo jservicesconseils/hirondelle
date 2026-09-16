@@ -7,6 +7,7 @@ import { eventRouter } from './routes/event.routes';
 import { feedbackRouter } from './routes/feedback.routes';
 import { fileRouter } from './routes/file.routes';
 import { registrationRouter } from './routes/registration.routes';
+import { webhookRouter } from './routes/webhook.routes';
 
 export function createApp(): Express {
   const app = createBaseApp();
@@ -28,6 +29,9 @@ export function createApp(): Express {
   app.use('/api/v1/registrations', registrationRouter);
   app.use('/api/v1/feedback', feedbackRouter);
   app.use('/api/v1/admin', adminRouter);
+  // Stripe n'envoie aucun jeton Cognito : pas de `requireAuth` ici, la
+  // vérification se fait par signature (`Stripe-Signature`), voir le routeur.
+  app.use('/api/v1/webhooks', webhookRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler(config.serviceName));

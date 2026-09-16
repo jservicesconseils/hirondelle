@@ -30,4 +30,10 @@ export const config = {
    * testait l'appartenance avec `allowedTypes.contains(contentType)`.
    */
   allowedTypes: env('APP_FILE_ALLOWED_TYPES', DEFAULT_ALLOWED_TYPES),
+  /** Clé secrète du compte Stripe principal de la plateforme. Vide en local sans .env. */
+  stripeSecretKey: env('STRIPE_SECRET_KEY', ''),
+  /** Secret de signature du webhook Stripe (`whsec_...`), pour vérifier `Stripe-Signature`. */
+  stripeWebhookSecret: env('STRIPE_WEBHOOK_SECRET', ''),
+  /** URL du site web, pour les `success_url`/`cancel_url` des Checkout Sessions. */
+  webBaseUrl: env('WEB_BASE_URL', 'http://localhost:4200'),
 } as const;

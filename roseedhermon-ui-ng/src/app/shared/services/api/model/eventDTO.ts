@@ -39,5 +39,14 @@ export interface EventDTO {
     files?: Array<EventFileDTO>;
     /** Identifiant du fichier servant de visuel principal. */
     mainPhotoId?: string;
+    /**
+     * Champs additifs — paiement. `stripeAccountId`/`stripeAccountStatus` : compte
+     * Stripe propre à cet événement (override, sinon celui du groupe organisateur).
+     * `applicationFeeEnabled` : `null`/absent hérite du réglage du groupe ; réservé
+     * au super admin. Voir `create-event.component.ts`.
+     */
+    stripeAccountId?: string | null;
+    stripeAccountStatus?: 'none' | 'pending' | 'active' | 'restricted';
+    applicationFeeEnabled?: boolean | null;
 }
 

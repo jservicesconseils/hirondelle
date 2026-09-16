@@ -1,12 +1,22 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { GroupEntity } from '../../../shared/services/api/model/groupEntity';
 import { Member } from '../../../shared/services/api/model/member';
-import { GroupService, GroupStats, GroupWithCount, GroupsOverview } from '../../../shared/services/groups/groups.service';
+import {
+  GroupPaymentStatus,
+  GroupService,
+  GroupStats,
+  GroupWithCount,
+  GroupsOverview
+} from '../../../shared/services/groups/groups.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Feature, FEATURES } from '../../../core/auth/auth.model';
+
+/** Devises acceptées pour les paiements Stripe des groupes de cette instance. */
+const CURRENCY_CHOICES = ['CAD', 'USD', 'EUR'];
 
 /** Un module, tel qu'il est présenté dans l'écran. */
 interface FeatureChoice {
@@ -93,12 +103,36 @@ export class GroupsComponent implements OnInit {
 
   constructor(
     private groupService: GroupService,
-    public auth: AuthService
+    public auth: AuthService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.load();
     if (this.auth.isSuperAdmin()) this.loadRequests();
+    this.handleStripeReturn();
+  }
+
+  /**
+   * Retour de l'onboarding Stripe hébergé (`stripeOnboarding=return&groupId=...`,
+   * voir `group-stripe.service.ts` côté serveur). On relit l'état du compte tout
+   * de suite plutôt que d'attendre le webhook `account.updated`, puis on rouvre
+   * le tiroir du groupe pour que le badge de statut soit à jour sans que la
+   * personne ait à rien refaire.
+   */
+  private handleStripeReturn(): void {
+    const params = this.route.snapshot.queryParamMap;
+    if (params.get('stripeOnboarding') !== 'return') return;
+    const groupId = params.get('groupId');
+
+    this.router.navigate([], { queryParams: {}, replaceUrl: true });
+    if (!groupId) return;
+
+    this.groupService.refreshAccountStatus(groupId).subscribe({
+      next: () => this.load(),
+      error: () => this.load()
+    });
   }
 
   get filteredGroups(): GroupWithCount[] {
@@ -198,7 +232,14 @@ export class GroupsComponent implements OnInit {
     this.selectedGroup = group;
     this.groupMembers = [];
     this.groupStats = null;
+    this.paymentStatus = null;
+    this.paymentError = '';
     if (!group.id) return;
+
+    this.groupService.getPaymentStatus(group.id).subscribe({
+      next: (status) => (this.paymentStatus = status),
+      error: () => (this.paymentStatus = null)
+    });
 
     this.membersLoading = true;
     this.groupService.getGroupMembers(group.id).subscribe({
@@ -232,6 +273,80 @@ export class GroupsComponent implements OnInit {
     this.selectedGroup = null;
     this.groupMembers = [];
     this.groupStats = null;
+    this.paymentStatus = null;
+  }
+
+  // --- Paiement (Stripe Connect) -----------------------------------------------------
+
+  readonly currencyChoices = CURRENCY_CHOICES;
+
+  paymentStatus: GroupPaymentStatus | null = null;
+  paymentError = '';
+  connectingStripe = false;
+  savingFee = false;
+  savingCurrency = false;
+
+  /** Ouvre l'onboarding Stripe Connect hébergé dans le même onglet (retour par `stripeOnboarding=return`). */
+  connectStripe(): void {
+    if (!this.selectedGroup?.id || this.connectingStripe) return;
+    this.connectingStripe = true;
+    this.paymentError = '';
+
+    this.groupService.createOnboardingLink(this.selectedGroup.id).subscribe({
+      next: ({ url }) => {
+        window.location.href = url;
+      },
+      error: (error) => {
+        this.connectingStripe = false;
+        this.paymentError =
+          error?.status === 400
+            ? "Le paiement n'est pas configuré sur cette instance."
+            : `La connexion à Stripe a échoué (${error?.status || 'réseau'}).`;
+      }
+    });
+  }
+
+  updateCurrency(currency: string): void {
+    const group = this.selectedGroup;
+    if (!group?.id || this.savingCurrency) return;
+
+    const before = this.paymentStatus?.currency;
+    this.savingCurrency = true;
+    this.paymentError = '';
+
+    const { memberCount, ...payload } = group;
+    this.groupService.updateGroup(group.id, { ...payload, currency }).subscribe({
+      next: (saved) => {
+        this.savingCurrency = false;
+        if (this.paymentStatus) this.paymentStatus.currency = saved.currency ?? currency;
+      },
+      error: (error) => {
+        this.savingCurrency = false;
+        if (this.paymentStatus && before) this.paymentStatus.currency = before;
+        this.paymentError = `La modification de la devise a échoué (${error?.status || 'réseau'}).`;
+      }
+    });
+  }
+
+  /** Réservé au super administrateur — l'écran ne le montre déjà qu'à lui, voir le gabarit. */
+  toggleApplicationFee(enabled: boolean): void {
+    if (!this.selectedGroup?.id || this.savingFee) return;
+    this.savingFee = true;
+    this.paymentError = '';
+
+    this.groupService.setApplicationFeeEnabled(this.selectedGroup.id, enabled).subscribe({
+      next: () => {
+        this.savingFee = false;
+        if (this.selectedGroup) this.selectedGroup.applicationFeeEnabled = enabled;
+      },
+      error: (error) => {
+        this.savingFee = false;
+        this.paymentError =
+          error?.status === 403
+            ? 'Seul un super administrateur peut modifier la commission.'
+            : `La modification a échoué (${error?.status || 'réseau'}).`;
+      }
+    });
   }
 
   // --- Demandes de création en attente ------------------------------------------------
@@ -321,6 +436,11 @@ export class GroupsComponent implements OnInit {
   /** Modules en cours d'enregistrement, par identifiant de groupe. */
   featureSaving = new Set<string>();
   featureError = '';
+
+  /** Absent ou vrai : la commission de 10 % s'applique (même défaut que le serveur). */
+  hasApplicationFeeEnabled(group: GroupEntity): boolean {
+    return group.applicationFeeEnabled !== false;
+  }
 
   hasFeature(group: GroupEntity, feature: Feature): boolean {
     // Un groupe antérieur à cette notion n'a pas le champ : il fait tout.

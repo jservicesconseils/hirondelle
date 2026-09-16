@@ -164,48 +164,6 @@
   font-style: normal;
 }
 
-// ---------------------------------------------------------------- carte
-
-.card-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-  margin-bottom: 1.6rem;
-  padding: 1.5rem 1.4rem;
-  border-radius: 18px;
-  background: linear-gradient(135deg, $blue-deep 0%, #2b5fb8 100%);
-  color: #fff;
-}
-
-.card-brand {
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.85;
-}
-
-.card-number {
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  // Chiffres de largeur fixe : le numéro ne tressaute pas pendant la frappe.
-  font-variant-numeric: tabular-nums;
-}
-
-.card-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-
-  small {
-    font-size: 0.78rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    opacity: 0.8;
-  }
-}
-
 .field {
   display: block;
   margin-bottom: 1.1rem;

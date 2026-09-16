@@ -218,14 +218,85 @@
                         </div>
 
                         <div class="wizard-field span-2">
-                            <label for="event-amount">Prix d'entrée (€)</label>
-                            <span class="field-hint">Laissez 0 € pour un événement gratuit</span>
+                            <label for="event-amount">Prix d'entrée ({{ eventCurrency }})</label>
+                            <span class="field-hint">Laissez 0 pour un événement gratuit</span>
                             <span class="input-with-icon trailing">
                                 <input id="event-amount" type="number" min="0" step="0.01"
                                        formControlName="amount" placeholder="0,00"
                                        (input)="onAmountChange()" />
-                                <i class="currency">€</i>
+                                <i class="currency">{{ eventCurrency }}</i>
                             </span>
+                        </div>
+
+                        <!--
+                          Paiement : compte de destination et commission plateforme. L'onboarding
+                          Stripe d'un compte propre à l'événement exige que l'événement existe déjà
+                          (pas d'id tant qu'il n'a pas été enregistré une première fois).
+                        -->
+                        <div class="wizard-field span-2 payment-panel" *ngIf="!f['free'].value">
+                            <label>Paiement</label>
+
+                            <ng-container *ngIf="eventToEdit?.id; else savePaymentFirst">
+                                <span class="field-hint">
+                                    Destination par défaut : compte du groupe organisateur
+                                    ({{ eventGroup?.stripeAccountStatus === 'active' ? 'connecté' : 'non connecté' }}).
+                                    Vous pouvez attacher un compte propre à cet événement pour que les
+                                    paiements y aillent directement.
+                                </span>
+
+                                <div class="stripe-status">
+                                    <span class="status-pill"
+                                          [class.is-active]="eventPaymentAccountStatus === 'active'"
+                                          [class.is-pending]="eventPaymentAccountStatus === 'pending'"
+                                          [class.is-restricted]="eventPaymentAccountStatus === 'restricted'">
+                                        <ng-container [ngSwitch]="eventPaymentAccountStatus">
+                                            <span *ngSwitchCase="'active'">Compte propre à l'événement connecté</span>
+                                            <span *ngSwitchCase="'pending'">Onboarding Stripe en cours</span>
+                                            <span *ngSwitchCase="'restricted'">Compte Stripe restreint</span>
+                                            <span *ngSwitchDefault>Aucun compte propre — hérite du groupe</span>
+                                        </ng-container>
+                                    </span>
+                                    <button type="button" class="cta ghost"
+                                            [disabled]="connectingEventStripe"
+                                            (click)="connectEventStripe()">
+                                        {{ connectingEventStripe ? 'Redirection…' : (eventPaymentAccountId ? 'Gérer sur Stripe' : 'Attacher un compte à cet événement') }}
+                                    </button>
+                                    <button type="button" class="link-remove"
+                                            *ngIf="eventPaymentAccountId"
+                                            [disabled]="clearingEventStripe"
+                                            (click)="clearEventStripe()">
+                                        Retirer, revenir au compte du groupe
+                                    </button>
+                                </div>
+
+                                <!-- Commission plateforme : réservée au super administrateur -->
+                                <div class="fee-override" *ngIf="auth.isSuperAdmin()">
+                                    <span class="field-hint">Commission de la plateforme (10 %) pour cet événement</span>
+                                    <div class="fee-choices">
+                                        <button type="button" class="feature-pill" [class.is-on]="eventApplicationFeeOverride === null"
+                                                [disabled]="savingEventFee" (click)="toggleEventApplicationFee(null)">
+                                            Hérite du groupe
+                                        </button>
+                                        <button type="button" class="feature-pill" [class.is-on]="eventApplicationFeeOverride === true"
+                                                [disabled]="savingEventFee" (click)="toggleEventApplicationFee(true)">
+                                            Activée
+                                        </button>
+                                        <button type="button" class="feature-pill" [class.is-on]="eventApplicationFeeOverride === false"
+                                                [disabled]="savingEventFee" (click)="toggleEventApplicationFee(false)">
+                                            Désactivée
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <p class="feature-error" *ngIf="eventPaymentError">{{ eventPaymentError }}</p>
+                            </ng-container>
+                            <ng-template #savePaymentFirst>
+                                <span class="field-hint">
+                                    Enregistrez d'abord l'événement pour pouvoir lui attacher son propre
+                                    compte de paiement — en attendant, les paiements iront au compte du
+                                    groupe organisateur.
+                                </span>
+                            </ng-template>
                         </div>
                     </div>
                 </section>

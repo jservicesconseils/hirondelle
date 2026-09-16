@@ -13,6 +13,12 @@ import { groupToJson } from '../mappers/group.mapper';
 import { memberToJson } from '../mappers/member.mapper';
 import * as groupService from '../services/group.service';
 import * as memberService from '../services/member.service';
+import {
+  createGroupOnboardingLink,
+  getGroupPaymentStatus,
+  refreshGroupAccountStatus,
+  setGroupApplicationFeeEnabled,
+} from '../services/group-stripe.service';
 
 /** Reprend `GroupController` : @RequestMapping("/api/v1/groups"). */
 export const groupRouter = Router();
@@ -255,6 +261,72 @@ groupRouter.put(
 
     const updated = await groupService.updateGroup(req.params.id, body);
     return res.json(groupToJson(updated));
+  }),
+);
+
+// --- Paiement ---------------------------------------------------------------------
+
+/**
+ * Lien d'onboarding Stripe Connect du groupe. Ouvert à qui l'administre, comme
+ * `PUT /:id` — un admin de groupe connecte son propre compte, le super admin
+ * peut le faire pour n'importe lequel.
+ */
+groupRouter.post(
+  '/:id/stripe/onboarding-link',
+  requireAuth,
+  requireRole(ROLES.SUPER_ADMIN, ROLES.GROUP_ADMIN),
+  asyncHandler(async (req, res) => {
+    if (!canReach(req, req.params.id)) {
+      return res.status(403).json({ error: 'Droits insuffisants.' });
+    }
+    const url = await createGroupOnboardingLink(req.params.id);
+    return res.json({ url });
+  }),
+);
+
+// GET /api/v1/groups/{id}/stripe/status — statut mis en cache (rapide, pas d'appel Stripe).
+groupRouter.get(
+  '/:id/stripe/status',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    if (!canReach(req, req.params.id)) {
+      return res.status(403).json({ error: 'Droits insuffisants.' });
+    }
+    return res.json(await getGroupPaymentStatus(req.params.id));
+  }),
+);
+
+/**
+ * Relit l'état du compte connecté directement sur Stripe. Appelé au retour de
+ * l'onboarding hébergé, pour ne pas laisser l'écran afficher « en attente »
+ * le temps que le webhook `account.updated` arrive.
+ */
+groupRouter.post(
+  '/:id/stripe/refresh',
+  requireAuth,
+  requireRole(ROLES.SUPER_ADMIN, ROLES.GROUP_ADMIN),
+  asyncHandler(async (req, res) => {
+    if (!canReach(req, req.params.id)) {
+      return res.status(403).json({ error: 'Droits insuffisants.' });
+    }
+    const stripeAccountStatus = await refreshGroupAccountStatus(req.params.id);
+    return res.json({ stripeAccountStatus });
+  }),
+);
+
+/**
+ * Active ou désactive la commission de 10 % pour tous les événements du
+ * groupe (sauf ceux qui portent leur propre override). Réservé au super
+ * admin : un administrateur de groupe ne voit ni ne contrôle ce réglage.
+ */
+groupRouter.patch(
+  '/:id/payment-fee',
+  requireAuth,
+  requireRole(ROLES.SUPER_ADMIN),
+  asyncHandler(async (req, res) => {
+    const enabled = Boolean(req.body?.applicationFeeEnabled);
+    await setGroupApplicationFeeEnabled(req.params.id, enabled);
+    return res.json({ applicationFeeEnabled: enabled });
   }),
 );
 

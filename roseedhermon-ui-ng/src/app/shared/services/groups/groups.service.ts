@@ -103,4 +103,35 @@ export class GroupService {
   getGroupStats(id: string): Observable<GroupStats> {
     return this.http.get<GroupStats>(`${this.baseUrl}/${id}/stats`);
   }
+
+  // --- Paiement (Stripe Connect) -----------------------------------------------------
+
+  /** Statut de paiement mis en cache (rapide, pas d'appel Stripe). */
+  getPaymentStatus(id: string): Observable<GroupPaymentStatus> {
+    return this.http.get<GroupPaymentStatus>(`${this.baseUrl}/${id}/stripe/status`);
+  }
+
+  /** Lien d'onboarding hébergé, à usage unique — à ouvrir aussitôt reçu. */
+  createOnboardingLink(id: string): Observable<{ url: string }> {
+    return this.http.post<{ url: string }>(`${this.baseUrl}/${id}/stripe/onboarding-link`, {});
+  }
+
+  /** Relit l'état du compte connecté sur Stripe, au retour de l'onboarding. */
+  refreshAccountStatus(id: string): Observable<{ stripeAccountStatus: string }> {
+    return this.http.post<{ stripeAccountStatus: string }>(`${this.baseUrl}/${id}/stripe/refresh`, {});
+  }
+
+  /** Réservé au super administrateur. */
+  setApplicationFeeEnabled(id: string, enabled: boolean): Observable<{ applicationFeeEnabled: boolean }> {
+    return this.http.patch<{ applicationFeeEnabled: boolean }>(`${this.baseUrl}/${id}/payment-fee`, {
+      applicationFeeEnabled: enabled
+    });
+  }
+}
+
+/** Statut de paiement d'un groupe, renvoyé par `/groups/{id}/stripe/status`. */
+export interface GroupPaymentStatus {
+  stripeAccountId: string | null;
+  stripeAccountStatus: 'none' | 'pending' | 'active' | 'restricted';
+  currency: string;
 }

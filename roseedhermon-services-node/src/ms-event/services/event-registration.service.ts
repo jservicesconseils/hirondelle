@@ -53,6 +53,12 @@ export function registrationToJson(document: EventRegistrationDocument): Record<
     note: toStringOrNull(raw.note),
     groupId: toStringOrNull(raw.groupId),
     createdAt: raw.createdAt instanceof Date ? raw.createdAt.toISOString() : null,
+    // Une inscription antérieure à ce champ, ou à un événement gratuit, vaut
+    // 'not_required' : rien n'attend de paiement.
+    paymentStatus: toStringOrNull(raw.paymentStatus) ?? 'not_required',
+    stripeCheckoutSessionId: toStringOrNull(raw.stripeCheckoutSessionId),
+    stripePaymentIntentId: toStringOrNull(raw.stripePaymentIntentId),
+    amountPaid: typeof raw.amountPaid === 'number' ? raw.amountPaid : null,
   };
 }
 
@@ -96,6 +102,44 @@ export async function registerForEvent(input: EventRegistrationInput): Promise<R
 /** Équivalent de `cancelRegistration` : `deleteById` ignore un identifiant inconnu. */
 export async function cancelRegistration(registrationId: string): Promise<void> {
   await EventRegistrationModel.deleteOne(springIdFilter(registrationId)).exec();
+}
+
+/**
+ * Attache une session de paiement Stripe à une inscription déjà créée.
+ *
+ * Mise à jour ciblée (`updateOne`), pas `registerForEvent` : celui-ci fait un
+ * remplacement complet dont le corps ne connaît pas les champs de paiement,
+ * ce qui les effacerait à la première relance.
+ */
+export async function setRegistrationCheckoutSession(
+  registrationId: string,
+  stripeCheckoutSessionId: string,
+): Promise<void> {
+  await EventRegistrationModel.updateOne(springIdFilter(registrationId), {
+    $set: { paymentStatus: 'pending', stripeCheckoutSessionId },
+  }).exec();
+}
+
+/**
+ * Confirme le paiement d'une inscription, retrouvée par sa session Stripe.
+ *
+ * Idempotent : un webhook livré deux fois (Stripe le documente comme possible)
+ * ne fait rien la seconde fois, `paymentStatus` étant déjà `paid`.
+ */
+export async function confirmRegistrationPayment(
+  stripeCheckoutSessionId: string,
+  stripePaymentIntentId: string,
+  amountPaid: number,
+): Promise<void> {
+  await EventRegistrationModel.updateOne(
+    { stripeCheckoutSessionId, paymentStatus: { $ne: 'paid' } },
+    { $set: { status: 'CONFIRMED', paymentStatus: 'paid', stripePaymentIntentId, amountPaid } },
+  ).exec();
+}
+
+/** Libère la place d'une inscription dont la session Stripe a expiré sans paiement. */
+export async function cancelRegistrationByCheckoutSession(stripeCheckoutSessionId: string): Promise<void> {
+  await EventRegistrationModel.deleteOne({ stripeCheckoutSessionId, paymentStatus: 'pending' }).exec();
 }
 
 /** Équivalent de `getRegistrationStatus` : « not_found » si l'inscription n'existe pas. */
@@ -168,10 +212,27 @@ export async function findExistingRegistration(
   return existing === null ? null : registrationToJson(existing);
 }
 
+/**
+ * Une inscription en attente de paiement depuis plus longtemps que ça n'a
+ * manifestement pas abouti — la session Stripe correspondante expire à 30
+ * minutes (voir `createCheckoutSession`). On cesse de lui compter sa place
+ * au-delà, plutôt que de dépendre uniquement du webhook `checkout.session.expired`
+ * pour la libérer : aucune tâche planifiée n'existe dans ce projet pour la
+ * supprimer sinon.
+ */
+const PENDING_PAYMENT_HOLD_MS = 30 * 60 * 1000;
+
 /** Places déjà retenues sur un événement, toutes inscriptions confondues. */
 export async function countReservedSeats(eventId: string): Promise<number> {
   const registrations = await EventRegistrationModel.find({ eventId }).exec();
+  const cutoff = Date.now() - PENDING_PAYMENT_HOLD_MS;
+
   return registrations.reduce((total, registration) => {
+    const paymentStatus = registration.get('paymentStatus') as string | undefined;
+    if (paymentStatus === 'pending') {
+      const createdAt = registration.get('createdAt') as Date | undefined;
+      if (!createdAt || createdAt.getTime() < cutoff) return total;
+    }
     const seats = registration.get('seats') as number | undefined;
     return total + (typeof seats === 'number' && seats > 0 ? seats : 1);
   }, 0);

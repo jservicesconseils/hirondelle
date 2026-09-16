@@ -278,6 +278,20 @@ export async function updateGroup(id: string, body: Record<string, unknown>): Pr
 
     const keptAdmins = existing?.get('adminEmails');
     if (Array.isArray(keptAdmins)) document.adminEmails = keptAdmins;
+
+    // Paiement : jamais transmis par le formulaire d'identité du groupe (name,
+    // adresse, etc.) — un remplacement complet les effacerait sinon à chaque
+    // modification anodine. Seules les routes Stripe dédiées les écrivent.
+    if (body.currency === undefined) {
+      const keptCurrency = existing?.get('currency');
+      if (keptCurrency !== undefined) document.currency = keptCurrency;
+    }
+    const keptStripeAccountId = existing?.get('stripeAccountId');
+    if (keptStripeAccountId !== undefined) document.stripeAccountId = keptStripeAccountId;
+    const keptStripeAccountStatus = existing?.get('stripeAccountStatus');
+    if (keptStripeAccountStatus !== undefined) document.stripeAccountStatus = keptStripeAccountStatus;
+    const keptApplicationFeeEnabled = existing?.get('applicationFeeEnabled');
+    if (keptApplicationFeeEnabled !== undefined) document.applicationFeeEnabled = keptApplicationFeeEnabled;
   }
 
   const replaced = await GroupModel.findOneAndReplace(
