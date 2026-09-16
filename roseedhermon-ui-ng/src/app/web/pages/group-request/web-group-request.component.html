@@ -10,7 +10,7 @@
       <h1>Créer ma communauté</h1>
       <p class="lead">
         Ouvrez un groupe pour organiser des événements réservés aux personnes que vous y invitez.
-        Un super administrateur approuve chaque demande avant qu'elle ne devienne active.
+        Votre communauté est active immédiatement, et vous en devenez l'administrateur.
       </p>
     </div>
   </header>
@@ -92,7 +92,7 @@
         <p class="error" *ngIf="error">{{ error }}</p>
 
         <button type="submit" class="submit" [disabled]="!canSave">
-          {{ saving ? 'Envoi…' : 'Envoyer la demande' }}
+          {{ saving ? 'Création…' : 'Créer ma communauté' }}
         </button>
       </form>
     </ng-container>

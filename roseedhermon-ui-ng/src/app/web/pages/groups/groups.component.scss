@@ -293,6 +293,23 @@
   justify-content: space-between;
   gap: 0.6rem;
   flex-wrap: wrap;
+
+  .cta.ghost {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.9rem;
+    border: 1.5px solid theme.$accent;
+    border-radius: 999px;
+    background: none;
+    color: theme.$accent;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover { background: theme.$accent-soft; }
+    &:disabled { opacity: 0.6; cursor: default; }
+  }
 }
 
 .status-pill {

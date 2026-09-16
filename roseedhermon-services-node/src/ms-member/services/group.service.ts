@@ -104,25 +104,33 @@ export async function getGroupsAdministeredBy(email: string): Promise<GroupDocum
 
 /**
  * Un membre sans groupe ouvre sa propre communauté ; un administrateur qui en
- * a déjà une peut tout aussi bien en ouvrir une seconde — seule une demande
- * déjà en attente bloque la suivante, le temps qu'elle soit tranchée.
+ * a déjà une peut tout aussi bien en ouvrir une seconde. Le groupe est actif
+ * immédiatement — son auteur en devient admin sur-le-champ, sans validation
+ * d'un super administrateur (ancien comportement : `status: 'PENDING'` en
+ * attente d'`approveGroup`, retiré à la demande du produit). `getPendingGroups`
+ * et `approveGroup`/`rejectGroup` restent utilisables pour d'éventuels groupes
+ * déjà en attente créés avant ce changement.
  */
 export async function requestGroup(requesterEmail: string, body: Record<string, unknown>): Promise<GroupDocument> {
   const email = requesterEmail.trim().toLowerCase();
 
-  const alreadyPending = await GroupModel.findOne({ status: 'PENDING', requestedByEmail: email }).exec();
-  if (alreadyPending) throw runtimeError('Une demande est déjà en attente pour ce compte.');
-
   const document = withoutNulls({ ...groupFromBody(body), _class: GROUP_CLASS });
 
-  return GroupModel.create({
+  const created = await GroupModel.create({
     _id: toSpringId(null),
     ...document,
-    status: 'PENDING',
+    status: 'APPROVED',
     requestedByEmail: email,
     requestedAt: new Date(),
     adminEmails: [email],
   });
+
+  const groupId = String(created._id);
+  await promoteToGroupAdmin(email);
+  const currentlyActive = await getAccountGroupId(email);
+  if (!currentlyActive) await setAccountGroupId(email, groupId);
+
+  return created;
 }
 
 /**

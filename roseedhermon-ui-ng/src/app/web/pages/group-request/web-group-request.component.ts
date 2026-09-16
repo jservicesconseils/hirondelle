@@ -14,10 +14,11 @@ const TYPE_CHOICES = ['Association', 'Club', 'Famille', 'Communauté religieuse'
 
 /**
  * N'importe quel compte ouvre sa propre communauté ici, qu'il en administre
- * déjà une ou pas — voir `POST /groups/request` côté serveur. La demande doit
- * être approuvée par un super administrateur avant de devenir active ; une
- * fois approuvée, elle s'ajoute aux communautés que le compte administre
- * (page Groupes) sans déloger celle déjà active pour la session en cours.
+ * déjà une ou pas — voir `POST /groups/request` côté serveur. Elle est active
+ * immédiatement et son auteur en devient admin sur-le-champ ; elle s'ajoute
+ * aux communautés que le compte administre (page Groupes) sans déloger celle
+ * déjà active pour la session en cours — une reconnexion (ou bascule depuis
+ * la page Groupes) est nécessaire pour que le jeton en tienne compte.
  */
 @Component({
   selector: 'app-web-group-request',
@@ -45,9 +46,11 @@ export class WebGroupRequestComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Un compte déjà rattaché à un groupe peut tout aussi bien en demander un
-    // autre — seule une demande déjà en attente bloque la suivante, ce que
-    // `getMyRequest()` reflète ci-dessous.
+    // Affiche la dernière communauté créée par ce compte (le cas échéant) au
+    // lieu du formulaire vide ; « Demander une autre communauté » (bouton du
+    // panneau « Approuvée ») repart sur un formulaire neuf pour en créer une
+    // autre. D'éventuels groupes encore `PENDING` d'avant ce changement
+    // continuent de s'afficher en attente ici.
     this.groupService.getMyRequest().subscribe({
       next: (request) => {
         this.request = request;

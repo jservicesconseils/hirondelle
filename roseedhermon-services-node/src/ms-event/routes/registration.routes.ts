@@ -16,7 +16,7 @@ import {
   registerForEvent,
   registrationFromBody,
 } from '../services/event-registration.service';
-import { createCheckoutSession } from '../services/checkout.service';
+import { createCheckoutSession, refundRegistrationPayment } from '../services/checkout.service';
 
 /** Routes de `EventRegistrationController`, montées sur `/api/v1/registrations`. */
 export const registrationRouter = Router();
@@ -281,6 +281,19 @@ registrationRouter.delete(
       // Une session ouverte qui n'est ni l'organisateur ni la personne inscrite.
       res.status(403).json({ error: 'Droits insuffisants.' });
       return;
+    }
+
+    // Une réservation payée doit être remboursée avant d'être effacée — sans
+    // quoi le débit reste en place alors que le billet n'existe plus.
+    if (registration.paymentStatus === 'paid' && registration.stripePaymentIntentId) {
+      try {
+        await refundRegistrationPayment(String(registration.stripePaymentIntentId));
+      } catch (error) {
+        res.status(502).json({
+          error: `Le remboursement a échoué, la réservation n'a pas été annulée : ${(error as Error).message}`,
+        });
+        return;
+      }
     }
 
     await cancelRegistration(registrationId);

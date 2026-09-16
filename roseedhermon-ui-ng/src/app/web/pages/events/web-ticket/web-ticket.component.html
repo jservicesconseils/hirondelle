@@ -120,7 +120,7 @@
 
     <div class="cancel-row">
       <button type="button" class="link-danger" (click)="cancel()" [disabled]="cancelling">
-        {{ cancelling ? 'Annulation…' : 'Annuler ma réservation' }}
+        {{ cancelling ? 'Annulation…' : (registration?.paymentStatus === 'paid' ? 'Annuler et me faire rembourser' : 'Annuler ma réservation') }}
       </button>
     </div>
   </div>

@@ -101,3 +101,21 @@ export async function createCheckoutSession(
 
   return { url: session.url, registrationId };
 }
+
+/**
+ * Rembourse intégralement une inscription payée, lors de son annulation.
+ *
+ * `reverse_transfer` retire les fonds déjà transférés au compte connecté du
+ * groupe (destination charge) ; `refund_application_fee` rend aussi la
+ * commission de la plateforme au client — sans effet si aucune commission
+ * n'avait été prélevée. Sans ça, annuler une réservation payée effaçait la
+ * fiche mais laissait le débit en place.
+ */
+export async function refundRegistrationPayment(paymentIntentId: string): Promise<void> {
+  const client = requireStripe();
+  await client.refunds.create({
+    payment_intent: paymentIntentId,
+    reverse_transfer: true,
+    refund_application_fee: true,
+  });
+}

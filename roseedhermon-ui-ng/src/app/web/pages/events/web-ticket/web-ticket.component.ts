@@ -218,7 +218,9 @@ export class WebTicketComponent implements OnInit, OnDestroy {
       },
       error: (error: HttpErrorResponse) => {
         this.cancelling = false;
-        this.loadError = `L'annulation a échoué (${error?.status || 'réseau'}).`;
+        // Le serveur explique lui-même l'échec du remboursement (502) ; on le relaie.
+        const message = typeof error?.error?.error === 'string' ? error.error.error : null;
+        this.loadError = message || `L'annulation a échoué (${error?.status || 'réseau'}).`;
       }
     });
   }
