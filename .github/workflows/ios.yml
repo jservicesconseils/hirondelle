@@ -268,12 +268,21 @@ jobs:
 
       # `altool` cherche la clé API à cet emplacement précis par défaut — pas
       # besoin de la passer autrement en ligne de commande.
+      #
+      # `--apple-id` : bug connu d'Xcode 26 (confirmé par Apple sur ses forums
+      # développeurs) — sans lui, altool échoue à retrouver l'app depuis le seul
+      # Bundle ID (« Cannot determine the Apple ID from Bundle ID… (19) »), ce
+      # qui a fait échouer l'envoi du 19 novembre 2026 malgré une archive et un
+      # export réussis. L'identifiant ci-dessous est l'« Apple ID » numérique de
+      # l'app (App Store Connect > Informations sur l'app) — distinct du Bundle
+      # ID et du Team ID, et non sensible (visible dans l'URL publique de la fiche).
       - name: Envoyer à TestFlight
         if: steps.check.outputs.ready == 'true'
         env:
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+          APPSTORE_APP_APPLE_ID: '6808785213'
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$APPSTORE_PRIVATE_KEY" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$APPSTORE_KEY_ID.p8
@@ -282,7 +291,8 @@ jobs:
             --type ios \
             --file "$RUNNER_TEMP/export/App.ipa" \
             --apiKey "$APPSTORE_KEY_ID" \
-            --apiIssuer "$APPSTORE_ISSUER_ID"
+            --apiIssuer "$APPSTORE_ISSUER_ID" \
+            --apple-id "$APPSTORE_APP_APPLE_ID"
 
       - uses: actions/upload-artifact@v4
         if: steps.check.outputs.ready == 'true'
