@@ -1,5 +1,6 @@
 import {
   AdminAddUserToGroupCommand,
+  AdminDeleteUserCommand,
   AdminGetUserCommand,
   AdminUpdateUserAttributesCommand,
   CognitoIdentityProviderClient,
@@ -68,4 +69,23 @@ export async function getAccountGroupId(email: string): Promise<string | null> {
   );
   const attribute = user.UserAttributes?.find((entry) => entry.Name === 'custom:groupId');
   return attribute?.Value || null;
+}
+
+/**
+ * Supprime définitivement le compte Cognito — exigé par Apple (App Review
+ * Guideline 5.1.1v) dès qu'une app permet d'en créer un. Irréversible : à
+ * appeler en dernier, une fois les autres nettoyages (fiche membre, groupes,
+ * téléphone) effectués, pour pouvoir réessayer si l'un d'eux échoue.
+ *
+ * Sans effet si le compte n'existe déjà plus (ex. appel répété après un échec
+ * précédent), pour rester idempotent comme le reste de ce fichier.
+ */
+export async function deleteCognitoUser(email: string): Promise<void> {
+  if (!USER_POOL_ID) return;
+
+  try {
+    await getClient().send(new AdminDeleteUserCommand({ UserPoolId: USER_POOL_ID, Username: email }));
+  } catch (error) {
+    if ((error as { name?: string }).name !== 'UserNotFoundException') throw error;
+  }
 }

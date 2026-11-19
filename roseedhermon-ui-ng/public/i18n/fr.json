@@ -51,6 +51,13 @@
     "photoTooLarge": "Ce fichier est trop lourd pour être une photo.",
     "photoFailed": "L'image n'a pas pu être traitée.",
     "saved": "Vos informations ont été enregistrées.",
-    "saveFailed": "L'enregistrement a échoué ({{status}})."
+    "saveFailed": "L'enregistrement a échoué ({{status}}).",
+    "deleteAccount": "Supprimer mon compte",
+    "deleteAccountConfirmTitle": "Supprimer définitivement votre compte ?",
+    "deleteAccountConfirmMessage": "Votre fiche, votre photo et vos coordonnées seront effacées. Vos inscriptions passées restent visibles à l'organisateur, mais sans votre nom ni vos coordonnées. Cette action est irréversible.",
+    "deleteAccountConfirmButton": "Oui, supprimer mon compte",
+    "deleteAccountCancel": "Annuler",
+    "deletingAccount": "Suppression en cours…",
+    "deleteAccountFailed": "La suppression a échoué ({{status}}). Réessayez ou contactez le support."
   }
 }

@@ -193,6 +193,26 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
           </svg>
           {{ 'profile.signOut' | translate }}
         </button>
+
+        <button type="button" class="delete-account" (click)="deleteConfirmOpen = true" *ngIf="!deleteConfirmOpen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+          </svg>
+          {{ 'profile.deleteAccount' | translate }}
+        </button>
+
+        <div class="delete-confirm" *ngIf="deleteConfirmOpen">
+          <p class="delete-confirm-title">{{ 'profile.deleteAccountConfirmTitle' | translate }}</p>
+          <p class="delete-confirm-message">{{ 'profile.deleteAccountConfirmMessage' | translate }}</p>
+          <p class="feedback ko" *ngIf="deleteError">{{ deleteError }}</p>
+          <button type="button" class="delete-account confirm" [disabled]="deleting" (click)="deleteAccount()">
+            {{ (deleting ? 'profile.deletingAccount' : 'profile.deleteAccountConfirmButton') | translate }}
+          </button>
+          <button type="button" class="delete-cancel" [disabled]="deleting" (click)="deleteConfirmOpen = false; deleteError = ''">
+            {{ 'profile.deleteAccountCancel' | translate }}
+          </button>
+        </div>
       </ng-container>
     </div>
   `,
@@ -456,6 +476,61 @@ const MAX_SOURCE_PHOTO_BYTES = 20_000_000;
     }
 
     .sign-out svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* Entrée discrète : le rouge plein est réservé à la confirmation, en dessous. */
+    .delete-account {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: calc(100% - 36px);
+      height: 40px;
+      margin: 0 18px 18px;
+      border: none;
+      border-radius: 14px;
+      background: transparent;
+      color: #c0392b;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .delete-account svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .delete-account.confirm {
+      height: 48px;
+      background: #c0392b;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: 0 10px 22px rgba(192, 57, 43, 0.3);
+    }
+    .delete-account.confirm:disabled { opacity: 0.6; cursor: default; }
+
+    .delete-confirm {
+      margin: 0 18px 18px;
+      padding: 16px;
+      border-radius: 14px;
+      background: #fdf0ee;
+      border: 1px solid rgba(192, 57, 43, 0.25);
+    }
+    .delete-confirm-title { margin: 0 0 6px; font-size: 14px; font-weight: 800; color: #1a1c22; }
+    .delete-confirm-message { margin: 0 0 14px; font-size: 13px; line-height: 1.5; color: #5a5f68; }
+    .delete-confirm .delete-account.confirm { width: 100%; margin: 0 0 8px; }
+    .delete-cancel {
+      display: block;
+      width: 100%;
+      height: 40px;
+      border: none;
+      border-radius: 14px;
+      background: #fff;
+      color: #5a5f68;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .delete-cancel:disabled { opacity: 0.6; cursor: default; }
   `]
 })
 export class MobileProfileComponent implements OnInit {
@@ -467,6 +542,10 @@ export class MobileProfileComponent implements OnInit {
   savedMessage = '';
   saveError = '';
   photoError = '';
+
+  deleteConfirmOpen = false;
+  deleting = false;
+  deleteError = '';
 
   readonly genders = GENDERS;
 
@@ -647,5 +726,17 @@ export class MobileProfileComponent implements OnInit {
   signOut(): void {
     this.auth.signOut();
     this.router.navigate(['/mobile/login']);
+  }
+
+  async deleteAccount(): Promise<void> {
+    this.deleting = true;
+    this.deleteError = '';
+    try {
+      await this.auth.deleteAccount();
+      this.router.navigate(['/mobile/login']);
+    } catch (error: any) {
+      this.deleting = false;
+      this.deleteError = this.translate.instant('profile.deleteAccountFailed', { status: error?.status || 'réseau' });
+    }
   }
 }

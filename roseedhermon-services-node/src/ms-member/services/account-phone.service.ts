@@ -34,3 +34,8 @@ export async function findPhoneByEmail(email: string): Promise<string | null> {
   const entry = await AccountPhoneModel.findOne({ email: email.trim().toLowerCase() }).exec();
   return entry?.get('phoneE164') ?? null;
 }
+
+/** Détache tous les numéros de ce compte — à la suppression du compte. */
+export async function unlinkAccountPhones(email: string): Promise<void> {
+  await AccountPhoneModel.deleteMany({ email: email.trim().toLowerCase() }).exec();
+}

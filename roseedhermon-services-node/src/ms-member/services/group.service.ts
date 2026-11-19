@@ -319,6 +319,18 @@ export async function deleteGroup(id: string): Promise<void> {
 }
 
 /**
+ * Retire ce compte de `adminEmails` partout où il figure, à la suppression
+ * de son compte. Le ou les groupes qu'il administrait restent en place avec
+ * leurs membres et événements — simplement sans cet administrateur — plutôt
+ * que de bloquer la suppression faute d'un parcours de transfert d'admin,
+ * qui n'existe pas encore dans l'application.
+ */
+export async function removeAdminFromAllGroups(email: string): Promise<void> {
+  const needle = email.trim().toLowerCase();
+  await GroupModel.updateMany({ adminEmails: needle }, { $pull: { adminEmails: needle } }).exec();
+}
+
+/**
  * Reprend `createGroupWithAdmins` : crée le groupe, exige exactement deux
  * administrateurs, puis crée ces membres avec le rôle ADMIN rattachés au groupe.
  *

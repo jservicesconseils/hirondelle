@@ -537,6 +537,24 @@ export class AuthService {
     await this.loadCurrentUser();
   }
 
+  /**
+   * Suppression du compte par son titulaire — exigée par Apple (App Review
+   * Guideline 5.1.1v) dès qu'une app permet d'en créer un. Irréversible.
+   *
+   * Deux appels, vers les deux services que ce front connaît séparément (voir
+   * `environment.host`, commun aux deux depuis que la passerelle les rend
+   * interchangeables) : `ms-event` anonymise d'abord les inscriptions de la
+   * personne (ni l'un ni l'autre service ne connaît les données de l'autre),
+   * puis `ms-member` retire la fiche, les droits d'administration et le
+   * compte Cognito lui-même. La session locale n'est effacée qu'une fois les
+   * deux appels terminés.
+   */
+  async deleteAccount(): Promise<void> {
+    await firstValueFrom(this.http.delete(`${environment.host}/api/v1/registrations/me`));
+    await firstValueFrom(this.http.delete(`${environment.host}/api/v1/me`));
+    this.signOut();
+  }
+
   fetchCurrentUser(): Observable<CurrentUser> {
     return this.http.get<CurrentUser>(`${environment.host}/api/v1/me`).pipe(
       tap((profile) => this.user.set({ ...ANONYMOUS, ...profile })),

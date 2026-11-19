@@ -51,6 +51,13 @@
     "photoTooLarge": "This file is too large to be a photo.",
     "photoFailed": "The image could not be processed.",
     "saved": "Your information has been saved.",
-    "saveFailed": "Saving failed ({{status}})."
+    "saveFailed": "Saving failed ({{status}}).",
+    "deleteAccount": "Delete my account",
+    "deleteAccountConfirmTitle": "Permanently delete your account?",
+    "deleteAccountConfirmMessage": "Your profile, photo and contact details will be erased. Your past event registrations stay visible to the organizer, but without your name or contact details. This action cannot be undone.",
+    "deleteAccountConfirmButton": "Yes, delete my account",
+    "deleteAccountCancel": "Cancel",
+    "deletingAccount": "Deleting…",
+    "deleteAccountFailed": "Deletion failed ({{status}}). Try again or contact support."
   }
 }

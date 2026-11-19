@@ -4,6 +4,7 @@ import { ApiError, asyncHandler, emptyResponse, isSuperAdmin, requireAuth, ROLES
 import { administers, isVisibleTo, ownsRegistration } from '../event-visibility';
 import { getAllEvents, getEvent } from '../services/event.service';
 import {
+  anonymizeRegistrationsByEmail,
   cancelRegistration,
   countReservedSeats,
   findExistingRegistration,
@@ -253,6 +254,27 @@ registrationRouter.get(
     // `ResponseEntity<String>` passait par le StringHttpMessageConverter : le corps est
     // le texte brut, pas une chaîne JSON.
     res.type('text/plain; charset=utf-8').send(status);
+  }),
+);
+
+/**
+ * Supprime les coordonnées personnelles des inscriptions de la personne
+ * connectée, à la suppression de son compte (voir `DELETE /api/v1/me` dans
+ * ms-member, qui ne connaît pas ces inscriptions). Déclarée avant `/:id`,
+ * pour la même raison que `/mine` : sans cela, « me » serait pris pour un
+ * identifiant d'inscription.
+ */
+registrationRouter.delete(
+  '/me',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const email = req.auth?.email ?? null;
+    if (email === null) {
+      res.status(400).json({ error: 'Aucun courriel associé à la session.' });
+      return;
+    }
+    await anonymizeRegistrationsByEmail(email);
+    emptyResponse.noContent(res);
   }),
 );
 

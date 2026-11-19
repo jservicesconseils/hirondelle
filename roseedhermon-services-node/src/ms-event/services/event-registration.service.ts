@@ -238,6 +238,28 @@ export async function countReservedSeats(eventId: string): Promise<number> {
   }, 0);
 }
 
+/**
+ * Supprime les données personnelles des inscriptions de ce compte, à la
+ * suppression de son compte — exigée par Apple (App Review Guideline 5.1.1v).
+ *
+ * Le billet lui-même (événement, statut, places, paiement) reste en place :
+ * c'est l'historique et la comptabilité de l'organisateur, et un paiement déjà
+ * effectué n'a pas à être défait par ce nettoyage. Seules les coordonnées qui
+ * identifient la personne sont retirées, comme `withoutNulls()` le ferait pour
+ * une création — `$unset` plutôt qu'une valeur nulle, pour que les documents
+ * gardés aient la même forme que ceux déjà sans ces champs.
+ */
+export async function anonymizeRegistrationsByEmail(email: string): Promise<number> {
+  const needle = normalizeEmail(email);
+  if (!needle) return 0;
+
+  const result = await EventRegistrationModel.updateMany(
+    { email: needle },
+    { $unset: { firstName: '', lastName: '', email: '', phoneNumber: '', note: '' } },
+  ).exec();
+  return result.modifiedCount ?? 0;
+}
+
 // --- Fonctions utilitaires --------------------------------------------------------
 
 function byNewest(a: Record<string, unknown>, b: Record<string, unknown>): number {

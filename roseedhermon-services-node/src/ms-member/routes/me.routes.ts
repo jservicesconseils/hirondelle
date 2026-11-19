@@ -1,9 +1,19 @@
 import { Router } from 'express';
-import { ALL_FEATURES, asyncHandler, featuresOfGroup, isSuperAdmin, requireAuth, toStringOrNull } from '../../common';
+import {
+  ALL_FEATURES,
+  asyncHandler,
+  deleteCognitoUser,
+  emptyResponse,
+  featuresOfGroup,
+  isSuperAdmin,
+  requireAuth,
+  toStringOrNull,
+} from '../../common';
 import { memberToJson } from '../mappers/member.mapper';
 import { groupToJson } from '../mappers/group.mapper';
 import * as memberService from '../services/member.service';
 import * as groupService from '../services/group.service';
+import { unlinkAccountPhones } from '../services/account-phone.service';
 
 /**
  * Profil de l'utilisateur connecté, monté sur `/api/v1/me`.
@@ -77,5 +87,41 @@ meRouter.put(
       : await memberService.addMember({ email, firstName, lastName });
 
     res.json(memberToJson(saved));
+  }),
+);
+
+/**
+ * Suppression du compte par son titulaire — exigée par Apple (App Review
+ * Guideline 5.1.1v) dès qu'une app permet d'en créer un.
+ *
+ * Nettoie tout ce que ce service possède : les numéros rattachés, les droits
+ * d'administration sur ses groupes (qui restent en place, simplement sans ce
+ * compte), la fiche membre, puis le compte Cognito lui-même — dans cet ordre,
+ * pour que l'identité de connexion ne disparaisse qu'une fois le reste nettoyé.
+ *
+ * Les inscriptions aux événements (service `ms-event`) sont anonymisées par un
+ * appel distinct du client à `DELETE /api/v1/registrations/me` : ce service ne
+ * connaît pas leurs données, comme les deux services Spring d'origine qu'il
+ * reprend n'avaient aucune dépendance l'un sur l'autre.
+ */
+meRouter.delete(
+  '/',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const email = req.auth?.email ?? null;
+    if (email === null) {
+      res.status(400).json({ error: 'Aucun courriel associé à la session.' });
+      return;
+    }
+
+    await unlinkAccountPhones(email);
+    await groupService.removeAdminFromAllGroups(email);
+
+    const existing = await memberService.findMemberByEmail(email);
+    if (existing) await memberService.deleteMember(String(existing._id));
+
+    await deleteCognitoUser(email);
+
+    emptyResponse.noContent(res);
   }),
 );
